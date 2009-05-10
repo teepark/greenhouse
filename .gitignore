@@ -1,0 +1,8 @@
+*.pyc
+*.pyo
+.*.swp
+greenhouse.egg-info/*
+build/*
+dist/*
+paver-minilib.zip
+setup.py

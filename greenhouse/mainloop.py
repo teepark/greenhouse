@@ -7,17 +7,17 @@ from greenhouse.compat import greenlet
 
 POLL_TIMEOUT = 0.1
 NOTHING_TO_DO_PAUSE = 0.05
-last_select = 0
+LAST_SELECT = 0
 
 def get_next():
-    global last_select
+    global LAST_SELECT
 
     if globals.events['awoken']:
         return globals.events['awoken'].pop(0)
     
     now = time.time()
-    if now >= last_select + POLL_TIMEOUT:
-        last_select = now
+    if now >= LAST_SELECT + POLL_TIMEOUT:
+        LAST_SELECT = now
         socketpoll()
 
     if globals.events['awoken']:
@@ -40,7 +40,7 @@ def pause():
     go_to_next()
 
 def pause_until(unixtime):
-    bisect.insort_right(globals.timed_paused, (unixtime, greenlet.getcurrent()))
+    bisect.insort(globals.timed_paused, (unixtime, greenlet.getcurrent()))
     go_to_next()
 
 def pause_for(secs):
@@ -52,17 +52,13 @@ def schedule(func):
     globals.paused.append(glet)
     return func
 
-def _scheduler(unixtime, func):
-    pause_until(unixtime)
-    return func()
-
 def schedule_at(unixtime, func=None):
     if func is None:
         def decorator(func):
-            schedule(_scheduler(unixtime, func))
+            bisect.insort(globals.timed_paused, (unixtime, greenlet(func)))
             return func
         return decorator
-    schedule(_scheduler(unixtime, func))
+    bisect.insort(globals.timed_paused, (unixtime, greenlet(func)))
     return func
 
 def schedule_in(secs, func=None):

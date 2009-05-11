@@ -33,10 +33,15 @@ class Lock(object):
     def locked(self):
         return self._locked
 
-    def acquire(self):
+    def acquire(self, blocking=True):
+        if not blocking:
+            locked_already = self._locked
+            self._locked = True
+            return not locked_already
         while self._locked:
             self._ev.wait()
         self._locked = True
+        return True
 
     def release(self):
         self._locked = False
@@ -47,3 +52,33 @@ class Lock(object):
 
     def __exit__(self, type, value, traceback):
         return self.release()
+
+class RLock(Lock):
+    def __init__(self):
+        super(RLock, self).__init__()
+        self._owner = greenlet.getcurrent()
+        self._count = 0
+
+    def acquire(self, blocking=True):
+        current = greenlet.getcurrent()
+        if self._owner is current:
+            self._count += 1
+            return True
+        if self._locked and not blocking:
+            return False
+        while self._locked:
+            self._ev.wait()
+        self._owner = current
+        self._locked = True
+        self._count = 1
+        return True
+
+    def release(self):
+        current = greenlet.getcurrent()
+        if not self._locked or self._owner is not current:
+            raise RuntimeError("cannot release un-acquired lock")
+        self._count -= 1
+        if self._count == 0:
+            self._locked = False
+            self._owner = None
+            self._ev.trigger()

@@ -39,10 +39,12 @@ def pause():
     globals.paused.append(greenlet.getcurrent())
     go_to_next()
 
-def pause_for(secs):
-    now = time.time()
-    bisect.insort_right(globals.timed_paused, (now + secs, greenlet.getcurrent()))
+def pause_until(unixtime):
+    bisect.insort_right(globals.timed_paused, (unixtime, greenlet.getcurrent()))
     go_to_next()
+
+def pause_for(secs):
+    pause_until(time.time() + secs)
 
 def schedule(func):
     glet = greenlet(func)
@@ -50,12 +52,28 @@ def schedule(func):
     globals.paused.append(glet)
     return func
 
+def _scheduler(unixtime, func):
+    pause_until(unixtime)
+    return func()
+
+def schedule_at(unixtime, func=None):
+    if func is None:
+        def decorator(func):
+            schedule(_scheduler(unixtime, func))
+            return func
+        return decorator
+    schedule(_scheduler(unixtime, func))
+    return func
+
+def schedule_in(secs, func=None):
+    return schedule_at(time.time() + secs, func)
+
 @greenlet
 def generic_parent(ended):
     while 1:
         next = get_next()
         if next is None:
-            time.sleep(0.1)
+            time.sleep(NOTHING_TO_DO_PAUSE)
             continue
         ended = next.switch()
 
@@ -67,7 +85,9 @@ def socketpoll():
         socks = globals.sockets[fd]
         if eventmap & globals.poller.INMASK:
             if socks:
-                socks[0]._readable.trigger()
+                socks[0]._readable.set()
+                socks[0]._readable.clear()
         if eventmap & globals.poller.OUTMASK:
             if socks:
-                socks[0]._writable.trigger()
+                socks[0]._writable.set()
+                socks[0]._writable.clear()

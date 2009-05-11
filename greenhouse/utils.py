@@ -1,29 +1,41 @@
 from __future__ import with_statement
 
-import threading
-
 from greenhouse import globals
 from greenhouse.compat import greenlet
 from greenhouse import mainloop
 
 
 class Event(object):
-    _guidlock = threading.Lock()
-    _guid = 1
-
     def __init__(self):
-        with self._guidlock:
-            self.id = self._guid
-            self.__class__._guid += 1
+        self._is_set = False
 
-    def wait(self):
-        globals.events['paused'][self.id].append(greenlet.getcurrent())
-        mainloop.go_to_next()
+    def is_set(self):
+        return self._is_set
 
-    def trigger(self):
-        globals.events['awoken'].update(globals.events['paused'][self.id])
-        del globals.events['paused'][self.id]
+    def set(self):
+        self._is_set = True
+        guid = id(self)
+        globals.events['awoken'].update(globals.events['paused'][guid])
+        del globals.events['paused'][guid]
 
+    def clear(self):
+        self._is_set = False
+
+    def wait(self, timeout=None):
+        if not self._is_set:
+            guid = id(self)
+            current = greenlet.getcurrent()
+            globals.events['paused'][guid].append(current)
+            if timeout is not None:
+                def hit_timeout():
+                    try:
+                        globals.events['paused'][guid].remove(current)
+                    except ValueError:
+                        pass
+                    else:
+                        globals.events['awoken'].add(current)
+                mainloop.schedule_in(timeout, hit_timeout)
+            mainloop.go_to_next()
 
 class Lock(object):
     def __init__(self):
@@ -47,7 +59,8 @@ class Lock(object):
         if not self._locked:
             raise RuntimeError("cannot release un-acquired lock")
         self._locked = False
-        self._ev.trigger()
+        self._ev.set()
+        self._ev.clear()
 
     def __enter__(self):
         return self.acquire()
@@ -58,7 +71,7 @@ class Lock(object):
 class RLock(Lock):
     def __init__(self):
         super(RLock, self).__init__()
-        self._owner = greenlet.getcurrent()
+        self._owner = None
         self._count = 0
 
     def acquire(self, blocking=True):
@@ -83,4 +96,5 @@ class RLock(Lock):
         if self._count == 0:
             self._locked = False
             self._owner = None
-            self._ev.trigger()
+            self._ev.set()
+            self._ev.clear()

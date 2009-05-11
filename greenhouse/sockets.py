@@ -7,11 +7,11 @@ from greenhouse import utils, globals
 
 _socket = socket.socket # in case we want to monkey-patch
 
-class GreenSocket(object):
+class Socket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
         self._sock = kwargs.pop('fromsock', None)
-        if isinstance(self._sock, GreenSocket):
+        if isinstance(self._sock, Socket):
             self._sock = self._sock._sock
         if not self._sock:
             self._sock = _socket(*args, **kwargs)
@@ -153,8 +153,8 @@ class GreenSocket(object):
     def listen(self, backlog):
         return self._sock.listen(backlog)
 
-    def makefile(self):
-        return self._sock.makefile()
+    def makefile(self, mode='r', bufsize=-1):
+        return self._sock.makefile(mode, bufsize)
 
     def setblocking(self, flag):
         return self._sock.setblocking(flag)
@@ -170,4 +170,4 @@ class GreenSocket(object):
             sock._timeout = timeout
 
 def monkeypatch():
-    socket.socket = GreenSocket
+    socket.socket = Socket

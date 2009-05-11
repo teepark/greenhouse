@@ -44,6 +44,8 @@ class Lock(object):
         return True
 
     def release(self):
+        if not self._locked:
+            raise RuntimeError("cannot release un-acquired lock")
         self._locked = False
         self._ev.trigger()
 

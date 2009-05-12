@@ -1,7 +1,7 @@
 import bisect
 import time
 
-from greenhouse import globals
+from greenhouse import _state
 from greenhouse.compat import greenlet
 
 
@@ -12,21 +12,21 @@ LAST_SELECT = 0
 def get_next():
     global LAST_SELECT
 
-    if globals.events['awoken']:
-        return globals.events['awoken'].pop()
+    if _state.events['awoken']:
+        return _state.events['awoken'].pop()
     
     now = time.time()
     if now >= LAST_SELECT + POLL_TIMEOUT:
         LAST_SELECT = now
         socketpoll()
 
-    if globals.events['awoken']:
-        return globals.events['awoken'].pop()
+    if _state.events['awoken']:
+        return _state.events['awoken'].pop()
 
-    if globals.timed_paused and now >= globals.timed_paused[0][0]:
-        return globals.timed_paused.pop()[1]
+    if _state.timed_paused and now >= _state.timed_paused[0][0]:
+        return _state.timed_paused.pop()[1]
 
-    return (globals.paused and (globals.paused.popleft(),) or (None,))[0]
+    return (_state.paused and (_state.paused.popleft(),) or (None,))[0]
 
 def go_to_next():
     next = get_next()
@@ -36,11 +36,11 @@ def go_to_next():
     next.switch()
 
 def pause():
-    globals.paused.append(greenlet.getcurrent())
+    _state.paused.append(greenlet.getcurrent())
     go_to_next()
 
 def pause_until(unixtime):
-    bisect.insort(globals.timed_paused, (unixtime, greenlet.getcurrent()))
+    bisect.insort(_state.timed_paused, (unixtime, greenlet.getcurrent()))
     go_to_next()
 
 def pause_for(secs):
@@ -49,16 +49,16 @@ def pause_for(secs):
 def schedule(func):
     glet = greenlet(func)
     glet.parent = generic_parent
-    globals.paused.append(glet)
+    _state.paused.append(glet)
     return func
 
 def schedule_at(unixtime, func=None):
     if func is None:
         def decorator(func):
-            bisect.insort(globals.timed_paused, (unixtime, greenlet(func)))
+            bisect.insort(_state.timed_paused, (unixtime, greenlet(func)))
             return func
         return decorator
-    bisect.insort(globals.timed_paused, (unixtime, greenlet(func)))
+    bisect.insort(_state.timed_paused, (unixtime, greenlet(func)))
     return func
 
 def schedule_in(secs, func=None):
@@ -74,16 +74,16 @@ def generic_parent(ended):
         ended = next.switch()
 
 def socketpoll():
-    if not hasattr(globals, 'poller'):
+    if not hasattr(_state, 'poller'):
         import greenhouse.poller
-    events = globals.poller.poll()
+    events = _state.poller.poll()
     for fd, eventmap in events:
-        socks = globals.sockets[fd]
-        if eventmap & globals.poller.INMASK:
+        socks = _state.sockets[fd]
+        if eventmap & _state.poller.INMASK:
             if socks:
                 socks[0]._readable.set()
                 socks[0]._readable.clear()
-        if eventmap & globals.poller.OUTMASK:
+        if eventmap & _state.poller.OUTMASK:
             if socks:
                 socks[0]._writable.set()
                 socks[0]._writable.clear()

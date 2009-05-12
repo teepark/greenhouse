@@ -2,7 +2,7 @@ import collections
 import errno
 import socket
 
-from greenhouse import utils, globals
+from greenhouse import utils, _state
 
 
 _socket = socket.socket # in case we want to monkey-patch
@@ -23,7 +23,7 @@ class Socket(object):
         self._fileno = self._sock.fileno()
 
         # share certain properties by filenumber, not socket instance
-        socksforfd = globals.sockets[self._fileno]
+        socksforfd = _state.sockets[self._fileno]
         if socksforfd:
             copyfrom = socksforfd[0]
             self._readable = copyfrom._readable
@@ -43,16 +43,16 @@ class Socket(object):
             self._closed = False
 
             # register this socket for polling events
-            if not hasattr(globals, 'poller'):
+            if not hasattr(_state, 'poller'):
                 import greenhouse.poller
-            globals.poller.register(self._sock)
+            _state.poller.register(self._sock)
 
         # for looking up by file number
         socksforfd.append(self)
 
     def __del__(self):
         try:
-            globals.poller.unregister(self._sock)
+            _state.poller.unregister(self._sock)
         except:
             pass
 
@@ -114,8 +114,8 @@ class Socket(object):
     def close(self):
         if self._closed:
             return
-        del globals.sockets[self._fileno]
-        for sock in globals.sockets[self._fileno]:
+        del _state.sockets[self._fileno]
+        for sock in _state.sockets[self._fileno]:
             sock._closed = True
         return self._sock.close()
 
@@ -166,7 +166,7 @@ class Socket(object):
         return self._sock.shutdown(flag)
 
     def settimeout(self, timeout):
-        for sock in globals.sockets[self._fileno]:
+        for sock in _state.sockets[self._fileno]:
             sock._timeout = timeout
 
 def monkeypatch():

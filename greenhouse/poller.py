@@ -1,7 +1,7 @@
 import collections
 import select
 
-from greenhouse import globals
+from greenhouse import _state
 
 
 class BasePoller(object):
@@ -99,5 +99,5 @@ def bestpoller():
     return SelectPoller()
 
 def setpoller(klass=None):
-    globals.poller = klass or bestpoller()
+    _state.poller = klass or bestpoller()
 setpoller()

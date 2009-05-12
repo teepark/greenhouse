@@ -4,7 +4,7 @@ import bisect
 import collections
 import time
 
-from greenhouse import globals
+from greenhouse import _state
 from greenhouse.compat import greenlet
 from greenhouse import mainloop
 
@@ -20,8 +20,8 @@ class Event(object):
 
     def set(self):
         self._is_set = True
-        globals.events['awoken'].update(globals.events['paused'][self._guid])
-        del globals.events['paused'][self._guid]
+        _state.events['awoken'].update(_state.events['paused'][self._guid])
+        del _state.events['paused'][self._guid]
 
     def clear(self):
         self._is_set = False
@@ -29,15 +29,15 @@ class Event(object):
     def wait(self, timeout=None):
         if not self._is_set:
             current = greenlet.getcurrent()
-            globals.events['paused'][self._guid].append(current)
+            _state.events['paused'][self._guid].append(current)
             if timeout is not None:
                 def hit_timeout():
                     try:
-                        globals.events['paused'][self._guid].remove(current)
+                        _state.events['paused'][self._guid].remove(current)
                     except ValueError:
                         pass
                     else:
-                        globals.events['awoken'].add(current)
+                        _state.events['awoken'].add(current)
                 mainloop.schedule_in(timeout, hit_timeout)
             mainloop.go_to_next()
 
@@ -192,10 +192,10 @@ class Timer(object):
         self.kwargs = kwargs or {}
         self._glet = glet = greenlet(self._run)
         self.waketime = waketime = time.time() + secs
-        bisect.insort(globals.timed_paused, (waketime, glet))
+        bisect.insort(_state.timed_paused, (waketime, glet))
 
     def cancel(self):
-        tp = globals.timed_paused
+        tp = _state.timed_paused
         if not tp:
             return
         index = bisect.bisect(tp, (self.waketime, self._glet)) - 1

@@ -3,7 +3,7 @@ import collections
 
 events = {
     # maps events to a list of coros waiting on them
-    'paused': collections.defaultdict(list),
+    'paused': collections.defaultdict(collections.deque),
 
     # from events that have triggered
     'awoken': set()

@@ -13,7 +13,7 @@ def get_next():
     global LAST_SELECT
 
     if globals.events['awoken']:
-        return globals.events['awoken'].pop(0)
+        return globals.events['awoken'].pop()
     
     now = time.time()
     if now >= LAST_SELECT + POLL_TIMEOUT:

@@ -204,3 +204,77 @@ class Timer(object):
 
     def _run(self):
         return self.func(*self.args, **self.kwargs)
+
+class Queue(object):
+    class Empty(Exception):
+        pass
+
+    class Full(Exception):
+        pass
+
+    def __init__(self, maxsize=0):
+        self.maxsize = maxsize
+        self.queue = collections.deque()
+        self.unfinished_tasks = 0
+        self.not_empty = Condition()
+        self.not_full = Condition()
+        self.all_tasks_done = Event()
+        self.all_tasks_done.set()
+
+    def empty(self):
+        return not self.queue
+
+    def full(self):
+        return self.maxsize and len(self.queue) == self.maxsize
+
+    def _unsafe_get(self):
+        with self.not_full:
+            self.not_full.notify()
+        return self.queue.popleft()
+
+    def get(self, blocking=True, timeout=None):
+        if not self.queue:
+            if blocking:
+                with self.not_empty:
+                    self.not_empty.wait(timeout)
+                if self.queue:
+                    return self._unsafe_get()
+            raise self.Empty()
+        return self._unsafe_get()
+
+    def get_nowait(self):
+        return self.get(False)
+
+    def join(self):
+        self.all_tasks_done.wait()
+
+    def _unsafe_put(self, item):
+        with self.not_empty:
+            self.not_empty.notify()
+        self.queue.append(item)
+        if not self.unfinished_tasks:
+            self.all_tasks_done.clear()
+        self.unfinished_tasks += 1
+
+    def put(self, item, blocking=True, timeout=None):
+        if self.maxsize and len(self.queue) >= self.maxsize:
+            if blocking:
+                with self.not_full:
+                    self.not_full.wait(timeout)
+                if len(self.queue) < self.maxsize:
+                    self._unsafe_put(item)
+            raise self.Full()
+        self._unsafe_put(item)
+
+    def put_nowait(self, item):
+        self.put(item, False)
+
+    def qsize(self):
+        return len(self.queue)
+
+    def task_done(self):
+        if not self.unfinished_tasks:
+            raise ValueError('task_done() called too many times')
+        self.unfinished_tasks -= 1
+        if not self.unfinished_tasks:
+            self.all_tasks_done.set()

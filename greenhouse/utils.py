@@ -130,7 +130,7 @@ class Condition(object):
         self._lock.release()
         event = Event()
         self._waiters.append(event)
-        event.wait()
+        event.wait(timeout)
         self._lock.acquire()
 
     def notify(self, num=1):

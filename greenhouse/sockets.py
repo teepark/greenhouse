@@ -1,11 +1,23 @@
 import collections
 import errno
 import socket
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 from greenhouse import utils, _state
 
 
-_socket = socket.socket # in case we want to monkey-patch
+_socket = socket.socket
+_fromfd = socket.fromfd
+
+def monkeypatch():
+    socket.socket = Socket
+    socket.fromfd = fromfd
+
+def fromfd(*args, **kwargs):
+    return Socket(fromsock=_fromfd(*args, **kwargs))
 
 class Socket(object):
     def __init__(self, *args, **kwargs):
@@ -30,6 +42,7 @@ class Socket(object):
             self._writable = copyfrom._writable
             self._timeout = copyfrom._timeout
             self._closed = copyfrom._closed
+            self._recvbuf = copyfrom._recvbuf
         else:
             # make the underlying socket non-blocking
             self._sock.setblocking(False)
@@ -41,6 +54,7 @@ class Socket(object):
             # some more housekeeping
             self._timeout = None
             self._closed = False
+            self._recvbuf = StringIO()
 
             # register this socket for polling events
             if not hasattr(_state, 'poller'):
@@ -114,7 +128,6 @@ class Socket(object):
     def close(self):
         if self._closed:
             return
-        del _state.sockets[self._fileno]
         for sock in _state.sockets[self._fileno]:
             sock._closed = True
         return self._sock.close()
@@ -154,7 +167,7 @@ class Socket(object):
         return self._sock.listen(backlog)
 
     def makefile(self, mode='r', bufsize=-1):
-        return self._sock.makefile(mode, bufsize)
+        return File(self, mode, bufsize)
 
     def setblocking(self, flag):
         return self._sock.setblocking(flag)
@@ -169,5 +182,164 @@ class Socket(object):
         for sock in _state.sockets[self._fileno]:
             sock._timeout = timeout
 
-def monkeypatch():
-    socket.socket = Socket
+class File(object):
+    CHUNKSIZE = 8192
+    ENDLINE = '\r\n'
+
+    def __init__(self, fd, mode='r', bufsize=-1):
+        self._fileno = isinstance(fd, int) and fd or fd.fileno()
+        _state.sockets[self._fileno].append(self)
+        self._closed = False
+        self._sock = self._getsock(fd)
+        self.mode = mode
+        self.bufsize = bufsize
+
+    @staticmethod
+    def _getsock(fp):
+        if isinstance(fp, Socket):
+            return fp
+        for sock in _state.sockets[fp]:
+            if isinstance(sock, Socket):
+                return sock
+        return fromfd(fp, socket.AF_INET, socket.SOCK_STREAM)
+
+    def close(self):
+        if self._closed:
+            return
+        for sock in _state.sockets[self._fileno]:
+            sock._closed = True
+        return self._sock.close()
+
+    @property
+    def closed(self):
+        return self._closed
+
+    def fileno(self):
+        return self._fileno
+
+    def flush(self):
+        pass
+
+    def read(self, size=-1):
+        if size <= 0:
+            return self._read_all()
+        return self._read_upto(size)
+
+    def _read_all(self):
+        buffer = self._sock._recvbuf
+        buffer.seek(0, 2)
+        while 1:
+            if self._sock._closed:
+                return buffer.getvalue()
+            chunk = self._sock.recv(self.CHUNKSIZE)
+            buffer.write(chunk)
+            if len(chunk) < self.CHUNKSIZE:
+                rc = buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate()
+                return rc
+
+    def _read_upto(self, upto):
+        buffer = self._sock._recvbuf
+        buffer.seek(0, 2)
+        size = upto
+        size -= len(buffer.getvalue())
+        if size <= 0:
+            buffer.seek(0)
+            rc = buffer.read(upto)
+            leftover = buffer.read()
+            buffer.seek(0)
+            buffer.write(leftover)
+            return rc
+        while 1:
+            if self._sock._closed:
+                return buffer.getvalue()
+            to_recv = min(size, self.CHUNKSIZE)
+            chunk = self._sock.recv(to_recv)
+            rcvd = len(chunk)
+            size -= rcvd
+            buffer.write(chunk)
+            if rcvd < to_recv or size == 0:
+                rc = buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate()
+                return rc
+
+    def readline(self):
+        buffer = self._sock._recvbuf
+        buffered = buffer.getvalue()
+        buffer.seek(0, 2)
+        index = buffered.find(self.ENDLINE)
+        if index >= 0:
+            index += len(self.ENDLINE)
+            buffer.seek(0)
+            buffer.truncate()
+            buffer.write(buffered[index:])
+            return buffered[:index]
+        while 1: # established that the buffer doesn't contain a newline
+            if self._sock._closed:
+                rc = buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate()
+                return rc
+            chunk = self._sock.recv(self.CHUNKSIZE)
+            if not chunk:
+                rc = buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate()
+                return rc
+            index = chunk.find(self.ENDLINE)
+            if index >= 0:
+                index += len(self.ENDLINE)
+                rc = buffer.getvalue() + chunk[:index]
+                buffer.seek(0)
+                buffer.truncate()
+                buffer.write(chunk[index:])
+                return rc
+            # recv'd chunk doesn't contain a newline, recv again
+            buffer.write(chunk)
+
+    def xreadlines(self):
+        buffer = self._sock._recvbuf
+        buffered = buffer.getvalue()
+        while 1:
+            index = buffered.find(self.ENDLINE)
+            if index >= 0:
+                index += len(self.ENDLINE)
+                yield buffered[:index]
+                buffered = buffered[index:]
+            else:
+                break
+        while 1:
+            if self._sock._closed:
+                yield buffer.getvalue()
+                return
+            chunk = self._sock.recv(self.CHUNKSIZE)
+            index = chunk.find(self.ENDLINE)
+            if len(chunk) < self.CHUNKSIZE:
+                buffered += chunk
+                break
+            if index >= 0:
+                index += len(self.ENDLINE)
+                yield buffered + chunk[:index]
+                buffered = chunk[index:]
+        while 1:
+            index = buffered.find(self.ENDLINE)
+            if index >= 0:
+                index += len(self.ENDLINE)
+                yield buffered[:index]
+                buffered = buffered[index:]
+            else:
+                yield buffered
+                break
+
+    __iter__ = xreadlines
+
+    def readlines(self):
+        return list(self.xreadlines())
+
+    def write(self, data):
+        self._sock.sendall(data)
+
+    def writelines(self, lines):
+        self._sock.sendall(''.join(lines))

@@ -6,3 +6,4 @@ build/*
 dist/*
 paver-minilib.zip
 setup.py
+ve/*

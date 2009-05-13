@@ -98,6 +98,6 @@ def bestpoller():
         return PollPoller()
     return SelectPoller()
 
-def setpoller(klass=None):
-    _state.poller = klass or bestpoller()
+def setpoller(poller=None):
+    _state.poller = poller or bestpoller()
 setpoller()

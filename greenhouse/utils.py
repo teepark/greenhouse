@@ -13,7 +13,7 @@ class Event(object):
     def __init__(self):
         self._is_set = False
         self._guid = id(self)
-        self._timeout_cbacks = []
+        self._timeout_callbacks = []
 
     def is_set(self):
         return self._is_set

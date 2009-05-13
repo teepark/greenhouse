@@ -28,7 +28,7 @@ class Event(object):
         self._is_set = False
 
     def _add_timeout_callback(self, func):
-        self._timeout_cbacks.append(func)
+        self._timeout_callbacks.append(func)
 
     def wait(self, timeout=None):
         if not self._is_set:

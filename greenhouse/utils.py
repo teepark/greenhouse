@@ -13,6 +13,7 @@ class Event(object):
     def __init__(self):
         self._is_set = False
         self._guid = id(self)
+        self._timeout_cbacks = []
 
     def is_set(self):
         return self._is_set
@@ -26,6 +27,9 @@ class Event(object):
     def clear(self):
         self._is_set = False
 
+    def _add_timeout_callback(self, func):
+        self._timeout_cbacks.append(func)
+
     def wait(self, timeout=None):
         if not self._is_set:
             current = greenlet.getcurrent()
@@ -38,6 +42,15 @@ class Event(object):
                         pass
                     else:
                         _state.events['awoken'].add(current)
+                    error = None
+                    for cback in self._timeout_callbacks:
+                        try:
+                            cback()
+                        except Exception, err:
+                            if error is None:
+                                error = err
+                    if error:
+                        raise error
                 mainloop.schedule_in(timeout, hit_timeout)
             mainloop.go_to_next()
 
@@ -130,6 +143,9 @@ class Condition(object):
         self._lock.release()
         event = Event()
         self._waiters.append(event)
+        def timeout_cback():
+            self._waiters.remove(event)
+        event._add_timeout_callback(timeout_cback)
         event.wait(timeout)
         self._lock.acquire()
 

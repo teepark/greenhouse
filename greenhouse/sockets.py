@@ -16,6 +16,10 @@ def monkeypatch():
     socket.socket = Socket
     socket.fromfd = fromfd
 
+def unmonkeypatch():
+    socket.socket = _socket
+    socket.fromfd = _fromfd
+
 def fromfd(*args, **kwargs):
     return Socket(fromsock=_fromfd(*args, **kwargs))
 

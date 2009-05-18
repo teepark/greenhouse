@@ -13,10 +13,13 @@ _socket = socket.socket
 _fromfd = socket.fromfd
 
 def monkeypatch():
+    """replace functions in the standard library socket module with their
+    non-blocking greenhouse equivalents"""
     socket.socket = Socket
     socket.fromfd = fromfd
 
 def unmonkeypatch():
+    "undo a call to monkeypatch()"
     socket.socket = _socket
     socket.fromfd = _fromfd
 

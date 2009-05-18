@@ -4,37 +4,40 @@ import select
 from greenhouse import _state
 
 
-class BasePoller(object):
-    NOT_PRESENT = object()
-    SHORT_TIMEOUT = 0.0001
+NOT_PRESENT = object()
+SHORT_TIMEOUT = 0.0001
 
-class EpollPoller(BasePoller):
+class EpollPoller(object):
+    "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
+    INMASK = getattr(select, 'EPOLLIN', None)
+    OUTMASK = getattr(select, 'EPOLLOUT', None)
+    ERRMASK = getattr(select, 'EPOLLERR', None)
     def __init__(self):
         self._poller = select.epoll()
-        self.count = 0
 
-    def register(self, fd, eventmask=BasePoller.NOT_PRESENT):
-        self.count += 1
+    def register(self, fd, eventmask=NOT_PRESENT):
         fd = isinstance(fd, int) and fd or fd.fileno()
         if eventmask is self.NOT_PRESENT:
             return self._poller.register(fd)
         return self._poller.register(fd, eventmask)
 
     def unregister(self, fd):
-        self.count -= 1
         fd = isinstance(fd, int) and fd or fd.fileno()
         self._poller.unregister(fd)
 
-    def poll(self, timeout=BasePoller.SHORT_TIMEOUT):
+    def poll(self, timeout=SHORT_TIMEOUT):
         return self._poller.poll(timeout)
 
-if hasattr(select, 'epoll'):
-    EpollPoller.INMASK = select.EPOLLIN
-    EpollPoller.OUTMASK = select.EPOLLOUT
-    EpollPoller.ERRMASK = select.EPOLLERR
+class PollPoller(object):
+    "a greenhouse poller using the poll system call''"
+    INMASK = getattr(select, 'POLLIN', None)
+    OUTMASK = getattr(select, 'POLLOUT', None)
+    ERRMASK = getattr(select, 'POLLERR', None)
 
-class PollPoller(BasePoller):
-    def register(self, fd, eventmask=BasePoller.NOT_PRESENT):
+    def __init__(self):
+        self._poller = select.poll()
+
+    def register(self, fd, eventmask=NOT_PRESENT):
         fd = isinstance(fd, int) and fd or fd.fileno()
         if event is self.NOT_PRESENT:
             return self._poller.register(fd)
@@ -44,15 +47,11 @@ class PollPoller(BasePoller):
         fd = isinstance(fd, int) and fd or fd.fileno()
         self._poller.unregister(fd)
 
-    def poll(self, timeout=BasePoller.SHORT_TIMEOUT):
+    def poll(self, timeout=SHORT_TIMEOUT):
         return self._poller.poll(timeout)
 
-if hasattr(select, 'poll'):
-    PollPoller.INMASK = select.POLLIN
-    PollPoller.OUTMASK = select.POLLOUT
-    PollPoller.ERRMASK = select.POLLERR
-
-class SelectPoller(BasePoller):
+class SelectPoller(object):
+    "a greenhouse poller using the select system call"
     INMASK = 1
     OUTMASK = 2
     ERRMASK = 4
@@ -60,7 +59,7 @@ class SelectPoller(BasePoller):
     def __init__(self):
         self._fds = {}
 
-    def register(self, fd, eventmask=BasePoller.NOT_PRESENT):
+    def register(self, fd, eventmask=NOT_PRESENT):
         fd = isinstance(fd, int) and fd or fd.fileno()
         if eventmask is self.NOT_PRESENT:
             eventmask = self.SELECTIN | self.SELECTOUT | self.SELECTERR
@@ -72,7 +71,7 @@ class SelectPoller(BasePoller):
         fd = isinstance(fd, int) and fd or fd.fileno()
         del self._fds[fd]
 
-    def poll(self, timeout=BasePoller.SHORT_TIMEOUT):
+    def poll(self, timeout=SHORT_TIMEOUT):
         rlist, wlist, xlist = [], [], []
         for fd, eventmask in self._fds.iteritems():
             if eventmask & self.INMASK:

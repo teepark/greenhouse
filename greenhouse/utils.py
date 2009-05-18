@@ -10,27 +10,44 @@ from greenhouse import mainloop
 
 
 class Event(object):
+    """an event for which greenlets can wait
+
+    mirrors the API of threading.Event"""
     def __init__(self):
         self._is_set = False
         self._guid = id(self)
         self._timeout_callbacks = []
 
     def is_set(self):
+        "returns True if waiting on this event will block, False if not"
         return self._is_set
     isSet = is_set
 
     def set(self):
+        """set the event to triggered
+
+        after calling this method, all greenlets waiting on this event will be
+        woken up, and calling wait() will not block until the clear() method
+        has been called"""
         self._is_set = True
         _state.events['awoken'].update(_state.events['paused'][self._guid])
         del _state.events['paused'][self._guid]
 
     def clear(self):
+        """clear the event from being triggered
+
+        after calling this method, waiting on this event will block until the
+        set() method has been called"""
         self._is_set = False
 
     def _add_timeout_callback(self, func):
         self._timeout_callbacks.append(func)
 
     def wait(self, timeout=None):
+        """pause the current coroutine until this event is set
+
+        if the set() method has been called, this method will not block at
+        all. otherwise it will block until the set() method is called"""
         if not self._is_set:
             current = greenlet.getcurrent()
             _state.events['paused'][self._guid].append(current)
@@ -55,14 +72,19 @@ class Event(object):
             mainloop.go_to_next()
 
 class Lock(object):
+    """an object that can only be 'owned' by one greenlet at a time
+
+    mirrors the API of threading.Lock"""
     def __init__(self):
         self._locked = False
         self._event = Event()
 
     def locked(self):
+        "returns true if the lock is already 'locked' or 'owned'"
         return self._locked
 
     def acquire(self, blocking=True):
+        "lock the lock, or block until it is available"
         if not blocking:
             locked_already = self._locked
             self._locked = True
@@ -73,6 +95,7 @@ class Lock(object):
         return True
 
     def release(self):
+        "open the lock back up to wake up greenlets waiting on this lock"
         if not self._locked:
             raise RuntimeError("cannot release un-acquired lock")
         self._locked = False
@@ -86,6 +109,9 @@ class Lock(object):
         return self.release()
 
 class RLock(Lock):
+    """a lock which may be acquired more than once by the same greenlet
+
+    mirrors the API of threading.RLock"""
     def __init__(self):
         super(RLock, self).__init__()
         self._owner = None
@@ -95,6 +121,8 @@ class RLock(Lock):
         return self._owner is greenlet.getcurrent()
 
     def acquire(self, blocking=True):
+        """if the lock is owned by a different greenlet, block until it is
+        fully released. then increment the acquired count by one"""
         current = greenlet.getcurrent()
         if self._owner is current:
             self._count += 1
@@ -109,6 +137,8 @@ class RLock(Lock):
         return True
 
     def release(self):
+        """decrement the owned count by one. if it reaches zero, fully release
+        the lock, waking up a waiting greenlet"""
         current = greenlet.getcurrent()
         if not self._locked or self._owner is not current:
             raise RuntimeError("cannot release un-acquired lock")
@@ -120,6 +150,9 @@ class RLock(Lock):
             self._event.clear()
 
 class Condition(object):
+    """a synchronization object capable of waking all or just one of its waiters
+
+    mirrors the threading.Condition API"""
     def __init__(self, lock=None):
         if lock is None:
             lock = RLock()
@@ -138,6 +171,9 @@ class Condition(object):
         return owned
 
     def wait(self, timeout=None):
+        """wait to be woken up by the condition
+
+        you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         self._lock.release()
@@ -150,24 +186,34 @@ class Condition(object):
         self._lock.acquire()
 
     def notify(self, num=1):
+        """wake up a set number (default 1) of the waiting greenlets
+
+        you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         for i in xrange(min(num, len(self._waiters))):
             self._waiters.popleft().set()
 
     def notify_all(self):
+        """wake up all the greenlets waiting on the condition
+
+        you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         self.notify(len(self._waiters))
     notifyAll = notify_all
 
 class Semaphore(object):
+    """a synchronization object with a counter that blocks when it reaches 0
+
+    mirrors the api of threading.Semaphore"""
     def __init__(self, value=1):
         assert value >= 0, "semaphore value cannot be negative"
         self._value = value
         self._waiters = collections.deque()
 
     def acquire(self, blocking=True):
+        "lock or increment the semaphore"
         if self._value:
             self._value -= 1
             return True
@@ -179,6 +225,7 @@ class Semaphore(object):
         return True
 
     def release(self):
+        "release or decrement the semaphore"
         if self._value or not self._waiters:
             self._value += 1
         else:
@@ -191,6 +238,7 @@ class Semaphore(object):
         return self.release()
 
 class BoundedSemaphore(Semaphore):
+    """a semaphore with an upper limit to the counter"""
     def __init__(self, value=1):
         super(BoundedSemaphore, self).__init__(value)
         self._initial_value = value
@@ -200,8 +248,12 @@ class BoundedSemaphore(Semaphore):
         if self._value >= self._initial_value:
             raise ValueError("BoundedSemaphore released too many times")
         return super(BoundedSemaphore, self).release()
+    release.__doc__ = Semaphore.release.__doc__
 
 class Timer(object):
+    """creates a greenlet from *func* and schedules it to run in *secs* seconds
+
+    mirrors the standard library threading.Timer API"""
     def __init__(self, secs, func, args=(), kwargs=None):
         self.func = func
         self.args = args
@@ -211,6 +263,7 @@ class Timer(object):
         bisect.insort(_state.timed_paused, (waketime, glet))
 
     def cancel(self):
+        "if called before the greenlet runs, stop it from ever starting"
         tp = _state.timed_paused
         if not tp:
             return
@@ -222,6 +275,9 @@ class Timer(object):
         return self.func(*self.args, **self.kwargs)
 
 class Queue(object):
+    """a producer-consumer queue
+
+    mirrors the standard library Queue.Queue API"""
     class Empty(Exception):
         pass
 
@@ -238,10 +294,14 @@ class Queue(object):
         self.all_tasks_done.set()
 
     def empty(self):
+        "without blocking, returns True if the queue is empty"
         return not self.queue
 
     def full(self):
-        return self.maxsize and len(self.queue) == self.maxsize
+        """returns True if the queue is full without blocking
+
+        if the queue has no *maxsize* this will always return False"""
+        return self.maxsize > 0 and len(self.queue) == self.maxsize
 
     def _unsafe_get(self):
         with self.not_full:
@@ -249,6 +309,14 @@ class Queue(object):
         return self.queue.popleft()
 
     def get(self, blocking=True, timeout=None):
+        """get an item out of the queue
+
+        if *blocking* is True (default), the method will block until an item is
+        available, or until *timeout* seconds, whichever comes first. if it
+        times out, it will raise a Queue.Empty exception
+
+        if *blocking* is False, it will immediately either return an item or
+        raise a Queue.Empty exception"""
         if not self.queue:
             if blocking:
                 with self.not_empty:
@@ -259,9 +327,11 @@ class Queue(object):
         return self._unsafe_get()
 
     def get_nowait(self):
+        "immediately return an item from the queue or raise Queue.Empty"
         return self.get(False)
 
     def join(self):
+        "block until every put() call has had a corresponding task_done() call"
         self.all_tasks_done.wait()
 
     def _unsafe_put(self, item):
@@ -273,6 +343,15 @@ class Queue(object):
         self.unfinished_tasks += 1
 
     def put(self, item, blocking=True, timeout=None):
+        """put an item into the queue
+
+        if *blocking* is True (default) and the queue has a maxsize, the method
+        will block until a spot in the queue has been made available, or
+        *timeout* seconds has passed, whichever comes first. if it times out,
+        it will raise a Queue.Full exception
+
+        if *blocking* is False, it will immediately either place the item in
+        the queue or raise a Query.Full exception"""
         if self.maxsize and len(self.queue) >= self.maxsize:
             if blocking:
                 with self.not_full:
@@ -283,12 +362,15 @@ class Queue(object):
         self._unsafe_put(item)
 
     def put_nowait(self, item):
+        "immediately place an item into the queue or raise Query.Full"
         self.put(item, False)
 
     def qsize(self):
+        "return the number of items in the queue, without blocking"
         return len(self.queue)
 
     def task_done(self):
+        "mark that a job (corresponding to a put() call) is finished"
         if not self.unfinished_tasks:
             raise ValueError('task_done() called too many times')
         self.unfinished_tasks -= 1

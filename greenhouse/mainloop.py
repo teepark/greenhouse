@@ -25,7 +25,7 @@ def get_next():
         return _state.events['awoken'].pop()
 
     if _state.timed_paused and now >= _state.timed_paused[0][0]:
-        return _state.timed_paused.pop()[1]
+        return _state.timed_paused.pop(0)[1]
 
     return (_state.paused and (_state.paused.popleft(),) or (None,))[0]
 
@@ -54,8 +54,7 @@ def pause_until(unixtime):
 def pause_for(secs):
     '''pause and reschedule the current greenlet for a set number of seconds,
     then switch to the next'''
-    schedule_in(secs, greenlet.getcurrent())
-    go_to_next()
+    pause_until(time.time() + secs)
 
 def schedule(target=None, args=(), kwargs=None):
     '''set up a greenlet or function to run later
@@ -70,13 +69,12 @@ def schedule(target=None, args=(), kwargs=None):
     if not isinstance(target, greenlet):
         if args or kwargs:
             inner_target = target
-            @greenlet
             def target():
                 inner_target(*args, **kwargs)
-        else:
-            target = greenlet(target)
-    target.parent = generic_parent
-    _state.paused.append(target)
+        glet = greenlet(target, generic_parent)
+    else:
+        glet = target
+    _state.paused.append(glet)
     return target
 
 def schedule_at(unixtime, target=None, args=(), kwargs=None):
@@ -92,13 +90,12 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
     if not isinstance(target, greenlet):
         if args or kwargs:
             inner_target = target
-            @greenlet
             def target():
                 inner_target(*args, **kwargs)
-        else:
-            target = greenlet(target)
-    target.parent = generic_parent
-    bisect.insort(_state.timed_paused, (unixtime, target))
+        glet = greenlet(target, generic_parent)
+    else:
+        glet = target
+    bisect.insort(_state.timed_paused, (unixtime, glet))
     return target
 
 def schedule_in(secs, run=None, args=(), kwargs=None):

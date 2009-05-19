@@ -61,7 +61,7 @@ def schedule(target=None, args=(), kwargs=None):
     '''set up a greenlet or function to run later
 
     if *target* is a function, it is wrapped in a new greenlet. the greenlet
-    will be target at an undetermined time. also usable as a decorator'''
+    will be run at an undetermined time. also usable as a decorator'''
     kwargs = kwargs or {}
     if target is None:
         def decorator(target):
@@ -83,7 +83,7 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
     '''set up a greenlet or function to run at the specified timestamp
 
     if *target* is a function, it is wrapped in a new greenlet. the greenlet
-    will be target sometime after *unixtime*, a timestamp'''
+    will be run sometime after *unixtime*, a timestamp'''
     kwargs = kwargs or {}
     if target is None:
         def decorator(target):

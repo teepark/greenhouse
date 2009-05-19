@@ -117,10 +117,10 @@ def _socketpoll():
     for fd, eventmap in events:
         socks = _state.sockets[fd]
         if eventmap & _state.poller.INMASK:
-            for sock in socks:
-                sock._readable.set()
-                sock._readable.clear()
+            if socks:
+                socks[0]._readable.set()
+                socks[0]._readable.clear()
         if eventmap & _state.poller.OUTMASK:
-            for sock in socks:
-                sock._writable.set()
-                sock._writable.clear()
+            if socks:
+                socks[0]._writable.set()
+                socks[0]._writable.clear()

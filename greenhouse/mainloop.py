@@ -48,25 +48,30 @@ def pause():
 def pause_until(unixtime):
     '''pause and reschedule the current greenlet until a set time,
     then switch to the next'''
-    bisect.insort(_state.timed_paused, (unixtime, greenlet.getcurrent()))
+    schedule_at(unixtime, greenlet.getcurrent())
     go_to_next()
 
 def pause_for(secs):
     '''pause and reschedule the current greenlet for a set number of seconds,
     then switch to the next'''
-    pause_until(time.time() + secs)
+    schedule_in(secs, greenlet.getcurrent())
+    go_to_next()
 
-def schedule(run):
+def schedule(run, *args, **kwargs):
     '''set up a greenlet or function to run later
 
     if *run* is a function, it is wrapped in a new greenlet. the greenlet will
     be run at an undetermined time. also usable as a decorator'''
+    if not isinstance(run, greenlet) and (args or kwargs):
+        inner_run = run
+        def run():
+            inner_run(*args, **kwargs)
     glet = isinstance(run, greenlet) and run or greenlet(run)
     glet.parent = generic_parent
     _state.paused.append(glet)
     return run
 
-def schedule_at(unixtime, run=None):
+def schedule_at(unixtime, run, *args, **kwargs):
     '''set up a greenlet or function to run at the specified timestamp
 
     if *run* is a function, it is wrapped in a new greenlet. the greenlet will
@@ -75,16 +80,20 @@ def schedule_at(unixtime, run=None):
         def decorator(run):
             return schedule_at(unixtime, run)
         return decorator
+    if not isinstance(run, greenlet) and (args or kwargs):
+        inner_run = run
+        def run():
+            inner_run(*args, **kwargs)
     glet = isinstance(run, greenlet) and run or greenlet(run)
     bisect.insort(_state.timed_paused, (unixtime, glet))
     return run
 
-def schedule_in(secs, run=None):
+def schedule_in(secs, run, *args, **kwargs):
     '''set up a greenlet or function to run in the specified number of seconds
 
     if *run* is a function, it is wrapped in a new greenlet. the greenlet will
     be run sometime after *secs* seconds have passed'''
-    return schedule_at(time.time() + secs, run)
+    return schedule_at(time.time() + secs, run, *args, **kwargs)
 
 @greenlet
 def generic_parent(ended):

@@ -57,43 +57,56 @@ def pause_for(secs):
     schedule_in(secs, greenlet.getcurrent())
     go_to_next()
 
-def schedule(run, *args, **kwargs):
+def schedule(target=None, args=(), kwargs=None):
     '''set up a greenlet or function to run later
 
-    if *run* is a function, it is wrapped in a new greenlet. the greenlet will
-    be run at an undetermined time. also usable as a decorator'''
-    if not isinstance(run, greenlet) and (args or kwargs):
-        inner_run = run
-        def run():
-            inner_run(*args, **kwargs)
-    glet = isinstance(run, greenlet) and run or greenlet(run)
-    glet.parent = generic_parent
-    _state.paused.append(glet)
-    return run
+    if *target* is a function, it is wrapped in a new greenlet. the greenlet
+    will be target at an undetermined time. also usable as a decorator'''
+    kwargs = kwargs or {}
+    if target is None:
+        def decorator(target):
+            return schedule(target, args=args, kwargs=kwargs)
+        return decorator
+    if not isinstance(target, greenlet):
+        if args or kwargs:
+            inner_target = target
+            @greenlet
+            def target():
+                inner_target(*args, **kwargs)
+        else:
+            target = greenlet(target)
+    target.parent = generic_parent
+    _state.paused.append(target)
+    return target
 
-def schedule_at(unixtime, run, *args, **kwargs):
+def schedule_at(unixtime, target=None, args=(), kwargs=None):
     '''set up a greenlet or function to run at the specified timestamp
 
-    if *run* is a function, it is wrapped in a new greenlet. the greenlet will
-    be run sometime after *unixtime*, a timestamp'''
-    if run is None:
-        def decorator(run):
-            return schedule_at(unixtime, run)
+    if *target* is a function, it is wrapped in a new greenlet. the greenlet
+    will be target sometime after *unixtime*, a timestamp'''
+    kwargs = kwargs or {}
+    if target is None:
+        def decorator(target):
+            return schedule_at(unixtime, target, args=args, kwargs=kwargs)
         return decorator
-    if not isinstance(run, greenlet) and (args or kwargs):
-        inner_run = run
-        def run():
-            inner_run(*args, **kwargs)
-    glet = isinstance(run, greenlet) and run or greenlet(run)
-    bisect.insort(_state.timed_paused, (unixtime, glet))
-    return run
+    if not isinstance(target, greenlet):
+        if args or kwargs:
+            inner_target = target
+            @greenlet
+            def target():
+                inner_target(*args, **kwargs)
+        else:
+            target = greenlet(target)
+    target.parent = generic_parent
+    bisect.insort(_state.timed_paused, (unixtime, target))
+    return target
 
-def schedule_in(secs, run, *args, **kwargs):
+def schedule_in(secs, run=None, args=(), kwargs=None):
     '''set up a greenlet or function to run in the specified number of seconds
 
     if *run* is a function, it is wrapped in a new greenlet. the greenlet will
     be run sometime after *secs* seconds have passed'''
-    return schedule_at(time.time() + secs, run, *args, **kwargs)
+    return schedule_at(time.time() + secs, run, args, kwargs)
 
 @greenlet
 def generic_parent(ended):

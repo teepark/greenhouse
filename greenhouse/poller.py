@@ -17,7 +17,7 @@ class EpollPoller(object):
 
     def register(self, fd, eventmask=NOT_PRESENT):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if eventmask is self.NOT_PRESENT:
+        if eventmask is NOT_PRESENT:
             return self._poller.register(fd)
         return self._poller.register(fd, eventmask)
 
@@ -39,7 +39,7 @@ class PollPoller(object):
 
     def register(self, fd, eventmask=NOT_PRESENT):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if event is self.NOT_PRESENT:
+        if event is NOT_PRESENT:
             return self._poller.register(fd)
         return self._poller.register(fd, eventmask)
 
@@ -61,7 +61,7 @@ class SelectPoller(object):
 
     def register(self, fd, eventmask=NOT_PRESENT):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if eventmask is self.NOT_PRESENT:
+        if eventmask is NOT_PRESENT:
             eventmask = self.SELECTIN | self.SELECTOUT | self.SELECTERR
         isnew = fd not in self._fds
         self._fds[fd] = eventmask

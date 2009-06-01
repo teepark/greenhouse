@@ -227,6 +227,20 @@ class File(object):
     def flush(self):
         pass
 
+    def _pull_left(self, size):
+        buffer = self._sock._recvbuf
+        contents = buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate()
+        buffer.write(contents[size:])
+        return contents[:size]
+
+    def _pull_all(self):
+        rc = buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate()
+        return rc
+
     def read(self, size=-1):
         if size <= 0:
             return self._read_all()
@@ -237,7 +251,10 @@ class File(object):
         buffer.seek(0, 2)
         while 1:
             if self._sock._closed:
-                return buffer.getvalue()
+                rc = buffer.getvalue()
+                buffer.seek(0)
+                buffer.truncate()
+                return rc
             chunk = self._sock.recv(self.CHUNKSIZE)
             buffer.write(chunk)
             if len(chunk) < self.CHUNKSIZE:

@@ -4,7 +4,6 @@ import select
 from greenhouse import _state
 
 
-NOT_PRESENT = object()
 SHORT_TIMEOUT = 0.0001
 
 class EpollPoller(object):
@@ -15,9 +14,9 @@ class EpollPoller(object):
     def __init__(self):
         self._poller = select.epoll()
 
-    def register(self, fd, eventmask=NOT_PRESENT):
+    def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if eventmask is NOT_PRESENT:
+        if eventmask is None:
             return self._poller.register(fd)
         return self._poller.register(fd, eventmask)
 
@@ -37,9 +36,9 @@ class PollPoller(object):
     def __init__(self):
         self._poller = select.poll()
 
-    def register(self, fd, eventmask=NOT_PRESENT):
+    def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if event is NOT_PRESENT:
+        if event is None:
             return self._poller.register(fd)
         return self._poller.register(fd, eventmask)
 
@@ -59,9 +58,9 @@ class SelectPoller(object):
     def __init__(self):
         self._fds = {}
 
-    def register(self, fd, eventmask=NOT_PRESENT):
+    def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if eventmask is NOT_PRESENT:
+        if eventmask is None:
             eventmask = self.SELECTIN | self.SELECTOUT | self.SELECTERR
         isnew = fd not in self._fds
         self._fds[fd] = eventmask

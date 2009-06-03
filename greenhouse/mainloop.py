@@ -11,18 +11,15 @@ LAST_SELECT = 0
 
 def get_next():
     'figure out the next greenlet to run'
-    global LAST_SELECT
-
-    if _state.events['awoken']:
-        return _state.events['awoken'].pop()
+    if _state.awoken_from_events:
+        return _state.awoken_from_events.pop()
 
     now = time.time()
     if now >= LAST_SELECT + POLL_TIMEOUT:
-        LAST_SELECT = now
         _socketpoll()
 
-    if _state.events['awoken']:
-        return _state.events['awoken'].pop()
+    if _state.awoken_from_events:
+        return _state.awoken_from_events.pop()
 
     if _state.timed_paused and now >= _state.timed_paused[0][0]:
         return _state.timed_paused.pop(0)[1]

@@ -30,8 +30,8 @@ class Event(object):
         woken up, and calling wait() will not block until the clear() method
         has been called"""
         self._is_set = True
-        _state.events['awoken'].update(_state.events['paused'][self._guid])
-        del _state.events['paused'][self._guid]
+        _state.awoken_from_events.update(_state.paused_on_events[self._guid])
+        del _state.paused_on_events[self._guid]
 
     def clear(self):
         """clear the event from being triggered
@@ -50,15 +50,15 @@ class Event(object):
         all. otherwise it will block until the set() method is called"""
         if not self._is_set:
             current = greenlet.getcurrent()
-            _state.events['paused'][self._guid].append(current)
+            _state.paused_on_events[self._guid].append(current)
             if timeout is not None:
                 def hit_timeout():
                     try:
-                        _state.events['paused'][self._guid].remove(current)
+                        _state.paused_on_events[self._guid].remove(current)
                     except ValueError:
                         pass
                     else:
-                        _state.events['awoken'].add(current)
+                        _state.awoken_from_events.add(current)
                     error = None
                     for cback in self._timeout_callbacks:
                         try:

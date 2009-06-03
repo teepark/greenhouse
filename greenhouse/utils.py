@@ -52,6 +52,7 @@ class Event(object):
             current = greenlet.getcurrent()
             _state.paused_on_events[self._guid].append(current)
             if timeout is not None:
+                @mainloop.schedule_in(timeout)
                 def hit_timeout():
                     try:
                         _state.paused_on_events[self._guid].remove(current)
@@ -68,7 +69,6 @@ class Event(object):
                                 error = err
                     if error:
                         raise error
-                mainloop.schedule_in(timeout, hit_timeout)
             mainloop.go_to_next()
 
 class Lock(object):
@@ -242,7 +242,6 @@ class BoundedSemaphore(Semaphore):
     def __init__(self, value=1):
         super(BoundedSemaphore, self).__init__(value)
         self._initial_value = value
-        self._upper_cond = Condition()
 
     def release(self):
         if self._value >= self._initial_value:

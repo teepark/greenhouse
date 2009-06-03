@@ -5,8 +5,8 @@ from greenhouse import _state
 from greenhouse.compat import greenlet
 
 
-POLL_TIMEOUT = 0.1
-NOTHING_TO_DO_PAUSE = 0.05
+POLL_TIMEOUT = 0.01
+NOTHING_TO_DO_PAUSE = 0.005
 LAST_SELECT = 0
 
 def get_next():

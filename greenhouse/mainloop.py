@@ -113,7 +113,8 @@ def _socketpoll():
         import greenhouse.poller
     events = _state.poller.poll()
     for fd, eventmap in events:
-        socks = _state.sockets[fd]
+        socks = filter(None, map(operator.methodcaller("__call__"),
+                _state.sockets[fd]))
         if eventmap & _state.poller.INMASK:
             for sock in socks:
                 sock._readable.set()

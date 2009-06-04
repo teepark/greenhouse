@@ -2,6 +2,7 @@ import collections
 import errno
 import functools
 import socket
+import weakref
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -63,7 +64,7 @@ class Socket(object):
         _state.poller.register(self._sock)
 
         # allow for lookup by fileno
-        _state.sockets[self._fileno].append(self)
+        _state.sockets[self._fileno].append(weakref.ref(self))
 
     def __del__(self):
         try:

@@ -11,13 +11,14 @@ setup(
     author_email="travis.parker@gmail.com"
 )
 
+MANIFEST = (
+    "setup.py",
+    "paver-minilib.zip",
+)
+
 @task
 def manifest():
-    fp = open('MANIFEST.in', 'w')
-    try:
-        fp.write('include setup.py\ninclude paver-minilib.zip')
-    finally:
-        fp.close()
+    path('MANIFEST.in').write_lines('include %s' % x for x in MANIFEST)
 
 @task
 @needs('generate_setup', 'minilib', 'manifest', 'setuptools.command.sdist')
@@ -26,8 +27,7 @@ def sdist():
 
 @task
 def clean():
-    for p in map(path, ('greenhouse.egg-info', 'dist', 'setup.py',
-                        'paver-minilib.zip', 'build', 'MANIFEST.in')):
+    for p in map(path, ('greenhouse.egg-info', 'dist', 'build', 'MANIFEST.in')):
         if p.exists():
             if p.isdir():
                 p.rmtree()

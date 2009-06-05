@@ -12,7 +12,7 @@ from greenhouse import mainloop
 class Event(object):
     """an event for which greenlets can wait
 
-    mirrors the API of threading.Event"""
+    mirrors the standard library threading.Event API"""
     def __init__(self):
         self._is_set = False
         self._guid = id(self)
@@ -74,7 +74,7 @@ class Event(object):
 class Lock(object):
     """an object that can only be 'owned' by one greenlet at a time
 
-    mirrors the API of threading.Lock"""
+    mirrors the standard library threading.Lock API"""
     def __init__(self):
         self._locked = False
         self._event = Event()
@@ -111,7 +111,7 @@ class Lock(object):
 class RLock(Lock):
     """a lock which may be acquired more than once by the same greenlet
 
-    mirrors the API of threading.RLock"""
+    mirrors the standard library threading.RLock API"""
     def __init__(self):
         super(RLock, self).__init__()
         self._owner = None
@@ -152,7 +152,7 @@ class RLock(Lock):
 class Condition(object):
     """a synchronization object capable of waking all or just one of its waiters
 
-    mirrors the threading.Condition API"""
+    mirrors the standard library threading.Condition API"""
     def __init__(self, lock=None):
         if lock is None:
             lock = RLock()

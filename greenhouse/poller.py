@@ -6,7 +6,7 @@ from greenhouse import _state
 
 SHORT_TIMEOUT = 0.0001
 
-class EpollPoller(object):
+class Epoll(object):
     "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
     INMASK = getattr(select, 'EPOLLIN', None)
     OUTMASK = getattr(select, 'EPOLLOUT', None)
@@ -27,7 +27,7 @@ class EpollPoller(object):
     def poll(self, timeout=SHORT_TIMEOUT):
         return self._poller.poll(timeout)
 
-class PollPoller(object):
+class Poll(object):
     "a greenhouse poller using the poll system call''"
     INMASK = getattr(select, 'POLLIN', None)
     OUTMASK = getattr(select, 'POLLOUT', None)
@@ -49,7 +49,7 @@ class PollPoller(object):
     def poll(self, timeout=SHORT_TIMEOUT):
         return self._poller.poll(timeout)
 
-class SelectPoller(object):
+class Select(object):
     "a greenhouse poller using the select system call"
     INMASK = 1
     OUTMASK = 2
@@ -89,13 +89,13 @@ class SelectPoller(object):
             events[fd] |= self.ERRMASK
         return events.items()
 
-def bestpoller():
+def best():
     if hasattr(select, 'epoll'):
-        return EpollPoller()
+        return Epoll()
     elif hasattr(select, 'poll'):
-        return PollPoller()
-    return SelectPoller()
+        return Poll()
+    return Select()
 
-def setpoller(poller=None):
-    _state.poller = poller or bestpoller()
-setpoller()
+def set(poller=None):
+    _state.poller = poller or best()
+set()

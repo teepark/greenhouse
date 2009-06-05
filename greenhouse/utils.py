@@ -273,6 +273,24 @@ class Timer(object):
     def _run(self):
         return self.func(*self.args, **self.kwargs)
 
+def Local(object):
+    """class that represents greenlet-local data
+
+    mirrors the standard library threading.local API"""
+    def __init__(self):
+        object.__setattr__(self, "data", {})
+
+    def __getattr__(self, name):
+        local = object.__getattr__(self, "data").setdefault(
+                greenlet.getcurrent(), {})
+        if name not in local:
+            raise AttributeError, "Local object has no attribute %s" % name
+        return local[name]
+
+    def __setattr__(self, name, value):
+        object.__getattr__(self, "data").setdefault(greenlet.getcurrent(),
+                {})[name] = value
+
 class Queue(object):
     """a producer-consumer queue
 

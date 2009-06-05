@@ -15,7 +15,8 @@ def get_next():
         return _state.awoken_from_events.pop()
 
     now = time.time()
-    if now >= LAST_SELECT + POLL_TIMEOUT:
+    timetopoll = now >= LAST_SELECT + POLL_TIMEOUT
+    if timetopoll:
         _socketpoll()
 
     if _state.awoken_from_events:
@@ -24,7 +25,15 @@ def get_next():
     if _state.timed_paused and now >= _state.timed_paused[0][0]:
         return _state.timed_paused.pop(0)[1]
 
-    return (_state.paused and (_state.paused.popleft(),) or (None,))[0]
+    if _state.paused:
+        return _state.paused.popleft()
+
+    if not timetopoll:
+        _socketpoll()
+        if _state.awoken_from_events:
+            return _state.awoken_from_events.pop()
+
+    return None
 
 def go_to_next():
     '''pause the current greenlet and switch to the next

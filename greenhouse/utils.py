@@ -2,6 +2,7 @@ from __future__ import with_statement
 
 import bisect
 import collections
+import functools
 import time
 
 from greenhouse import _state
@@ -393,3 +394,21 @@ class Queue(object):
         self.unfinished_tasks -= 1
         if not self.unfinished_tasks:
             self.all_tasks_done.set()
+
+def _debugger(cls):
+    import types
+    for name in dir(cls):
+        attr = getattr(cls, name)
+        if isinstance(attr, types.MethodType):
+            def extrascope(attr):
+                @functools.wraps(attr)
+                def wrapper(*args, **kwargs):
+                    print "%s.%s %s %s" % (cls.__name__, attr.__name__,
+                            repr(args[1:]), repr(kwargs))
+                    rc = attr(*args, **kwargs)
+                    print "%s.%s --> %s" % (cls.__name__, attr.__name__,
+                            repr(rc))
+                    return rc
+                return wrapper
+            setattr(cls, name, extrascope(attr))
+    return cls

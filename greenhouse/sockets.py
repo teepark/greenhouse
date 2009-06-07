@@ -14,9 +14,7 @@ from greenhouse import utils, _state, mainloop
 _socket = socket.socket
 _fromfd = socket.fromfd
 
-# EBADF shouldn't be in this list, but i'm getting it for some reason
-SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN,
-        errno.EBADF))
+SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 
 def monkeypatch():
     """replace functions in the standard library socket module
@@ -32,6 +30,7 @@ def unmonkeypatch():
 def fromfd(*args, **kwargs):
     return Socket(fromsock=_fromfd(*args, **kwargs))
 
+#@utils._debugger
 class Socket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
@@ -88,6 +87,7 @@ class Socket(object):
         return self._sock.bind(*args, **kwargs)
 
     def close(self):
+        self._closed = True
         return self._sock.close()
 
     def connect(self, address):
@@ -127,12 +127,11 @@ class Socket(object):
     def makefile(self, mode='r', bufsize=-1):
         return File(self, mode, bufsize)
 
-    def _recv_now(self, nbytes):
-        return self._sock.recv(nbytes)
-
     # for all the socket reading methods, we first need the readable event
     def recv(self, nbytes):
         while 1:
+            if self._closed:
+                return ''
             try:
                 return self._sock.recv(nbytes)
             except socket.error, e:
@@ -191,6 +190,7 @@ class Socket(object):
     def settimeout(self, timeout):
         self._timeout = timeout
 
+#@utils._debugger
 class File(object):
     default_bufsize = 8192
     ENDLINE = '\r\n'
@@ -250,25 +250,59 @@ class File(object):
                 raise StopIteration
 
     def read(self, size=None):
+        if size is None:
+            return self._read_all()
+        return self._read_for(size)
+
+    def _read_for(self, size):
         buf = self._readbuf
-        while 1:
-            rc = buf.getvalue()
-            if not rc or (size and len(rc) >= size):
-                buf.seek(0)
-                buf.truncate()
-                if size:
-                    if len(rc) > size:
-                        buf.write(rc[size:])
-                    return rc[:size]
-                return rc
-            toread = size and min(size - len(rc), self.bufsize) or self.bufsize
-            rcvd = self._sock.recv(toread)
+        buffered = buf.getvalue()
+
+        if len(buffered) >= size:
+            buf.seek(0)
+            buf.truncate()
+            if len(buffered) > size:
+                buf.write(buffered[size:])
+            return buffered[:size]
+
+        if self._sock._closed:
+            buf.seek(0)
+            buf.truncate()
+            return buffered
+
+        buf.seek(0, 2)
+        rcvd = self._sock.recv(min(size - len(buffered), self.bufsize))
+        buf.write(rcvd)
+
+        while rcvd and buf.tell() < size:
+            rcvd = self._sock.recv(min(size - buf.tell(), self.bufsize))
             buf.write(rcvd)
-            if len(rcvd) < toread:
-                rc = buf.getvalue()
-                buf.seek(0)
-                buf.truncate()
-                return rc
+
+        rc = buf.getvalue()
+        buf.seek(0)
+        buf.truncate()
+        return rc
+
+    def _read_all(self):
+        buf = self._readbuf
+        buf.seek(0, 2)
+
+        if self._sock._closed:
+            rc = buf.getvalue()
+            buf.seek(0)
+            buf.truncate()
+            return rc
+
+        rcvd = self._sock.recv(self.bufsize)
+        buf.write(rcvd)
+        while rcvd:
+            rcvd = self._sock.recv(self.bufsize)
+            buf.write(rcvd)
+
+        rc = buf.getvalue()
+        buf.seek(0)
+        buf.truncate()
+        return rc
 
     def readline(self):
         buf = self._readbuf

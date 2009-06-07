@@ -1,4 +1,5 @@
 import bisect
+import operator
 import time
 
 from greenhouse import _state
@@ -11,29 +12,32 @@ LAST_SELECT = 0
 
 def get_next():
     'figure out the next greenlet to run'
-    if _state.awoken_from_events:
-        return _state.awoken_from_events.pop()
-
-    now = time.time()
-    timetopoll = now >= LAST_SELECT + POLL_TIMEOUT
-    if timetopoll:
+    if not _state.to_run:
+        # run the socket poller to trigger network events
         _socketpoll()
 
-    if _state.awoken_from_events:
-        return _state.awoken_from_events.pop()
+        # start with events that have already triggered
+        _state.to_run.extend(_state.awoken_from_events)
+        _state.awoken_from_events.clear()
 
-    if _state.timed_paused and now >= _state.timed_paused[0][0]:
-        return _state.timed_paused.pop(0)[1]
+        # append timed pauses that have expired
+        index = bisect.bisect(_state.timed_paused, (time.time(), None))
+        _state.to_run.extend(_state.timed_paused[:index])
+        _state.timed_paused = _state.timed_paused[index:]
 
-    if _state.paused:
-        return _state.paused.popleft()
+        # append simple cooperative yields
+        _state.to_run.extend(_state.paused)
+        _state.paused = []
 
-    if not timetopoll:
-        _socketpoll()
-        if _state.awoken_from_events:
-            return _state.awoken_from_events.pop()
+        # loop waiting for network events while we don't have anything to run
+        if not _state.to_run:
+            while not _state.awoken_from_events:
+                time.sleep(NOTHING_TO_DO_PAUSE)
+                _socketpoll()
+            _state.to_run.extend(_state.awoken_from_events)
+            _state.awoken_from_events.clear()
 
-    return None
+    return _state.to_run.popleft()
 
 def go_to_next():
     '''pause the current greenlet and switch to the next

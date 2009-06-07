@@ -15,3 +15,6 @@ paused = collections.deque()
 
 # map of file numbers to the sockets on that descriptor
 sockets = collections.defaultdict(list)
+
+# lined up to run right away
+to_run = collections.deque()

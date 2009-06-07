@@ -12,7 +12,6 @@ from greenhouse import utils, _state, mainloop
 
 
 _socket = socket.socket
-_fromfd = socket.fromfd
 
 SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 
@@ -20,15 +19,10 @@ def monkeypatch():
     """replace functions in the standard library socket module
     with their non-blocking greenhouse equivalents"""
     socket.socket = Socket
-    socket.fromfd = fromfd
 
 def unmonkeypatch():
     "undo a call to monkeypatch()"
     socket.socket = _socket
-    socket.fromfd = _fromfd
-
-def fromfd(*args, **kwargs):
-    return Socket(fromsock=_fromfd(*args, **kwargs))
 
 #@utils._debugger
 class Socket(object):
@@ -76,9 +70,10 @@ class Socket(object):
             try:
                 client, addr = self._sock.accept()
             except socket.error, err:
-                if err[0] == errno.EWOULDBLOCK:
+                if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
                     pass
-                raise
+                else:
+                    raise
             else:
                 return type(self)(fromsock=client), addr
             self._readable.wait()
@@ -124,8 +119,8 @@ class Socket(object):
     def listen(self, backlog):
         return self._sock.listen(backlog)
 
-    def makefile(self, mode='r', bufsize=-1):
-        return File(self, mode, bufsize)
+    def makefile(self, mode='r', bufsize=None):
+        return socket._fileobject(self)
 
     # for all the socket reading methods, we first need the readable event
     def recv(self, nbytes):
@@ -189,144 +184,3 @@ class Socket(object):
 
     def settimeout(self, timeout):
         self._timeout = timeout
-
-#@utils._debugger
-class File(object):
-    default_bufsize = 8192
-    ENDLINE = '\r\n'
-
-    def __init__(self, fd, mode='r', bufsize=None):
-        self._fileno = isinstance(fd, int) and fd or fd.fileno()
-        self._closed = False
-        self._sock = self._getsock(fd)
-        self.mode = mode
-        self.bufsize = bufsize or self.default_bufsize
-        self._readbuf = StringIO()
-
-    def __iter__(self):
-        return self
-
-    def close(self):
-        self._closed = True
-
-    @property
-    def closed(self):
-        return self._closed
-
-    def fileno(self):
-        return self._sock.fileno()
-
-    def flush(self):
-        pass
-
-    @staticmethod
-    def _getsock(fd):
-        if isinstance(fd, Socket):
-            return fd
-        return fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-
-    def next(self):
-        buf = self._readbuf
-        while 1:
-            rc = buf.getvalue()
-            index = buf.find(self.ENDLINE)
-            if index >= 0:
-                index += len(self.ENDLINE)
-                buf.seek(0)
-                buf.truncate()
-                buf.write(rc[index:])
-                return rc[:index]
-            if self._sock._closed:
-                buf.seek(0)
-                buf.truncate()
-                if rc:
-                    return rc
-                raise StopIteration()
-            rcvd = self._sock.recv(self.bufsize)
-            buf.write(rcvd)
-            if not rcvd:
-                if rc:
-                    return rc
-                raise StopIteration
-
-    def read(self, size=None):
-        if size is None:
-            return self._read_all()
-        return self._read_for(size)
-
-    def _read_for(self, size):
-        buf = self._readbuf
-        buffered = buf.getvalue()
-
-        if len(buffered) >= size:
-            buf.seek(0)
-            buf.truncate()
-            if len(buffered) > size:
-                buf.write(buffered[size:])
-            return buffered[:size]
-
-        if self._sock._closed:
-            buf.seek(0)
-            buf.truncate()
-            return buffered
-
-        buf.seek(0, 2)
-        rcvd = self._sock.recv(min(size - len(buffered), self.bufsize))
-        buf.write(rcvd)
-
-        while rcvd and buf.tell() < size:
-            rcvd = self._sock.recv(min(size - buf.tell(), self.bufsize))
-            buf.write(rcvd)
-
-        rc = buf.getvalue()
-        buf.seek(0)
-        buf.truncate()
-        return rc
-
-    def _read_all(self):
-        buf = self._readbuf
-        buf.seek(0, 2)
-
-        if self._sock._closed:
-            rc = buf.getvalue()
-            buf.seek(0)
-            buf.truncate()
-            return rc
-
-        rcvd = self._sock.recv(self.bufsize)
-        buf.write(rcvd)
-        while rcvd:
-            rcvd = self._sock.recv(self.bufsize)
-            buf.write(rcvd)
-
-        rc = buf.getvalue()
-        buf.seek(0)
-        buf.truncate()
-        return rc
-
-    def readline(self):
-        buf = self._readbuf
-        while 1:
-            rc = buf.getvalue()
-            index = rc.find(self.ENDLINE)
-            if index >= 0:
-                index += len(self.ENDLINE)
-                buf.seek(0)
-                buf.truncate()
-                buf.write(rc[index:])
-                return rc[:index]
-            if self._sock._closed:
-                buf.seek(0)
-                buf.truncate()
-                return rc
-            rcvd = self._sock.recv(self.bufsize)
-            buf.write(rcvd)
-
-    def readlines(self):
-        return self.read().split(self.ENDLINE)
-
-    def write(self, data):
-        self._sock.sendall(data)
-
-    def writelines(self, lines):
-        self.write(self.ENDLINE.join(lines))

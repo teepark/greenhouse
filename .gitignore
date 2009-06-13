@@ -5,4 +5,3 @@ greenhouse.egg-info/*
 MANIFEST.in
 build/*
 dist/*
-ve/*

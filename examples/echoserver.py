@@ -5,8 +5,8 @@ import greenhouse
 
 PORT = 9000
 
-def connection_handler(clientsock):
-    print "connection made"
+def connection_handler(clientsock, address):
+    print "connection made from %s:%s" % address
     clientfile = clientsock.makefile()
     while 1:
         if clientsock._closed:
@@ -21,7 +21,7 @@ def connection_handler(clientsock):
         while len(input) == 8192:
             input = clientsock.recv(8192)
             received += input
-        print "input received: %s" % received
+        print "input received: %s" % received.rstrip('\r\n')
         clientsock.sendall(received)
 
 def main():
@@ -33,7 +33,7 @@ def main():
         serversock.listen(5)
         while 1:
             clientsock, address = serversock.accept()
-            greenhouse.schedule(connection_handler, args=[clientsock])
+            greenhouse.schedule(connection_handler, args=[clientsock, address])
     except KeyboardInterrupt:
         print "KeyboardInterrupt caught, closing listener socket"
         serversock.close()

@@ -1,4 +1,5 @@
 import bisect
+from itertools import imap
 import operator
 import time
 
@@ -6,24 +7,32 @@ from greenhouse import _state
 from greenhouse.compat import greenlet
 
 
-POLL_TIMEOUT = 0.01
 NOTHING_TO_DO_PAUSE = 0.005
-LAST_SELECT = 0
+
+def _find_timein():
+    index = bisect.bisect(_state.timed_paused, (time.time(), None))
+    newly_timedin = _state.timed_paused[:index]
+    _state.to_run.extend(imap(operator.itemgetter(1), newly_timedin))
+    _state.timed_paused = _state.timed_paused[index:]
+    return bool(newly_timedin)
+
+def _find_awoken():
+    newly_awoken = bool(_state.awoken_from_events)
+    _state.to_run.extend(_state.awoken_from_events)
+    _state.awoken_from_events.clear()
+    return newly_awoken
 
 def get_next():
-    'figure out the next greenlet to run'
+    'update the scheduler state and figure out the next greenlet to run'
     if not _state.to_run:
         # run the socket poller to trigger network events
         _socketpoll()
 
         # start with events that have already triggered
-        _state.to_run.extend(_state.awoken_from_events)
-        _state.awoken_from_events.clear()
+        _find_awoken()
 
         # append timed pauses that have expired
-        index = bisect.bisect(_state.timed_paused, (time.time(), None))
-        _state.to_run.extend(_state.timed_paused[:index])
-        _state.timed_paused = _state.timed_paused[index:]
+        _find_timein()
 
         # append simple cooperative yields
         _state.to_run.extend(_state.paused)
@@ -31,11 +40,10 @@ def get_next():
 
         # loop waiting for network events while we don't have anything to run
         if not _state.to_run:
-            while not _state.awoken_from_events:
+            while 1:
                 time.sleep(NOTHING_TO_DO_PAUSE)
                 _socketpoll()
-            _state.to_run.extend(_state.awoken_from_events)
-            _state.awoken_from_events.clear()
+                if _find_awoken() or _find_timein(): break
 
     return _state.to_run.popleft()
 
@@ -44,11 +52,7 @@ def go_to_next():
 
     this is different from the pause* methods in that it does not
     reschedule the current greenlet'''
-    next = get_next()
-    while next is None:
-        time.sleep(NOTHING_TO_DO_PAUSE)
-        next = get_next()
-    next.switch()
+    get_next().switch()
 
 def pause():
     'pause and reschedule the current greenlet and switch to the next'
@@ -115,13 +119,51 @@ def schedule_in(secs, target=None, args=(), kwargs=None):
     will be run sometime after *secs* seconds have passed'''
     return schedule_at(time.time() + secs, target, args, kwargs)
 
+def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
+        args=(), kwargs=None):
+    '''set up a function to run at a regular interval
+
+    every *interval* seconds, *target* will be wrapped in a new greenlet
+    and run
+
+    if *maxtimes* is greater than 0, *target* will stop being scheduled after
+    *maxtimes* runs
+
+    if *starting_at* is greater than 0, the recurring runs will begin at that
+    unix timestamp, instead of ``time.time() + interval``'''
+    kwargs = kwargs or {}
+    starting_at = starting_at or time.time()
+
+    if target is None:
+        def decorator(target):
+            return schedule_recurring(unixtime, target, maxtimes, args, kwargs)
+        return decorator
+
+    func = target
+    if isinstance(target, greenlet):
+        if target.dead:
+            raise TypeError("can't schedule a dead greenlet")
+        func = target.run
+
+    def run_and_schedule_one(tstamp, count):
+        # pass in the time scheduled instead of just checking
+        # time.time() so that delays don't add up
+        if not maxtimes or count < maxtimes:
+            func(*args, **kwargs)
+            tstamp += interval
+            schedule_at(tstamp, run_and_schedule_one, args=(tstamp, count + 1))
+
+    firstrun = starting_at + interval
+    schedule_at(firstrun, run_and_schedule_one, args=(firstrun, 0))
+
+    return target
+
 @greenlet
 def generic_parent(ended):
     while 1:
         go_to_next()
 
 def _socketpoll():
-    global LAST_SELECT
     if not hasattr(_state, 'poller'):
         import greenhouse.poller
     events = _state.poller.poll()
@@ -136,5 +178,4 @@ def _socketpoll():
             for sock in socks:
                 sock._writable.set()
                 sock._writable.clear()
-    LAST_SELECT = time.time()
     return events

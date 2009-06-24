@@ -7,7 +7,7 @@ import time
 
 from greenhouse._state import state
 from greenhouse.compat import greenlet
-from greenhouse import mainloop
+from greenhouse import scheduler
 
 
 class Event(object):
@@ -53,7 +53,7 @@ class Event(object):
             current = greenlet.getcurrent()
             state.paused_on_events[self._guid].append(current)
             if timeout is not None:
-                @mainloop.schedule_in(timeout)
+                @scheduler.schedule_in(timeout)
                 def hit_timeout():
                     try:
                         state.paused_on_events[self._guid].remove(current)
@@ -70,7 +70,7 @@ class Event(object):
                                 error = err
                     if error:
                         raise error
-            mainloop.go_to_next()
+            scheduler.go_to_next()
 
 class Lock(object):
     """an object that can only be 'owned' by one greenlet at a time
@@ -151,7 +151,7 @@ class RLock(Lock):
             self._event.clear()
 
 class Condition(object):
-    """a synchronization object capable of waking all or just one of its waiters
+    """a synchronization object capable of waking all or one of its waiters
 
     mirrors the standard library threading.Condition API"""
     def __init__(self, lock=None):

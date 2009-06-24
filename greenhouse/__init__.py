@@ -1,7 +1,7 @@
 from greenhouse.compat import greenlet
 from greenhouse.utils import Event, Lock, RLock, Condition, Semaphore,\
         BoundedSemaphore, Timer, Queue, Local
-from greenhouse.mainloop import pause, pause_until, pause_for, schedule,\
+from greenhouse.scheduler import pause, pause_until, pause_for, schedule,\
         schedule_at, schedule_in
 from greenhouse.pool import Pool, OrderedPool
 from greenhouse.sockets import Socket

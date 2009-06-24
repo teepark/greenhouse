@@ -8,7 +8,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from greenhouse import utils, mainloop
+from greenhouse import utils
 from greenhouse._state import state
 
 

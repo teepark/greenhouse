@@ -1,3 +1,4 @@
+import greenhouse.scheduler
 from greenhouse.utils import Queue
 
 
@@ -14,7 +15,7 @@ class Pool(object):
     def start(self):
         self.coros = []
         for i in xrange(self.size):
-            self.coros.append(mainloop.schedule(self._runner))
+            self.coros.append(greenhouse.scheduler.schedule(self._runner))
 
     def close(self):
         for i in xrange(self.size):

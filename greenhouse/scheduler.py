@@ -136,7 +136,8 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     if target is None:
         def decorator(target):
-            return schedule_recurring(unixtime, target, maxtimes, args, kwargs)
+            return schedule_recurring(interval, target, maxtimes, starting_at,
+                                      args, kwargs)
         return decorator
 
     func = target

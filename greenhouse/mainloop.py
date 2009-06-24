@@ -3,28 +3,28 @@ from itertools import imap
 import operator
 import time
 
-from greenhouse import _state
+from greenhouse._state import state
 from greenhouse.compat import greenlet
 
 
 NOTHING_TO_DO_PAUSE = 0.005
 
 def _find_timein():
-    index = bisect.bisect(_state.timed_paused, (time.time(), None))
-    newly_timedin = _state.timed_paused[:index]
-    _state.to_run.extend(imap(operator.itemgetter(1), newly_timedin))
-    _state.timed_paused = _state.timed_paused[index:]
+    index = bisect.bisect(state.timed_paused, (time.time(), None))
+    newly_timedin = state.timed_paused[:index]
+    state.to_run.extend(imap(operator.itemgetter(1), newly_timedin))
+    state.timed_paused = state.timed_paused[index:]
     return bool(newly_timedin)
 
 def _find_awoken():
-    newly_awoken = bool(_state.awoken_from_events)
-    _state.to_run.extend(_state.awoken_from_events)
-    _state.awoken_from_events.clear()
+    newly_awoken = bool(state.awoken_from_events)
+    state.to_run.extend(state.awoken_from_events)
+    state.awoken_from_events.clear()
     return newly_awoken
 
 def get_next():
     'update the scheduler state and figure out the next greenlet to run'
-    if not _state.to_run:
+    if not state.to_run:
         # run the socket poller to trigger network events
         _socketpoll()
 
@@ -35,17 +35,17 @@ def get_next():
         _find_timein()
 
         # append simple cooperative yields
-        _state.to_run.extend(_state.paused)
-        _state.paused = []
+        state.to_run.extend(state.paused)
+        state.paused = []
 
         # loop waiting for network events while we don't have anything to run
-        if not _state.to_run:
+        if not state.to_run:
             while 1:
                 time.sleep(NOTHING_TO_DO_PAUSE)
                 _socketpoll()
                 if _find_awoken() or _find_timein(): break
 
-    return _state.to_run.popleft()
+    return state.to_run.popleft()
 
 def go_to_next():
     '''pause the current greenlet and switch to the next
@@ -88,7 +88,7 @@ def schedule(target=None, args=(), kwargs=None):
             def target():
                 inner_target(*args, **kwargs)
         glet = greenlet(target, generic_parent)
-    _state.paused.append(glet)
+    state.paused.append(glet)
     return target
 
 def schedule_at(unixtime, target=None, args=(), kwargs=None):
@@ -109,7 +109,7 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
             def target():
                 inner_target(*args, **kwargs)
         glet = greenlet(target, generic_parent)
-    bisect.insort(_state.timed_paused, (unixtime, glet))
+    bisect.insort(state.timed_paused, (unixtime, glet))
     return target
 
 def schedule_in(secs, target=None, args=(), kwargs=None):
@@ -164,17 +164,17 @@ def generic_parent(ended):
         go_to_next()
 
 def _socketpoll():
-    if not hasattr(_state, 'poller'):
+    if not hasattr(state, 'poller'):
         import greenhouse.poller
-    events = _state.poller.poll()
+    events = state.poller.poll()
     for fd, eventmap in events:
         socks = filter(None, map(operator.methodcaller("__call__"),
-                _state.sockets[fd]))
-        if eventmap & _state.poller.INMASK:
+                state.sockets[fd]))
+        if eventmap & state.poller.INMASK:
             for sock in socks:
                 sock._readable.set()
                 sock._readable.clear()
-        if eventmap & _state.poller.OUTMASK:
+        if eventmap & state.poller.OUTMASK:
             for sock in socks:
                 sock._writable.set()
                 sock._writable.clear()

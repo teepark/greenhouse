@@ -5,7 +5,7 @@ import collections
 import functools
 import time
 
-from greenhouse import _state
+from greenhouse._state import state
 from greenhouse.compat import greenlet
 from greenhouse import mainloop
 
@@ -31,8 +31,8 @@ class Event(object):
         woken up, and calling wait() will not block until the clear() method
         has been called"""
         self._is_set = True
-        _state.awoken_from_events.update(_state.paused_on_events[self._guid])
-        del _state.paused_on_events[self._guid]
+        state.awoken_from_events.update(state.paused_on_events[self._guid])
+        del state.paused_on_events[self._guid]
 
     def clear(self):
         """clear the event from being triggered
@@ -51,16 +51,16 @@ class Event(object):
         all. otherwise it will block until the set() method is called"""
         if not self._is_set:
             current = greenlet.getcurrent()
-            _state.paused_on_events[self._guid].append(current)
+            state.paused_on_events[self._guid].append(current)
             if timeout is not None:
                 @mainloop.schedule_in(timeout)
                 def hit_timeout():
                     try:
-                        _state.paused_on_events[self._guid].remove(current)
+                        state.paused_on_events[self._guid].remove(current)
                     except ValueError:
                         pass
                     else:
-                        _state.awoken_from_events.add(current)
+                        state.awoken_from_events.add(current)
                     error = None
                     for cback in self._timeout_callbacks:
                         try:
@@ -260,11 +260,11 @@ class Timer(object):
         self.kwargs = kwargs or {}
         self._glet = glet = greenlet(self._run)
         self.waketime = waketime = time.time() + secs
-        bisect.insort(_state.timed_paused, (waketime, glet))
+        bisect.insort(state.timed_paused, (waketime, glet))
 
     def cancel(self):
         "if called before the greenlet runs, stop it from ever starting"
-        tp = _state.timed_paused
+        tp = state.timed_paused
         if not tp:
             return
         index = bisect.bisect(tp, (self.waketime, self._glet)) - 1

@@ -1,20 +1,22 @@
 import collections
+import threading
 
+state = threading.local()
 
 # maps events to a list of coros waiting on them
-paused_on_events = collections.defaultdict(collections.deque)
+state.paused_on_events = collections.defaultdict(collections.deque)
 
 # from events that have triggered
-awoken_from_events = set()
+state.awoken_from_events = set()
 
 # cooperatively yielded for a set timeout
-timed_paused = []
+state.timed_paused = []
 
 # executed a simple cooperative yield
-paused = collections.deque()
+state.paused = collections.deque()
 
 # map of file numbers to the sockets on that descriptor
-sockets = collections.defaultdict(list)
+state.sockets = collections.defaultdict(list)
 
 # lined up to run right away
-to_run = collections.deque()
+state.to_run = collections.deque()

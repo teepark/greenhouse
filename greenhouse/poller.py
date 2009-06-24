@@ -1,7 +1,7 @@
 import collections
 import select
 
-from greenhouse import _state
+from greenhouse._state import state
 
 
 SHORT_TIMEOUT = 0.0001
@@ -97,5 +97,5 @@ def best():
     return Select()
 
 def set(poller=None):
-    _state.poller = poller or best()
+    state.poller = poller or best()
 set()

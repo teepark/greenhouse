@@ -8,7 +8,8 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from greenhouse import utils, _state, mainloop
+from greenhouse import utils, mainloop
+from greenhouse._state import state
 
 
 _socket = socket.socket
@@ -52,16 +53,16 @@ class Socket(object):
         self._closed = False
 
         # register this socket for polling events
-        if not hasattr(_state, 'poller'):
+        if not hasattr(state, 'poller'):
             import greenhouse.poller
-        _state.poller.register(self._sock)
+        state.poller.register(self._sock)
 
         # allow for lookup by fileno
-        _state.sockets[self._fileno].append(weakref.ref(self))
+        state.sockets[self._fileno].append(weakref.ref(self))
 
     def __del__(self):
         try:
-            _state.poller.unregister(self._sock)
+            state.poller.unregister(self._sock)
         except:
             pass
 

@@ -219,11 +219,24 @@ class File(object):
             else:
                 raise
 
-        self._readable = utils.Event()
-        self._writable = utils.Event()
         if not hasattr(state, 'poller'):
             import greenhouse.poller
-        state.poller.register(self)
+        try:
+            state.poller.register(self)
+            self._readable = utils.Event()
+            self._writable = utils.Event()
+            self._wait = self._wait_event
+        except IOError:
+            self._wait = self._wait_yield
+
+    def _wait_event(self, reading):
+        if reading:
+            self._readable.wait()
+        else:
+            self._writable.wait()
+
+    def _wait_yield(self, reading):
+        scheduler.pause()
 
     @classmethod
     def fromfd(cls, fd, mode='rb'):
@@ -296,7 +309,7 @@ class File(object):
 
             if output is None:
                 # would have blocked
-                self._readable.wait()
+                self._wait(reading=True)
                 continue
 
             if not output:
@@ -367,7 +380,7 @@ class File(object):
         while data:
             went = self._write_once(data)
             if went is None:
-                self._writable.wait()
+                self._wait(reading=False)
                 continue
             data = data[went:]
 

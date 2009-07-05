@@ -1,7 +1,4 @@
-import collections
 import errno
-import fcntl
-import functools
 import os
 import socket
 import stat
@@ -63,7 +60,7 @@ class Socket(object):
         # register this socket for polling events
         if not hasattr(state, 'poller'):
             import greenhouse.poller
-        state.poller.register(self._sock)
+        state.poller.register(self)
 
         # allow for lookup by fileno
         state.sockets[self._fileno].append(weakref.ref(self))
@@ -201,7 +198,7 @@ class File(object):
         self.name = name
         self._buf = StringIO()
 
-        flags = os.O_RDONLY
+        flags = os.O_RDONLY | os.O_NONBLOCK
         if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
             flags |= os.O_RDWR
         elif 'w' in mode or 'a' in mode:
@@ -219,8 +216,17 @@ class File(object):
             else:
                 raise
 
-        flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
-        fcntl.fcntl(fileno, fcntl.F_SETFL , flags | os.O_NONBLOCK)
+        self._readable = utils.Event()
+        self._writable = utils.Event()
+        if not hasattr(state, 'poller'):
+            import greenhouse.poller
+        state.poller.register(self)
+
+    def __iter__(self):
+        line = self.readline()
+        while line:
+            yield line
+            line = self.readline()
 
     def close(self):
         os.close(self._fno)
@@ -253,7 +259,7 @@ class File(object):
 
             if output is None:
                 # would have blocked
-                scheduler.pause()
+                self._readable.wait()
                 continue
 
             if not output:
@@ -300,12 +306,6 @@ class File(object):
         buf.write(rc[index:])
         return rc[:index]
 
-    def xreadlines(self):
-        line = self.readline()
-        while line:
-            yield line
-            line = self.readline()
-
     def readline(self):
         return list(self.xreadlines())
 
@@ -330,7 +330,7 @@ class File(object):
         while data:
             went = self._write_once(data)
             if went is None:
-                scheduler.pause()
+                self._writable.wait()
                 continue
             data = data[went:]
 

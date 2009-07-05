@@ -205,6 +205,7 @@ class File(object):
         self.mode = mode
         self._buf = StringIO()
 
+        # translate mode into the proper open flags
         flags = os.O_RDONLY | os.O_NONBLOCK
         if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
             flags |= os.O_RDWR
@@ -213,15 +214,12 @@ class File(object):
         if 'a' in mode:
             flags |= os.O_APPEND
 
-        try:
-            self._fileno = fileno = os.open(name, flags)
-        except OSError, err:
-            if flags & (os.O_WRONLY | os.O_RDWR) and \
-                    err.args[0] == errno.ENOENT:
-                os.mknod(name, 0644, stat.S_IFREG)
-                self._fileno = fileno = os.open(name, flags)
-            else:
-                raise
+        # if write or append mode and the file doesn't exist, create it
+        if flags & (os.O_WRONLY | os.O_RDRW) and not os.path.exists(name):
+            os.mknod(name, 0644, stat.S_IFREG)
+
+        # open the file, get a descriptor
+        self._fileno = fileno = os.open(name, flags)
 
         if not hasattr(state, 'poller'):
             import greenhouse.poller

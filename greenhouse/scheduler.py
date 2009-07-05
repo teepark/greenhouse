@@ -10,18 +10,41 @@ from greenhouse.compat import greenlet
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
 
-def _find_timein():
-    index = bisect.bisect(state.timed_paused, (time.time(), None))
-    newly_timedin = state.timed_paused[:index]
-    state.to_run.extend(imap(operator.itemgetter(1), newly_timedin))
-    state.timed_paused = state.timed_paused[index:]
-    return bool(newly_timedin)
+def _socketpoll():
+    if not hasattr(state, 'poller'):
+        import greenhouse.poller
+    events = state.poller.poll()
+    for fd, eventmap in events:
+        socks = []
+        for index, weakref in enumerate(state.descriptormap[fd]):
+            sock = weakref()
+            if sock is None:
+                assert state.descriptormap[fd].pop(index) is None, \
+                        "woops, removed a perfectly good socket"
+            else:
+                socks.append(sock)
+        if eventmap & state.poller.INMASK:
+            for sock in socks:
+                sock._readable.set()
+                sock._readable.clear()
+        if eventmap & state.poller.OUTMASK:
+            for sock in socks:
+                sock._writable.set()
+                sock._writable.clear()
+    return events
 
 def _find_awoken():
     newly_awoken = bool(state.awoken_from_events)
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
     return newly_awoken
+
+def _find_timein():
+    index = bisect.bisect(state.timed_paused, (time.time(), None))
+    newly_timedin = state.timed_paused[:index]
+    state.to_run.extend(imap(operator.itemgetter(1), newly_timedin))
+    state.timed_paused = state.timed_paused[index:]
+    return bool(newly_timedin)
 
 def get_next():
     'update the scheduler state and figure out the next greenlet to run'
@@ -164,20 +187,3 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 def generic_parent(ended):
     while 1:
         go_to_next()
-
-def _socketpoll():
-    if not hasattr(state, 'poller'):
-        import greenhouse.poller
-    events = state.poller.poll()
-    for fd, eventmap in events:
-        socks = filter(None, map(operator.methodcaller("__call__"),
-                state.sockets[fd]))
-        if eventmap & state.poller.INMASK:
-            for sock in socks:
-                sock._readable.set()
-                sock._readable.clear()
-        if eventmap & state.poller.OUTMASK:
-            for sock in socks:
-                sock._writable.set()
-                sock._writable.clear()
-    return events

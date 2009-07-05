@@ -7,6 +7,7 @@ from greenhouse._state import state
 from greenhouse.compat import greenlet
 
 
+# pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
 
 def _find_timein():

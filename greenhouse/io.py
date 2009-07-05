@@ -221,6 +221,9 @@ class File(object):
         # open the file, get a descriptor
         self._fileno = fileno = os.open(name, flags)
 
+        # try to drive the asyncronous waiting off of the polling interface,
+        # but epoll doesn't seem to support filesystem descriptors, so fall
+        # back to a waiting with a simple yield
         if not hasattr(state, 'poller'):
             import greenhouse.poller
         try:
@@ -235,12 +238,14 @@ class File(object):
             self._wait = self._wait_yield
 
     def _wait_event(self, reading):
+        "wait on our events"
         if reading:
             self._readable.wait()
         else:
             self._writable.wait()
 
     def _wait_yield(self, reading):
+        "generic wait, for when polling won't work"
         scheduler.pause()
 
     @classmethod

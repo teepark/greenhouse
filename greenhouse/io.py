@@ -269,7 +269,11 @@ class File(object):
             yield line
             line = self.readline()
 
-    #TODO: context manager protocol
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
     def __del__(self):
         try:

@@ -1,4 +1,5 @@
 import errno
+import fcntl
 import os
 import socket
 import stat
@@ -67,7 +68,7 @@ class Socket(object):
 
     def __del__(self):
         try:
-            state.poller.unregister(self._sock)
+            state.poller.unregister(self)
         except:
             pass
 
@@ -89,6 +90,7 @@ class Socket(object):
 
     def close(self):
         self._closed = True
+        state.poller.unregister(self)
         return self._sock.close()
 
     def connect(self, address):
@@ -196,6 +198,7 @@ class File(object):
 
     def __init__(self, name, mode='rb'):
         self.name = name
+        self.mode = mode
         self._buf = StringIO()
 
         flags = os.O_RDONLY | os.O_NONBLOCK
@@ -222,14 +225,48 @@ class File(object):
             import greenhouse.poller
         state.poller.register(self)
 
+    @classmethod
+    def fromfd(cls, fd, mode='rb'):
+        fp = object.__new__(cls)
+        fp.mode = mode
+        fp._fno = fd
+        fp._buf = StringIO()
+
+        flags = os.O_RDONLY | os.O_NONBLOCK
+        if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
+            flags |= os.O_RDWR
+        elif 'w' in mode or 'a' in mode:
+            flags |= os.O_WRONLY
+        if 'a' in mode:
+            flags |= os.O_APPEND
+
+        fdflags = fcntl.fcntl(fd, FCNTL.F_GETFL)
+        if fdflags & flags != flags:
+            fcntl.fcntl(fd, FCNTL.F_SETFL, flags | fdflags)
+
+        fp._readable = utils.Event()
+        fp._writable = utils.Event()
+        if not hasattr(state, 'poller'):
+            import greenhouse.poller
+        state.poller.register(fp)
+
     def __iter__(self):
         line = self.readline()
         while line:
             yield line
             line = self.readline()
 
+    #TODO: context manager protocol
+
+    def __del__(self):
+        try:
+            state.poller.unregister(self)
+        except:
+            pass
+
     def close(self):
         os.close(self._fno)
+        state.poller.unregister(self)
 
     def fileno(self):
         return self._fno

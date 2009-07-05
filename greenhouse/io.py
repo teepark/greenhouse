@@ -360,8 +360,8 @@ class File(object):
         buf.write(rc[index:])
         return rc[:index]
 
-    def readline(self):
-        return list(self.xreadlines())
+    def readlines(self):
+        return list(self.__iter__())
 
     def seek(self, pos, modifier=0):
         os.lseek(self._fileno, pos, modifier)

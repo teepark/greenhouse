@@ -13,7 +13,7 @@ state.awoken_from_events = set()
 state.timed_paused = []
 
 # executed a simple cooperative yield
-state.paused = collections.deque()
+state.paused = []
 
 # map of file numbers to the sockets on that descriptor
 state.sockets = collections.defaultdict(list)

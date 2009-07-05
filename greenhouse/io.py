@@ -90,7 +90,11 @@ class Socket(object):
 
     def close(self):
         self._closed = True
-        state.poller.unregister(self)
+        try:
+            state.poller.unregister(self)
+        except IOError, err:
+            if err.args[0] != errno.ENOENT:
+                raise
         return self._sock.close()
 
     def connect(self, address):

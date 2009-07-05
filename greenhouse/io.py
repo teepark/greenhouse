@@ -64,7 +64,7 @@ class Socket(object):
         state.poller.register(self)
 
         # allow for lookup by fileno
-        state.sockets[self._fileno].append(weakref.ref(self))
+        state.descriptormap[self._fileno].append(weakref.ref(self))
 
     def __del__(self):
         try:
@@ -223,9 +223,12 @@ class File(object):
             import greenhouse.poller
         try:
             state.poller.register(self)
+
+            # if we got here, poller.register worked, so set up event-based IO
+            self._wait = self._wait_event
             self._readable = utils.Event()
             self._writable = utils.Event()
-            self._wait = self._wait_event
+            state.descriptormap[fileno].append(weakref.ref(self))
         except IOError:
             self._wait = self._wait_yield
 

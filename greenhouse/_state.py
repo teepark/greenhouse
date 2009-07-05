@@ -15,8 +15,8 @@ state.timed_paused = []
 # executed a simple cooperative yield
 state.paused = []
 
-# map of file numbers to the sockets on that descriptor
-state.sockets = collections.defaultdict(list)
+# map of file numbers to the sockets/files on that descriptor
+state.descriptormap = collections.defaultdict(list)
 
 # lined up to run right away
 state.to_run = collections.deque()

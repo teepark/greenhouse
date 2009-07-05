@@ -1,6 +1,8 @@
 import collections
 import errno
+import fcntl
 import functools
+import os
 import socket
 import weakref
 try:
@@ -123,7 +125,6 @@ class Socket(object):
     def makefile(self, mode='r', bufsize=None):
         return socket._fileobject(self)
 
-    # for all the socket reading methods, we first need the readable event
     def recv(self, nbytes):
         while 1:
             if self._closed:
@@ -151,7 +152,6 @@ class Socket(object):
         self._readable.wait()
         return self._sock.recvfrom_into(buffer, nbytes)
 
-    # don't expect write calls to block, but maybe throw exceptions
     def send(self, data):
         try:
             return self._sock.send(data)
@@ -185,3 +185,139 @@ class Socket(object):
 
     def settimeout(self, timeout):
         self._timeout = timeout
+
+#@utils._debugger
+class File(object):
+    CHUNKSIZE = 8192
+    NEWLINE = "\n"
+
+    def __init__(self, name, mode='rb'):
+        self.name = name
+        self._buf = StringIO()
+        self._pos = 0
+
+        flags = os.O_RDWR
+        if 'a' in mode:
+            flags |= os.O_APPEND
+        self._fno = fileno = os.open(name, flags)
+
+        flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
+        fcntl.fcntl(fileno, fcntl.F_SETFL , flags | os.O_NONBLOCK)
+
+    def close(self):
+        os.close(self._fno)
+
+    def fileno(self):
+        return self._fno
+
+    def _read_once(self, size):
+        try:
+            return os.read(self._fno, size)
+        except (OSError, IOError), err:
+            if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                return None
+            else:
+                raise
+
+    def read(self, size=-1):
+        chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
+
+        buf = self._buf
+        buf.seek(0, 2)
+        collected = buf.tell()
+
+        while 1:
+            if size >= 0 and collected <= size:
+                # we have read enough already
+                break
+
+            output = self._read_once(chunksize)
+
+            if output is None:
+                # would have blocked
+                scheduler.pause()
+                continue
+
+            if not output:
+                # nothing more to read
+                break
+
+            collected += len(output)
+            buf.write(output)
+
+        # get rid of the old buffer
+        rc = buf.getvalue()
+        buf.seek(0)
+        buf.truncate()
+
+        # leave the overflow in the buffer
+        if size >= 0:
+            buf.write(rc[size:])
+        return rc[:size]
+
+    def readline(self):
+        buf = self._buf
+        buf.seek(0)
+        newline, chunksize = self.NEWLINE, self.CHUNKSIZE
+
+        text = buf.read()
+        while text.find(newline) < 0:
+            text = self.read(chunksize)
+            if not text:
+                break
+            buf.write(text)
+
+        rc = buf.getvalue()
+        index = rc.find(newline)
+
+        if index < 0:
+            # no newline in the whole file, return everything
+            index = len(rc)
+        else:
+            index += len(newline)
+
+        buf.seek(0)
+        buf.truncate()
+        buf.write(rc[index:])
+        return rc[:index]
+
+    def xreadlines(self):
+        line = self.readline()
+        while line:
+            yield line
+            line = self.readline()
+
+    def readline(self):
+        return list(self.xreadlines())
+
+    def seek(self, pos, modifier=0):
+        os.lseek(self._fno, pos, modifier)
+
+        # clear out the buffer
+        buf = self._buf
+        buf.seek(0)
+        buf.truncate()
+
+    def tell(self):
+        return self._pos
+
+    def _write_once(self, data):
+        try:
+            return os.write(self._fno, data)
+        except (OSError, IOError), err:
+            if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                return None
+            else:
+                raise
+
+    def write(self, data):
+        while data:
+            went = self._write_once(data)
+            if went is None:
+                scheduler.pause()
+                continue
+            data = data[went:]
+
+    def writelines(self, lines):
+        for line in lines:
+            self.write(line)

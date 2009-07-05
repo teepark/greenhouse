@@ -4,7 +4,7 @@ from greenhouse.utils import Event, Lock, RLock, Condition, Semaphore,\
 from greenhouse.scheduler import pause, pause_until, pause_for, schedule,\
         schedule_at, schedule_in
 from greenhouse.pool import Pool, OrderedPool
-from greenhouse.sockets import Socket
+from greenhouse.io import File, Socket
 from greenhouse._state import state
 
 

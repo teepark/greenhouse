@@ -38,7 +38,7 @@ class Poll(object):
 
     def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        if event is None:
+        if eventmask is None:
             return self._poller.register(fd)
         return self._poller.register(fd, eventmask)
 

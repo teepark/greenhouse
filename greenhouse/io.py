@@ -4,6 +4,7 @@ import fcntl
 import functools
 import os
 import socket
+import stat
 import weakref
 try:
     from cStringIO import StringIO
@@ -194,12 +195,24 @@ class File(object):
     def __init__(self, name, mode='rb'):
         self.name = name
         self._buf = StringIO()
-        self._pos = 0
 
-        flags = os.O_RDWR
+        flags = os.O_RDONLY
+        if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
+            flags |= os.O_RDWR
+        elif 'w' in mode or 'a' in mode:
+            flags |= os.O_WRONLY
         if 'a' in mode:
             flags |= os.O_APPEND
-        self._fno = fileno = os.open(name, flags)
+
+        try:
+            self._fno = fileno = os.open(name, flags)
+        except OSError, err:
+            if flags & (os.O_WRONLY | os.O_RDWR) and \
+                    err.args[0] == errno.ENOENT:
+                os.mknod(name, 0644, stat.S_IFREG)
+                self._fno = fileno = os.open(name, flags)
+            else:
+                raise
 
         flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
         fcntl.fcntl(fileno, fcntl.F_SETFL , flags | os.O_NONBLOCK)
@@ -223,11 +236,11 @@ class File(object):
         chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
 
         buf = self._buf
-        buf.seek(0, 2)
+        buf.seek(0, os.SEEK_END)
         collected = buf.tell()
 
         while 1:
-            if size >= 0 and collected <= size:
+            if size >= 0 and collected >= size:
                 # we have read enough already
                 break
 
@@ -250,10 +263,11 @@ class File(object):
         buf.seek(0)
         buf.truncate()
 
-        # leave the overflow in the buffer
         if size >= 0:
+            # leave the overflow in the buffer
             buf.write(rc[size:])
-        return rc[:size]
+            return rc[:size]
+        return rc
 
     def readline(self):
         buf = self._buf
@@ -297,9 +311,6 @@ class File(object):
         buf = self._buf
         buf.seek(0)
         buf.truncate()
-
-    def tell(self):
-        return self._pos
 
     def _write_once(self, data):
         try:

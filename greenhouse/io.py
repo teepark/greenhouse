@@ -210,12 +210,12 @@ class File(object):
             flags |= os.O_APPEND
 
         try:
-            self._fno = fileno = os.open(name, flags)
+            self._fileno = fileno = os.open(name, flags)
         except OSError, err:
             if flags & (os.O_WRONLY | os.O_RDWR) and \
                     err.args[0] == errno.ENOENT:
                 os.mknod(name, 0644, stat.S_IFREG)
-                self._fno = fileno = os.open(name, flags)
+                self._fileno = fileno = os.open(name, flags)
             else:
                 raise
 
@@ -229,7 +229,7 @@ class File(object):
     def fromfd(cls, fd, mode='rb'):
         fp = object.__new__(cls)
         fp.mode = mode
-        fp._fno = fd
+        fp._fileno = fd
         fp._buf = StringIO()
 
         flags = os.O_RDONLY | os.O_NONBLOCK
@@ -265,15 +265,15 @@ class File(object):
             pass
 
     def close(self):
-        os.close(self._fno)
+        os.close(self._fileno)
         state.poller.unregister(self)
 
     def fileno(self):
-        return self._fno
+        return self._fileno
 
     def _read_once(self, size):
         try:
-            return os.read(self._fno, size)
+            return os.read(self._fileno, size)
         except (OSError, IOError), err:
             if err.args[0] in (errno.EAGAIN, errno.EINTR):
                 return None
@@ -347,7 +347,7 @@ class File(object):
         return list(self.xreadlines())
 
     def seek(self, pos, modifier=0):
-        os.lseek(self._fno, pos, modifier)
+        os.lseek(self._fileno, pos, modifier)
 
         # clear out the buffer
         buf = self._buf
@@ -356,7 +356,7 @@ class File(object):
 
     def _write_once(self, data):
         try:
-            return os.write(self._fno, data)
+            return os.write(self._fileno, data)
         except (OSError, IOError), err:
             if err.args[0] in (errno.EAGAIN, errno.EINTR):
                 return None

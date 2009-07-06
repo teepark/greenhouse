@@ -7,3 +7,4 @@ greenhouse.egg-info/*
 MANIFEST.in
 build/*
 dist/*
+html/*

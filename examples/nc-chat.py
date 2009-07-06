@@ -38,8 +38,9 @@ def get_name(clientsock):
         kwargs={'continuation': lambda: connection_handler(clientsock, name)})
 
 def broadcast(msg, skip=None, continuation=None):
-    for recip, sock in CONNECTED.iteritems():
-        if not skip or skip != recip:
+    for recip in CONNECTED:
+        sock = CONNECTED.get(recip)
+        if sock and not sock._closed and skip != recip:
             sock.sendall(msg)
 
     if continuation:
@@ -48,10 +49,12 @@ def broadcast(msg, skip=None, continuation=None):
 def connection_handler(clientsock, name):
     while 1:
         if clientsock._closed:
+            CONNECTED.pop(name)
             break
 
         input = received = clientsock.recv(8192)
         if not input:
+            CONNECTED.pop(name)
             break
 
         while len(input) == 8192:
@@ -61,7 +64,7 @@ def connection_handler(clientsock, name):
         greenhouse.schedule(broadcast, args=(
             "%s: %s\n" % (name, received.rstrip("\r\n")), name))
 
-    broadcast("*** %s has left the building\n" % name, name)
+    broadcast("*** %s has left the building\n" % name)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 import collections
 import threading
 
+
+__all__ = ["state"]
+
 state = threading.local()
 
 # maps events to a list of coros waiting on them

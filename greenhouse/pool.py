@@ -2,6 +2,8 @@ import greenhouse.scheduler
 from greenhouse.utils import Queue
 
 
+__all__ = ["Pool", "OrderedPool"]
+
 _STOP = object()
 
 class Pool(object):

@@ -10,6 +10,9 @@ from greenhouse.compat import greenlet
 from greenhouse import scheduler
 
 
+__all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
+           "BoundedSemaphore", "Timer", "Local", "Queue"]
+
 class Event(object):
     """an event for which greenlets can wait
 

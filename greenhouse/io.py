@@ -13,6 +13,9 @@ from greenhouse import utils
 from greenhouse._state import state
 
 
+__all__ = ["Socket", "File", "monkeypatch", "unmonkeypatch"]
+
+
 _socket = socket.socket
 _open = __builtins__['open']
 _file = __builtins__['file']

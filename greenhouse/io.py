@@ -408,3 +408,10 @@ class File(object):
     def writelines(self, lines):
         for line in lines:
             self.write(line)
+
+def pipe():
+    r, w = os.pipe()
+    r = File.fromfd(r, 'rb')
+    w = File.fromfd(w, 'wb')
+
+    return r, w

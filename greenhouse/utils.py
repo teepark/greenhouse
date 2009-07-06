@@ -68,7 +68,7 @@ class Event(object):
                         except Exception, err:
                             if error is None:
                                 error = err
-                    if error:
+                    if error is not None:
                         raise error
             scheduler.go_to_next()
 

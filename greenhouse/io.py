@@ -200,19 +200,29 @@ class File(object):
     CHUNKSIZE = 8192
     NEWLINE = "\n"
 
+    @staticmethod
+    def _mode_to_flags(mode):
+        flags = os.O_RDONLY | os.O_NONBLOCK # always non-blocking
+        if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
+            # both read and write
+            flags |= os.O_RDWR
+        elif 'w' in mode or 'a' in mode:
+            # else just write
+            flags |= os.O_WRONLY
+
+        if 'a' in mode:
+            # append-write mode
+            flags |= os.O_APPEND
+
+        return flags
+
     def __init__(self, name, mode='rb'):
         self.name = name
         self.mode = mode
         self._buf = StringIO()
 
         # translate mode into the proper open flags
-        flags = os.O_RDONLY | os.O_NONBLOCK
-        if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
-            flags |= os.O_RDWR
-        elif 'w' in mode or 'a' in mode:
-            flags |= os.O_WRONLY
-        if 'a' in mode:
-            flags |= os.O_APPEND
+        flags = self._mode_to_flags(mode)
 
         # if write or append mode and the file doesn't exist, create it
         if flags & (os.O_WRONLY | os.O_RDRW) and not os.path.exists(name):
@@ -255,13 +265,7 @@ class File(object):
         fp._fileno = fd
         fp._buf = StringIO()
 
-        flags = os.O_RDONLY | os.O_NONBLOCK
-        if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
-            flags |= os.O_RDWR
-        elif 'w' in mode or 'a' in mode:
-            flags |= os.O_WRONLY
-        if 'a' in mode:
-            flags |= os.O_APPEND
+        flags = cls._mode_to_flags(mode)
 
         fdflags = fcntl.fcntl(fd, FCNTL.F_GETFL)
         if fdflags & flags != flags:

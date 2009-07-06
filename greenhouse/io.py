@@ -219,6 +219,20 @@ class File(object):
 
         return flags
 
+    def _set_up_waiting(self):
+        if not hasattr(state, 'poller'):
+            import greenhouse.poller
+        try:
+            state.poller.register(self)
+
+            # if we got here, poller.register worked, so set up event-based IO
+            self._wait = self._wait_event
+            self._readable = utils.Event()
+            self._writable = utils.Event()
+            state.descriptormap[self._fileno].append(weakref.ref(self))
+        except IOError:
+            self._wait = self._wait_yield
+
     def __init__(self, name, mode='rb'):
         self.name = name
         self.mode = mode
@@ -237,18 +251,7 @@ class File(object):
         # try to drive the asyncronous waiting off of the polling interface,
         # but epoll doesn't seem to support filesystem descriptors, so fall
         # back to a waiting with a simple yield
-        if not hasattr(state, 'poller'):
-            import greenhouse.poller
-        try:
-            state.poller.register(self)
-
-            # if we got here, poller.register worked, so set up event-based IO
-            self._wait = self._wait_event
-            self._readable = utils.Event()
-            self._writable = utils.Event()
-            state.descriptormap[fileno].append(weakref.ref(self))
-        except IOError:
-            self._wait = self._wait_yield
+        self._set_up_waiting()
 
     def _wait_event(self, reading):
         "wait on our events"
@@ -274,11 +277,7 @@ class File(object):
         if fdflags & flags != flags:
             fcntl.fcntl(fd, FCNTL.F_SETFL, flags | fdflags)
 
-        fp._readable = utils.Event()
-        fp._writable = utils.Event()
-        if not hasattr(state, 'poller'):
-            import greenhouse.poller
-        state.poller.register(fp)
+        fp._set_up_waiting()
 
     def __iter__(self):
         line = self.readline()
@@ -387,6 +386,9 @@ class File(object):
         buf = self._buf
         buf.seek(0)
         buf.truncate()
+
+    def tell(self):
+        return os.fdopen(self._fileno).tell()
 
     def _write_once(self, data):
         try:

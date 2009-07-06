@@ -6,7 +6,7 @@ desc: |-
   add __all__ lists to modules, then do import *s in __init__.py
 type: :feature
 component: greenhouse
-release: 
+release: "0.5"
 reporter: Travis Parker <travis.parker@gmail.com>
 status: :closed
 disposition: :fixed
@@ -30,6 +30,10 @@ log_events:
 - - 2009-07-06 07:25:27.792144 Z
   - Travis Parker <travis.parker@gmail.com>
   - closed with disposition fixed
+  - ""
+- - 2009-07-06 07:56:55.440253 Z
+  - Travis Parker <travis.parker@gmail.com>
+  - assigned to release 0.5 from unassigned
   - ""
 git_branch: 
 claimer: Travis Parker <travis.parker@gmail.com>

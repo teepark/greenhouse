@@ -6,7 +6,7 @@ desc: |-
   that wait with a timeout. that code probably needs a rewrite.
 type: :task
 component: greenhouse
-release: 
+release: "0.5"
 reporter: Travis Parker <travis.parker@gmail.com>
 status: :unstarted
 disposition: 
@@ -23,5 +23,11 @@ log_events:
   - Travis Parker <travis.parker@gmail.com>
   - issue claimed
   - ""
+- - 2009-07-06 07:57:04.120905 Z
+  - Travis Parker <travis.parker@gmail.com>
+  - assigned to release 0.5 from unassigned
+  - ""
 git_branch: 
 claimer: Travis Parker <travis.parker@gmail.com>
+labels: []
+

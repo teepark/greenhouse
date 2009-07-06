@@ -8,8 +8,8 @@ type: :feature
 component: greenhouse
 release: 
 reporter: Travis Parker <travis.parker@gmail.com>
-status: :unstarted
-disposition: 
+status: :closed
+disposition: :fixed
 creation_time: 2009-07-06 05:25:55.062285 Z
 references: []
 
@@ -19,3 +19,19 @@ log_events:
   - Travis Parker <travis.parker@gmail.com>
   - created
   - ""
+- - 2009-07-06 07:08:45.218442 Z
+  - Travis Parker <travis.parker@gmail.com>
+  - issue claimed
+  - ""
+- - 2009-07-06 07:18:33.957049 Z
+  - Travis Parker <travis.parker@gmail.com>
+  - changed status from unstarted to in_progress
+  - ""
+- - 2009-07-06 07:25:27.792144 Z
+  - Travis Parker <travis.parker@gmail.com>
+  - closed with disposition fixed
+  - ""
+git_branch: 
+claimer: Travis Parker <travis.parker@gmail.com>
+labels: []
+

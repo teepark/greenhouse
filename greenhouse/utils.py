@@ -20,7 +20,8 @@ class Event(object):
     def __init__(self):
         self._is_set = False
         self._guid = id(self)
-        self._timeout_callbacks = []
+        self._timeout_callbacks = collections.defaultdict(list)
+        self._active_timeout_runners = set()
 
     def is_set(self):
         "returns True if waiting on this event will block, False if not"
@@ -34,6 +35,7 @@ class Event(object):
         woken up, and calling wait() will not block until the clear() method
         has been called"""
         self._is_set = True
+        self._active_timeout_runners.clear()
         state.awoken_from_events.update(state.paused_on_events[self._guid])
         del state.paused_on_events[self._guid]
 
@@ -44,8 +46,10 @@ class Event(object):
         set() method has been called"""
         self._is_set = False
 
-    def _add_timeout_callback(self, func):
-        self._timeout_callbacks.append(func)
+    def _add_timeout_callback(self, func, for_glet=None):
+        if for_glet is None:
+            for_glet = greenlet.getcurrent()
+        self._timeout_callbacks[for_glet].append(func)
 
     def wait(self, timeout=None):
         """pause the current coroutine until this event is set
@@ -53,19 +57,17 @@ class Event(object):
         if the set() method has been called, this method will not block at
         all. otherwise it will block until the set() method is called"""
         if not self._is_set:
-            current = greenlet.getcurrent()
+            current = greenlet.getcurrent() # the waiting greenlet
             state.paused_on_events[self._guid].append(current)
             if timeout is not None:
                 @scheduler.schedule_in(timeout)
                 def hit_timeout():
-                    try:
-                        state.paused_on_events[self._guid].remove(current)
-                    except ValueError:
-                        pass
-                    else:
-                        state.awoken_from_events.add(current)
+                    if hit_timeout not in self._active_timeout_runners:
+                        return
+                    state.paused_on_events[self._guid].remove(current)
+                    state.awoken_from_events.add(current)
                     error = None
-                    for cback in self._timeout_callbacks:
+                    for cback in self._timeout_callbacks[current]:
                         try:
                             cback()
                         except Exception, err:
@@ -73,6 +75,7 @@ class Event(object):
                                 error = err
                     if error is not None:
                         raise error
+                self._active_timeout_runners.add(hit_timeout)
             scheduler.go_to_next()
 
 class Lock(object):

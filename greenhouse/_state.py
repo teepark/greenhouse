@@ -7,7 +7,7 @@ __all__ = ["state"]
 state = threading.local()
 
 # maps events to a list of coros waiting on them
-state.paused_on_events = collections.defaultdict(collections.deque)
+state.paused_on_events = collections.defaultdict(list)
 
 # from events that have triggered
 state.awoken_from_events = set()

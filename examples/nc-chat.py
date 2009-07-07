@@ -20,8 +20,10 @@ def start():
             greenhouse.schedule(get_name, args=(clientsock,))
 
     except KeyboardInterrupt:
-        print "KeyboardInterrupt caught, closing listener socket"
+        print "KeyboardInterrupt caught, closing connections"
         serversock.close()
+        for sock in CONNECTED.values():
+            sock.close()
 
 def get_name(clientsock):
     clientsock.sendall("enter your name up to 20 characters\n")

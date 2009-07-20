@@ -242,7 +242,7 @@ class File(object):
         flags = self._mode_to_flags(mode)
 
         # if write or append mode and the file doesn't exist, create it
-        if flags & (os.O_WRONLY | os.O_RDRW) and not os.path.exists(name):
+        if flags & (os.O_WRONLY | os.O_RDWR) and not os.path.exists(name):
             os.mknod(name, 0644, stat.S_IFREG)
 
         # open the file, get a descriptor

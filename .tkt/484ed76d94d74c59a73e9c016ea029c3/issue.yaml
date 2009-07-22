@@ -1,0 +1,16 @@
+created: 2009-07-05 21:19:55.944968
+creator: Travis Parker <travis.parker@gmail.com>
+dependencies: null
+description: 'it looks like timeout callbacks will be run even if the event triggers
+
+  normally. also, callbacks added by any greenlet apply to all greenlets
+
+  that wait with a timeout. that code probably needs a rewrite.'
+id: 484ed76d94d74c59a73e9c016ea029c3
+labels: []
+owner: Travis Parker <travis.parker@gmail.com>
+release: '0.5'
+resolution: fixed
+status: closed
+title: fix utils.Event timeout machinery
+type: task

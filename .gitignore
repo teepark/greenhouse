@@ -1,8 +1,6 @@
 *.pyc
 *.pyo
 .*.swp
-.ditz-config
-.ditz-plugins
 greenhouse.egg-info/*
 MANIFEST.in
 build/*

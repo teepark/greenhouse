@@ -5,7 +5,7 @@ description: 'that __init__.py looks like a mess.
 
 
   add __all__ lists to modules, then do import *s in __init__.py'
-id: ebe2334ee3524d6884ca572a5bafa78a
+id: 4a517cd3-ebe2334e
 labels: []
 owner: Travis Parker <travis.parker@gmail.com>
 release: '0.5'

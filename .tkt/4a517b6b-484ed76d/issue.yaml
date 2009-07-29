@@ -6,7 +6,7 @@ description: 'it looks like timeout callbacks will be run even if the event trig
   normally. also, callbacks added by any greenlet apply to all greenlets
 
   that wait with a timeout. that code probably needs a rewrite.'
-id: 484ed76d94d74c59a73e9c016ea029c3
+id: 4a517b6b-484ed76d
 labels: []
 owner: Travis Parker <travis.parker@gmail.com>
 release: '0.5'

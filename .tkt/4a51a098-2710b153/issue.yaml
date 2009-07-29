@@ -2,7 +2,7 @@ created: 2009-07-05 23:58:32.628101
 creator: Travis Parker <travis.parker@gmail.com>
 dependencies: null
 description: should be a replacement for os.pipe(), should return a pair of greenhouse.io.Files
-id: 2710b1539d7d4482ae009dba9e17dede
+id: 4a51a098-2710b153
 labels: []
 owner: Travis Parker <travis.parker@gmail.com>
 release: '0.5'

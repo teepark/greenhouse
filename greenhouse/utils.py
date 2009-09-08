@@ -280,7 +280,7 @@ class Timer(object):
     def _run(self):
         return self.func(*self.args, **self.kwargs)
 
-def Local(object):
+class Local(object):
     """class that represents greenlet-local data
 
     mirrors the standard library threading.local API"""

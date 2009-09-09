@@ -25,16 +25,16 @@ class Pool(object):
 
     def _runner(self):
         while 1:
-            pair = self.inq.get()
-            if pair is _STOP:
+            input = self.inq.get()
+            if input is _STOP:
                 break
-            self.outq.put((pair[0], self.func(pair[1])))
+            self.outq.put(self.func(input))
 
     def put(self, input):
-        self.inq.put((None, input))
+        self.inq.put(input)
 
     def get(self):
-        return self.outq.get()[1]
+        return self.outq.get()
 
 class OrderedPool(Pool):
     def __init__(self, *args, **kwargs):
@@ -42,6 +42,13 @@ class OrderedPool(Pool):
         self.putcount = 0
         self.getcount = 0
         self.cache = {}
+
+    def _runner(self):
+        while 1:
+            pair = self.inq.get()
+            if pair is _STOP:
+                break
+            self.outq.put((pair[0], self.func(pair[1])))
 
     def put(self, input):
         self.inq.put((self.putcount, input))

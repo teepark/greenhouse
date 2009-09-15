@@ -234,7 +234,6 @@ class File(object):
             self._wait = self._wait_yield
 
     def __init__(self, name, mode='rb'):
-        self.name = name
         self.mode = mode
         self._buf = StringIO()
 
@@ -246,7 +245,7 @@ class File(object):
             os.mknod(name, 0644, stat.S_IFREG)
 
         # open the file, get a descriptor
-        self._fileno = fileno = os.open(name, flags)
+        self._fileno = os.open(name, flags)
 
         # try to drive the asyncronous waiting off of the polling interface,
         # but epoll doesn't seem to support filesystem descriptors, so fall
@@ -266,18 +265,20 @@ class File(object):
 
     @classmethod
     def fromfd(cls, fd, mode='rb'):
-        fp = object.__new__(cls)
+        fp = object.__new__(cls) # bypass __init__
         fp.mode = mode
         fp._fileno = fd
         fp._buf = StringIO()
 
         flags = cls._mode_to_flags(mode)
 
-        fdflags = fcntl.fcntl(fd, FCNTL.F_GETFL)
+        fdflags = fcntl.fcntl(fd, fcntl.F_GETFL)
         if fdflags & flags != flags:
-            fcntl.fcntl(fd, FCNTL.F_SETFL, flags | fdflags)
+            fcntl.fcntl(fd, fcntl.F_SETFL, flags | fdflags)
 
         fp._set_up_waiting()
+
+        return fp
 
     def __iter__(self):
         line = self.readline()
@@ -413,7 +414,4 @@ class File(object):
 
 def pipe():
     r, w = os.pipe()
-    r = File.fromfd(r, 'rb')
-    w = File.fromfd(w, 'wb')
-
-    return r, w
+    return File.fromfd(r, 'rb'), File.fromfd(w, 'wb')

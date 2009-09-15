@@ -37,17 +37,14 @@ def _socketpoll():
     return events
 
 def _find_awoken():
-    newly_awoken = bool(state.awoken_from_events)
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
-    return newly_awoken
 
 def _find_timein():
     index = bisect.bisect(state.timed_paused, (time.time(), None))
-    newly_timedin = state.timed_paused[:index]
-    state.to_run.extend(imap(operator.itemgetter(1), newly_timedin))
+    state.to_run.extend(imap(operator.itemgetter(1),
+                             state.timed_paused[:index]))
     state.timed_paused = state.timed_paused[index:]
-    return bool(newly_timedin)
 
 def get_next():
     'update the scheduler state and figure out the next greenlet to run'

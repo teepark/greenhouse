@@ -146,8 +146,7 @@ class RLock(Lock):
     def release(self):
         """decrement the owned count by one. if it reaches zero, fully release
         the lock, waking up a waiting greenlet"""
-        current = greenlet.getcurrent()
-        if not self._locked or self._owner is not current:
+        if not self._locked or self._owner is not greenlet.getcurrent():
             raise RuntimeError("cannot release un-acquired lock")
         self._count -= 1
         if self._count == 0:
@@ -220,7 +219,7 @@ class Semaphore(object):
         self._waiters = collections.deque()
 
     def acquire(self, blocking=True):
-        "lock or increment the semaphore"
+        "lock or decrement the semaphore"
         if self._value:
             self._value -= 1
             return True
@@ -232,7 +231,7 @@ class Semaphore(object):
         return True
 
     def release(self):
-        "release or decrement the semaphore"
+        "release or increment the semaphore"
         if self._value or not self._waiters:
             self._value += 1
         else:

@@ -13,7 +13,7 @@ from greenhouse import utils
 from greenhouse._state import state
 
 
-__all__ = ["Socket", "File", "monkeypatch", "unmonkeypatch"]
+__all__ = ["Socket", "File", "monkeypatch", "unmonkeypatch", "pipe"]
 
 
 _socket = socket.socket

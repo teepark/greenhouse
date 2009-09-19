@@ -1,3 +1,4 @@
+import contextlib
 import errno
 import fcntl
 import os
@@ -51,7 +52,7 @@ class Socket(object):
         self._fileno = self._sock.fileno()
 
         # make the underlying socket non-blocking
-        self._sock.setblocking(False)
+        self.setblocking(False)
 
         # create events
         self._readable = utils.Event()
@@ -61,10 +62,9 @@ class Socket(object):
         self._timeout = None
         self._closed = False
 
-        # register this socket for polling events
+        # make sure we have a state.poller
         if not hasattr(state, 'poller'):
             import greenhouse.poller
-        state.poller.register(self)
 
         # allow for lookup by fileno
         state.descriptormap[self._fileno].append(weakref.ref(self))
@@ -75,40 +75,62 @@ class Socket(object):
         except:
             pass
 
+    @contextlib.contextmanager
+    def _registered(self):
+        try:
+            state.poller.register(self)
+        except IOError, error:
+            # turn IOErrors with known error codes into socket.errors
+            if error.args and error.args[0] in errno.errorcode:
+                raise socket.error(*error.args)
+            raise
+        yield
+        try:
+            state.poller.unregister(self)
+        except IOError, error:
+            # turn IOErrors with known error codes into socket.errors
+            if error.args and error.args[0] in errno.errorcode:
+                raise socket.error(*error.args)
+            raise
+
     def accept(self):
-        while 1:
-            try:
-                client, addr = self._sock.accept()
-            except socket.error, err:
-                if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
-                    pass
+        with self._registered():
+            while 1:
+                try:
+                    client, addr = self._sock.accept()
+                except socket.error, err:
+                    if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
+                        pass
+                    else:
+                        raise
                 else:
-                    raise
-            else:
-                return type(self)(fromsock=client), addr
-            self._readable.wait()
+                    return type(self)(fromsock=client), addr
+                self._readable.wait()
 
     def bind(self, *args, **kwargs):
         return self._sock.bind(*args, **kwargs)
 
     def close(self):
-        self._closed = True
-        try:
-            state.poller.unregister(self)
-        except IOError, err:
-            if err.args[0] != errno.ENOENT:
-                raise
-        return self._sock.close()
+        with self._registered():
+            self._closed = True
+            try:
+                state.poller.unregister(self)
+            except IOError, err:
+                if err.args[0] != errno.ENOENT:
+                    raise
+            return self._sock.close()
 
     def connect(self, address):
-        while True:
-            err = self._sock.connect_ex(address)
-            if err in (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
-                self._writable.wait()
-                continue
-            if err not in (0, errno.EISCONN):
-                raise socket.error(err, errno.errorcode[err])
-            return
+        with self._registered():
+            while True:
+                err = self._sock.connect_ex(address)
+                if err in (errno.EINPROGRESS, errno.EALREADY,
+                        errno.EWOULDBLOCK):
+                    self._writable.wait()
+                    continue
+                if err not in (0, errno.EISCONN):
+                    raise socket.error(err, errno.errorcode[err])
+                return
 
     def connect_ex(self, address):
         return self._sock.connect_ex(address)
@@ -138,50 +160,55 @@ class Socket(object):
         return socket._fileobject(self)
 
     def recv(self, nbytes):
-        while 1:
-            if self._closed:
-                return ''
-            try:
-                return self._sock.recv(nbytes)
-            except socket.error, e:
-                if e[0] == errno.EWOULDBLOCK:
-                    self._readable.wait()
-                    continue
-                if e[0] in SOCKET_CLOSED:
-                    self._closed = True
+        with self._registered():
+            while 1:
+                if self._closed: #pragma: no cover
                     return ''
-                raise
+                try:
+                    return self._sock.recv(nbytes)
+                except socket.error, e:
+                    if e[0] == errno.EWOULDBLOCK: #pragma: no cover
+                        self._readable.wait()
+                        continue
+                    if e[0] in SOCKET_CLOSED:
+                        self._closed = True
+                        return ''
+                    raise
 
     def recv_into(self, buffer, nbytes):
-        self._readable.wait()
-        return self._sock.recv_into(buffer, nbytes)
+        with self._registered():
+            self._readable.wait()
+            return self._sock.recv_into(buffer, nbytes)
 
     def recvfrom(self, nbytes):
-        self._readable.wait()
-        return self._sock.recvfrom(nbytes)
+        with self._registered():
+            self._readable.wait()
+            return self._sock.recvfrom(nbytes)
 
     def recvfrom_into(self, buffer, nbytes):
-        self._readable.wait()
-        return self._sock.recvfrom_into(buffer, nbytes)
+        with self._registered():
+            self._readable.wait()
+            return self._sock.recvfrom_into(buffer, nbytes)
 
     def send(self, data):
-        try:
-            return self._sock.send(data)
-        except socket.error, err:
-            if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
-                return 0
-            raise
+        with self._registered():
+            try:
+                return self._sock.send(data)
+            except socket.error, err: #pragma: no cover
+                if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
+                    return 0
+                raise
 
     def sendall(self, data):
         sent = self.send(data)
-        while sent < len(data):
+        while sent < len(data): #pragma: no cover
             self._writable.wait()
             sent += self.send(data[sent:])
 
     def sendto(self, *args):
         try:
             return self._sock.sendto(*args)
-        except socket.error, err:
+        except socket.error, err: #pragma: no cover
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise

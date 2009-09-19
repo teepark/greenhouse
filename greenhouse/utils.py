@@ -173,7 +173,8 @@ class Condition(object):
 
     def _is_owned(self):
         owned = not self._lock.acquire(False)
-        self._lock.release()
+        if not owned:
+            self._lock.release()
         return owned
 
     def wait(self, timeout=None):
@@ -263,9 +264,9 @@ class Timer(object):
         self.func = func
         self.args = args
         self.kwargs = kwargs or {}
-        self._glet = glet = greenlet(self._run)
+        self._glet = glet = greenlet(self._run, scheduler.generic_parent)
         self.waketime = waketime = time.time() + secs
-        bisect.insort(state.timed_paused, (waketime, glet))
+        scheduler.schedule_at(waketime, glet)
 
     def cancel(self):
         "if called before the greenlet runs, stop it from ever starting"
@@ -287,14 +288,14 @@ class Local(object):
         object.__setattr__(self, "data", {})
 
     def __getattr__(self, name):
-        local = object.__getattr__(self, "data").setdefault(
+        local = object.__getattribute__(self, "data").setdefault(
                 greenlet.getcurrent(), {})
         if name not in local:
             raise AttributeError, "Local object has no attribute %s" % name
         return local[name]
 
     def __setattr__(self, name, value):
-        object.__getattr__(self, "data").setdefault(greenlet.getcurrent(),
+        object.__getattribute__(self, "data").setdefault(greenlet.getcurrent(),
                 {})[name] = value
 
 class Queue(object):
@@ -376,13 +377,14 @@ class Queue(object):
         if *blocking* is False, it will immediately either place the item in
         the queue or raise a Query.Full exception"""
         if self.maxsize and len(self.queue) >= self.maxsize:
-            if blocking:
-                with self.not_full:
-                    self.not_full.wait(timeout)
-                if len(self.queue) < self.maxsize:
-                    self._unsafe_put(item)
-            raise self.Full()
-        self._unsafe_put(item)
+            if not blocking:
+                raise self.Full()
+            with self.not_full:
+                self.not_full.wait(timeout)
+            if len(self.queue) < self.maxsize:
+                self._unsafe_put(item)
+        else:
+            self._unsafe_put(item)
 
     def put_nowait(self, item):
         "immediately place an item into the queue or raise Query.Full"

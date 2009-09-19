@@ -1,5 +1,4 @@
 import bisect
-from itertools import imap
 import operator
 import time
 
@@ -42,8 +41,7 @@ def _find_awoken():
 
 def _find_timein():
     index = bisect.bisect(state.timed_paused, (time.time(), None))
-    state.to_run.extend(imap(operator.itemgetter(1),
-                             state.timed_paused[:index]))
+    state.to_run.extend(p[1] for p in state.timed_paused[:index])
     state.timed_paused = state.timed_paused[index:]
 
 def get_next():
@@ -62,12 +60,12 @@ def get_next():
         state.to_run.extend(state.paused)
         state.paused = []
 
-        # loop waiting for network events while we don't have anything to run
-        if not state.to_run:
-            while 1:
-                time.sleep(NOTHING_TO_DO_PAUSE)
-                _socketpoll()
-                if _find_awoken() or _find_timein(): break
+        # wait for timeouts and events while we don't have anything to run
+        while not state.to_run:
+            time.sleep(NOTHING_TO_DO_PAUSE)
+            _socketpoll()
+            _find_awoken()
+            _find_timein()
 
     return state.to_run.popleft()
 

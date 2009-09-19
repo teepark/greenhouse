@@ -270,7 +270,7 @@ class Timer(object):
     def cancel(self):
         "if called before the greenlet runs, stop it from ever starting"
         tp = state.timed_paused
-        if not tp:
+        if not tp: #pragma: no cover (this should be impossible)
             return
         index = bisect.bisect(tp, (self.waketime, self._glet)) - 1
         if tp[index][1] is self._glet:
@@ -400,7 +400,7 @@ class Queue(object):
         if not self.unfinished_tasks:
             self.all_tasks_done.set()
 
-def _debugger(cls):
+def _debugger(cls): #pragma: no cover
     import types
     for name in dir(cls):
         attr = getattr(cls, name)

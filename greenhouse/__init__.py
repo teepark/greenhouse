@@ -6,7 +6,7 @@ from greenhouse.io import *
 from greenhouse._state import *
 
 
-def show_state():
+def show_state(): #pragma: no cover
     print "%d greenlets awoken from events, waiting for their turn" \
             % len(state.awoken_from_events)
     print "%d greenlets waiting on %d events" % (

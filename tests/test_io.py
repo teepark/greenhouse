@@ -313,9 +313,8 @@ class SocketTestCase(StateClearingTestCase):
 
         greenhouse.pause()
         time.sleep(TESTING_TIMEOUT)
-        greenhouse.pause()
 
-        assert l and l[0] == ''
+        self.assertRaises(socket.timeout, greenhouse.pause)
 
 class FileTestCase(StateClearingTestCase):
     def setUp(self):

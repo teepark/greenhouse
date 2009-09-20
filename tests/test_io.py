@@ -306,6 +306,7 @@ class SocketTestCase(StateClearingTestCase):
         handler, addr = server.accept()
 
         client.settimeout(TESTING_TIMEOUT)
+        assert client.gettimeout() == TESTING_TIMEOUT
 
         @greenhouse.schedule
         def f():

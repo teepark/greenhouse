@@ -4,6 +4,7 @@ import socket
 import stat
 import tempfile
 import threading
+import time
 import unittest
 
 import greenhouse
@@ -297,7 +298,24 @@ class SocketTestCase(StateClearingTestCase):
         assert results[0] == "this is a test"
 
     def test_socket_timeout(self):
-        pass #TODO: working from here
+        l = []
+        server = self.makeserversock()
+        client = greenhouse.Socket()
+
+        client.connect(("", PORT))
+        handler, addr = server.accept()
+
+        client.settimeout(TESTING_TIMEOUT)
+
+        @greenhouse.schedule
+        def f():
+            l.append(client.recv(10))
+
+        greenhouse.pause()
+        time.sleep(TESTING_TIMEOUT)
+        greenhouse.pause()
+
+        assert l and l[0] == ''
 
 class FileTestCase(StateClearingTestCase):
     def setUp(self):

@@ -80,7 +80,7 @@ class EventsTestCase(StateClearingTestCase):
         ev.wait(TESTING_TIMEOUT)
         assert l[0]
 
-    def test_timeout_goes_away(self):
+    def test_timeout_callback_goes_away(self):
         ev = greenhouse.Event()
         l = [False]
 

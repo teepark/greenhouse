@@ -14,7 +14,7 @@ NOTHING_TO_DO_PAUSE = 0.005
 
 def _socketpoll():
     if not hasattr(state, 'poller'):
-        import greenhouse.poller
+        import greenhouse.poller #pragma: no cover
     events = state.poller.poll()
     for fd, eventmap in events:
         socks = []
@@ -22,7 +22,7 @@ def _socketpoll():
             sock = weakref()
             if sock is None:
                 assert state.descriptormap[fd].pop(index)() is None, \
-                        "woops, removed a perfectly good socket"
+                        "removed a perfectly good socket"
             else:
                 socks.append(sock)
         if eventmap & state.poller.INMASK:

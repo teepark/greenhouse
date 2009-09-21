@@ -64,7 +64,7 @@ class Socket(object):
 
         # make sure we have a state.poller
         if not hasattr(state, 'poller'):
-            import greenhouse.poller
+            import greenhouse.poller #pragma: no cover
 
         # allow for lookup by fileno
         state.descriptormap[self._fileno].append(weakref.ref(self))
@@ -79,16 +79,16 @@ class Socket(object):
     def _registered(self):
         try:
             state.poller.register(self)
-        except IOError, error:
-            # turn IOErrors with known error codes into socket.errors
+        except (IOError, OSError), error: #pragma: no cover
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
+
         yield
+
         try:
             state.poller.unregister(self)
-        except IOError, error:
-            # turn IOErrors with known error codes into socket.errors
+        except (IOError, OSError), error: #pragma: no cover
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
@@ -100,35 +100,28 @@ class Socket(object):
                     client, addr = self._sock.accept()
                 except socket.error, err:
                     if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
-                        pass
+                        self._readable.wait()
+                        continue
                     else:
-                        raise
-                else:
-                    return type(self)(fromsock=client), addr
-                self._readable.wait()
+                        raise #pragma: no cover
+                return type(self)(fromsock=client), addr
 
     def bind(self, *args, **kwargs):
         return self._sock.bind(*args, **kwargs)
 
     def close(self):
-        with self._registered():
-            self._closed = True
-            try:
-                state.poller.unregister(self)
-            except IOError, err:
-                if err.args[0] != errno.ENOENT:
-                    raise
-            return self._sock.close()
+        self._closed = True
+        return self._sock.close()
 
     def connect(self, address):
         with self._registered():
             while True:
-                err = self._sock.connect_ex(address)
+                err = self.connect_ex(address)
                 if err in (errno.EINPROGRESS, errno.EALREADY,
                         errno.EWOULDBLOCK):
                     self._writable.wait()
                     continue
-                if err not in (0, errno.EISCONN):
+                if err not in (0, errno.EISCONN): #pragma: no cover
                     raise socket.error(err, errno.errorcode[err])
                 return
 
@@ -162,8 +155,8 @@ class Socket(object):
     def recv(self, nbytes):
         with self._registered():
             while 1:
-                if self._closed: #pragma: no cover
-                    return ''
+                if self._closed:
+                    raise socket.error(errno.EBADF, "Bad file descriptor")
                 try:
                     return self._sock.recv(nbytes)
                 except socket.error, e:
@@ -173,7 +166,7 @@ class Socket(object):
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
                         return ''
-                    raise
+                    raise #pragma: no cover
 
     def recv_into(self, buffer, nbytes):
         with self._registered():
@@ -248,7 +241,7 @@ class File(object):
 
     def _set_up_waiting(self):
         if not hasattr(state, 'poller'):
-            import greenhouse.poller
+            import greenhouse.poller #pragma: no cover
         try:
             state.poller.register(self)
 
@@ -279,16 +272,22 @@ class File(object):
         # back to a waiting with a simple yield
         self._set_up_waiting()
 
-    def _wait_event(self, reading):
+    def _wait_event(self, reading): #pragma: no cover
         "wait on our events"
         if reading:
             self._readable.wait()
         else:
             self._writable.wait()
 
-    def _wait_yield(self, reading):
+    def _wait_yield(self, reading): #pragma: no cover
         "generic wait, for when polling won't work"
         scheduler.pause()
+
+    @staticmethod
+    def _add_flags(fd, flags):
+        fdflags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        if fdflags & flags != flags:
+            fcntl.fcntl(fd, fcntl.F_SETFL, flags | fdflags)
 
     @classmethod
     def fromfd(cls, fd, mode='rb'):
@@ -297,12 +296,7 @@ class File(object):
         fp._fileno = fd
         fp._buf = StringIO()
 
-        flags = cls._mode_to_flags(mode)
-
-        fdflags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        if fdflags & flags != flags:
-            fcntl.fcntl(fd, fcntl.F_SETFL, flags | fdflags)
-
+        cls._add_flags(fd, cls._mode_to_flags(mode))
         fp._set_up_waiting()
 
         return fp
@@ -332,15 +326,6 @@ class File(object):
     def fileno(self):
         return self._fileno
 
-    def _read_once(self, size):
-        try:
-            return os.read(self._fileno, size)
-        except (OSError, IOError), err:
-            if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                return None
-            else:
-                raise
-
     def read(self, size=-1):
         chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
 
@@ -353,12 +338,15 @@ class File(object):
                 # we have read enough already
                 break
 
-            output = self._read_once(chunksize)
-
-            if output is None:
-                # would have blocked
-                self._wait(reading=True)
-                continue
+            try:
+                output = os.read(self._fileno, chunksize)
+            except (OSError, IOError), err: #pragma: no cover
+                if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                    # would have blocked
+                    self._wait(reading=True)
+                    continue
+                else:
+                    raise
 
             if not output:
                 # nothing more to read
@@ -380,29 +368,38 @@ class File(object):
 
     def readline(self):
         buf = self._buf
-        buf.seek(0)
         newline, chunksize = self.NEWLINE, self.CHUNKSIZE
+        buf.seek(0)
 
         text = buf.read()
         while text.find(newline) < 0:
-            text = self.read(chunksize)
+            try:
+                text = os.read(self._fileno, chunksize)
+            except (OSError, IOError), err: #pragma: no cover
+                if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                    # would have blocked
+                    self._wait(reading=True)
+                    continue
+                else:
+                    raise
             if not text:
                 break
             buf.write(text)
-
-        rc = buf.getvalue()
-        index = rc.find(newline)
-
-        if index < 0:
-            # no newline in the whole file, return everything
-            index = len(rc)
         else:
-            index += len(newline)
+            # found a newline
+            rc = buf.getvalue()
+            index = rc.find(newline) + len(newline)
 
+            buf.seek(0)
+            buf.truncate()
+            buf.write(rc[index:])
+            return rc[:index]
+
+        # hit the end of the file, no more newlines
+        rc = buf.getvalue()
         buf.seek(0)
         buf.truncate()
-        buf.write(rc[index:])
-        return rc[:index]
+        return rc
 
     def readlines(self):
         return list(self.__iter__())
@@ -416,28 +413,24 @@ class File(object):
         buf.truncate()
 
     def tell(self):
-        return os.fdopen(self._fileno).tell()
-
-    def _write_once(self, data):
-        try:
-            return os.write(self._fileno, data)
-        except (OSError, IOError), err:
-            if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                return None
-            else:
-                raise
+        with os.fdopen(os.dup(self._fileno)) as fp:
+            return fp.tell()
 
     def write(self, data):
         while data:
-            went = self._write_once(data)
-            if went is None:
-                self._wait(reading=False)
-                continue
+            try:
+                went = os.write(self._fileno, data)
+            except (OSError, IOError), err: #pragma: no cover
+                if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                    self._wait(reading=False)
+                    continue
+                else:
+                    raise
+
             data = data[went:]
 
     def writelines(self, lines):
-        for line in lines:
-            self.write(line)
+        self.write("".join(lines))
 
 def pipe():
     r, w = os.pipe()

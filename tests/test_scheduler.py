@@ -1,10 +1,15 @@
+import os
+import socket
 import time
 import unittest
 
 import greenhouse
+import greenhouse.poller
 
 from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
+
+port = lambda: 8000 + os.getpid() # because i want to run multiprocess nose
 
 class ScheduleTestCase(StateClearingTestCase):
     def test_schedule(self):
@@ -64,11 +69,12 @@ class ScheduleTestCase(StateClearingTestCase):
         greenhouse.pause()
         assert not l
 
-        time.sleep(TESTING_TIMEOUT)
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
+        assert time.time() >= at
         greenhouse.pause()
 
         l.sort()
-        assert l == [1, 2, 3, 4, 5]
+        assert l == [1, 2, 3, 4, 5], l
 
     def test_schedule_in(self):
         l = []
@@ -158,16 +164,77 @@ class ScheduleTestCase(StateClearingTestCase):
         self.assertRaises(TypeError, greenhouse.schedule_recurring,
                 TESTING_TIMEOUT, f, maxtimes=2)
 
-class TimedPausingTestCase(StateClearingTestCase):
+    def test_deleted_sock_gets_cleared(self):
+        dmap = greenhouse._state.state.descriptormap
+        fno = greenhouse.Socket().fileno()
+
+        import gc
+        gc.collect()
+
+        assert None in [x() for x in dmap[fno]]
+
+        client = greenhouse.Socket()
+        server = greenhouse.Socket()
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("", port()))
+        server.listen(5)
+        client.connect(("", port()))
+        handler, addr = server.accept()
+
+        handler.send("howdy")
+        client.recv(5)
+
+        assert all(x() for x in dmap[fno]), [x() for x in dmap[fno]]
+
+        handler.close()
+        client.close()
+        server.close()
+
+    def test_socketpolling(self):
+        client = greenhouse.Socket()
+        server = greenhouse.Socket()
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("", port()))
+        server.listen(5)
+        client.connect(("", port()))
+        handler, addr = server.accept()
+        l = [False]
+
+        @greenhouse.schedule
+        def f():
+            client.recv(10)
+            l[0] = True
+
+        greenhouse.pause()
+        greenhouse.pause()
+        assert not l[0]
+
+        handler.send("hi")
+        greenhouse.pause()
+        assert l[0]
+
+class PausingTestCase(StateClearingTestCase):
+    def test_pause(self):
+        l = [False]
+
+        @greenhouse.schedule
+        def f():
+            l[0] = True
+
+        assert not l[0]
+
+        greenhouse.pause()
+        assert l[0]
+
     def test_pause_for(self):
         start = time.time()
         greenhouse.pause_for(TESTING_TIMEOUT)
-        assert TESTING_TIMEOUT + 0.01 > time.time() - start >= TESTING_TIMEOUT
+        assert TESTING_TIMEOUT + 0.03 > time.time() - start >= TESTING_TIMEOUT
 
     def test_pause_until(self):
         until = time.time() + TESTING_TIMEOUT
         greenhouse.pause_until(until)
-        assert until + 0.01 > time.time() >= until
+        assert until + 0.03 > time.time() >= until
 
 
 if __name__ == '__main__':

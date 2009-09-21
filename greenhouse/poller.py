@@ -13,6 +13,7 @@ class Epoll(object):
     INMASK = getattr(select, 'EPOLLIN', None)
     OUTMASK = getattr(select, 'EPOLLOUT', None)
     ERRMASK = getattr(select, 'EPOLLERR', None)
+
     def __init__(self):
         self._poller = select.epoll()
 
@@ -63,7 +64,7 @@ class Select(object):
     def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
         if eventmask is None:
-            eventmask = self.SELECTIN | self.SELECTOUT | self.SELECTERR
+            eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
         isnew = fd not in self._fds
         self._fds[fd] = eventmask
         return isnew

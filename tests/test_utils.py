@@ -2,6 +2,7 @@ import time
 import unittest
 
 import greenhouse
+import greenhouse.poller
 
 from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
@@ -429,6 +430,13 @@ class QueueTestCase(StateClearingTestCase):
         q = greenhouse.Queue()
         self.assertRaises(q.Empty, q.get_nowait)
 
+    def test_nonblocking_raises_full(self):
+        q = greenhouse.Queue(2)
+        q.put(1)
+        q.put(2)
+
+        self.assertRaises(q.Full, q.put_nowait, 3)
+
     def test_put_sized_nonblocking(self):
         q = greenhouse.Queue(3)
         q.put(4)
@@ -489,6 +497,47 @@ class QueueTestCase(StateClearingTestCase):
 
         q.task_done()
         self.assertRaises(ValueError, q.task_done)
+
+    def test_empty_method(self):
+        q = greenhouse.Queue()
+        assert q.empty()
+
+        q.put(5)
+        assert not q.empty()
+
+        q.get()
+        assert q.empty()
+
+    def test_full_method(self):
+        q = greenhouse.Queue(2)
+        assert not q.full()
+
+        q.put(4)
+        assert not q.full()
+
+        q.put(5)
+        assert q.full()
+
+        q.get()
+        assert not q.full()
+
+        q.put(6)
+        assert q.full()
+
+    def test_qsize(self):
+        q = greenhouse.Queue()
+        assert q.qsize() == 0
+
+        q.put(4)
+        q.put(5)
+        assert q.qsize() == 2
+
+        q.get()
+        assert q.qsize() == 1
+
+        q.put(6)
+        q.put(7)
+        assert q.qsize() == 3
 
 if __name__ == '__main__':
     unittest.main()

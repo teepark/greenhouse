@@ -85,7 +85,7 @@ class Socket(object):
                 mask |= poller.INMASK
             if 'w' in events:
                 mask |= poller.OUTMASK
-            if 'e' in events:
+            if 'e' in events: #pragma: no cover
                 mask |= poller.ERRMASK
         try:
             poller.register(self, mask)

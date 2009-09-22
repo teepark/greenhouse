@@ -1,8 +1,0 @@
-name: greenhouse
-plugins:
-- tkt.plugins.dependencies
-- tkt.plugins.releases
-- tkt.plugins.labels
-- tkt.plugins.claiming
-releases:
-  '0.5': null

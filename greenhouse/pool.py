@@ -22,6 +22,7 @@ class Pool(object):
     def close(self):
         for i in xrange(self.size):
             self.inq.put(_STOP)
+        self.coros = []
 
     def _runner(self):
         while 1:

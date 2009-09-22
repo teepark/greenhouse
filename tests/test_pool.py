@@ -153,3 +153,7 @@ class OrderedPoolTestCase(PoolTestCase):
         assert l == [x ** 2 for x in xrange(30)]
 
         pool.close()
+
+
+if __name__ == '__main__':
+    unittest.main()

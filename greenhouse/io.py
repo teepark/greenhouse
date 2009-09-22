@@ -76,9 +76,19 @@ class Socket(object):
             pass
 
     @contextlib.contextmanager
-    def _registered(self):
+    def _registered(self, events=None):
+        poller = state.poller
+        mask = None
+        if events:
+            mask = 0
+            if 'r' in events:
+                mask |= poller.INMASK
+            if 'w' in events:
+                mask |= poller.OUTMASK
+            if 'e' in events:
+                mask |= poller.ERRMASK
         try:
-            state.poller.register(self)
+            poller.register(self, mask)
         except (IOError, OSError), error: #pragma: no cover
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
@@ -87,14 +97,14 @@ class Socket(object):
         yield
 
         try:
-            state.poller.unregister(self)
+            poller.unregister(self)
         except (IOError, OSError), error: #pragma: no cover
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
 
     def accept(self):
-        with self._registered():
+        with self._registered('r'):
             while 1:
                 try:
                     client, addr = self._sock.accept()
@@ -114,7 +124,7 @@ class Socket(object):
         return self._sock.close()
 
     def connect(self, address):
-        with self._registered():
+        with self._registered('w'):
             while True:
                 err = self.connect_ex(address)
                 if err in (errno.EINPROGRESS, errno.EALREADY,
@@ -153,7 +163,7 @@ class Socket(object):
         return socket._fileobject(self)
 
     def recv(self, nbytes):
-        with self._registered():
+        with self._registered('r'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
@@ -169,34 +179,34 @@ class Socket(object):
                     raise #pragma: no cover
 
     def recv_into(self, buffer, nbytes):
-        with self._registered():
+        with self._registered('r'):
             self._readable.wait()
             return self._sock.recv_into(buffer, nbytes)
 
     def recvfrom(self, nbytes):
-        with self._registered():
+        with self._registered('r'):
             self._readable.wait()
             return self._sock.recvfrom(nbytes)
 
     def recvfrom_into(self, buffer, nbytes):
-        with self._registered():
+        with self._registered('r'):
             self._readable.wait()
             return self._sock.recvfrom_into(buffer, nbytes)
 
     def send(self, data):
-        with self._registered():
-            try:
-                return self._sock.send(data)
-            except socket.error, err: #pragma: no cover
-                if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
-                    return 0
-                raise
+        try:
+            return self._sock.send(data)
+        except socket.error, err: #pragma: no cover
+            if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
+                return 0
+            raise
 
     def sendall(self, data):
-        sent = self.send(data)
-        while sent < len(data): #pragma: no cover
-            self._writable.wait()
-            sent += self.send(data[sent:])
+        with self._registered('w'):
+            sent = self.send(data)
+            while sent < len(data): #pragma: no cover
+                self._writable.wait()
+                sent += self.send(data[sent:])
 
     def sendto(self, *args):
         try:

@@ -36,6 +36,13 @@ class Pool(object):
     def get(self):
         return self.outq.get()
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
 class OrderedPool(Pool):
     def __init__(self, *args, **kwargs):
         super(OrderedPool, self).__init__(*args, **kwargs)

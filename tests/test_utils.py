@@ -70,6 +70,22 @@ class EventsTestCase(StateClearingTestCase):
         now = time.time()
         assert now - start > TESTING_TIMEOUT, now - start
 
+    def test_timeouts_in_grlets(self):
+        l = [False]
+        ev = greenhouse.Event()
+
+        @greenhouse.schedule
+        def f():
+            ev.wait(TESTING_TIMEOUT)
+            l[0] = True
+
+        greenhouse.pause()
+        assert not l[0]
+
+        time.sleep(TESTING_TIMEOUT * 2)
+        greenhouse.pause()
+        assert l[0]
+
     def test_timeout_callback(self):
         ev = greenhouse.Event()
         l = [False]

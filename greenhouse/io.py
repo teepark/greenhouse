@@ -58,6 +58,12 @@ class Socket(object):
         self._readable = utils.Event()
         self._writable = utils.Event()
 
+        # make sure these events timing out raises socket.timeout
+        def timeout_callback():
+            raise socket.timeout("timed out")
+        self._readable._add_timeout_callback(timeout_callback)
+        self._writable._add_timeout_callback(timeout_callback)
+
         # some more housekeeping
         self._timeout = None
         self._closed = False
@@ -110,7 +116,7 @@ class Socket(object):
                     client, addr = self._sock.accept()
                 except socket.error, err:
                     if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
-                        self._readable.wait()
+                        self._readable.wait(self._timeout)
                         continue
                     else:
                         raise #pragma: no cover
@@ -129,7 +135,7 @@ class Socket(object):
                 err = self.connect_ex(address)
                 if err in (errno.EINPROGRESS, errno.EALREADY,
                         errno.EWOULDBLOCK):
-                    self._writable.wait()
+                    self._writable.wait(self._timeout)
                     continue
                 if err not in (0, errno.EISCONN): #pragma: no cover
                     raise socket.error(err, errno.errorcode[err])
@@ -171,7 +177,7 @@ class Socket(object):
                     return self._sock.recv(nbytes)
                 except socket.error, e:
                     if e[0] == errno.EWOULDBLOCK: #pragma: no cover
-                        self._readable.wait()
+                        self._readable.wait(self._timeout)
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -180,17 +186,17 @@ class Socket(object):
 
     def recv_into(self, buffer, nbytes):
         with self._registered('r'):
-            self._readable.wait()
+            self._readable.wait(self._timeout)
             return self._sock.recv_into(buffer, nbytes)
 
     def recvfrom(self, nbytes):
         with self._registered('r'):
-            self._readable.wait()
+            self._readable.wait(self._timeout)
             return self._sock.recvfrom(nbytes)
 
     def recvfrom_into(self, buffer, nbytes):
         with self._registered('r'):
-            self._readable.wait()
+            self._readable.wait(self._timeout)
             return self._sock.recvfrom_into(buffer, nbytes)
 
     def send(self, data):
@@ -205,7 +211,7 @@ class Socket(object):
         with self._registered('w'):
             sent = self.send(data)
             while sent < len(data): #pragma: no cover
-                self._writable.wait()
+                self._writable.wait(self._timeout)
                 sent += self.send(data[sent:])
 
     def sendto(self, *args):

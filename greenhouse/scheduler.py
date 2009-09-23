@@ -1,9 +1,10 @@
 import bisect
 import operator
+import sys
 import time
 
 from greenhouse._state import state
-from greenhouse.compat import greenlet
+from greenhouse.compat import greenlet, main_greenlet
 
 
 __all__ = ["get_next", "go_to_next", "pause", "pause_until", "pause_for",
@@ -184,4 +185,16 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 @greenlet
 def generic_parent(ended):
     while 1:
-        go_to_next()
+        try:
+            go_to_next()
+        except Exception, exc:
+            if main_greenlet and not isinstance(exc, greenlet.GreenletExit):
+                main_greenlet.throw(sys.exc_info()[1])
+
+# prime the pump. if there is a traceback before the generic parent has a
+# chance to get into its 'try' block, the generic parent will die of that
+# traceback and it will wind up being raised in the main greenlet
+@schedule
+def f():
+    pass
+pause()

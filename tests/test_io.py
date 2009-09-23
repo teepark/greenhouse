@@ -274,10 +274,12 @@ class SelectSocketTestCase(EPollSocketTestCase):
 
 class FileWithEpollTestCase(StateClearingTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         self.fname = tempfile.mktemp()
         greenhouse.poller.set(greenhouse.poller.Epoll())
 
     def tearDown(self):
+        super(FileWithEpollTestCase, self).tearDown()
         if os.path.exists(self.fname):
             os.unlink(self.fname)
 
@@ -434,16 +436,19 @@ test""")
 
 class FileWithPollTestCase(FileWithEpollTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         self.fname = tempfile.mktemp()
         greenhouse.poller.set(greenhouse.poller.Poll())
 
 class FileWithSelectTestCase(FileWithEpollTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         self.fname = tempfile.mktemp()
         greenhouse.poller.set(greenhouse.poller.Select())
 
 class PipeWithEpollTestCase(StateClearingTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Select())
 
     def test_basic(self):
@@ -477,10 +482,12 @@ class PipeWithEpollTestCase(StateClearingTestCase):
 
 class PipeWithPollTestCase(PipeWithEpollTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Poll())
 
 class PipeWithSelectTestCase(PipeWithEpollTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Select())
 
 

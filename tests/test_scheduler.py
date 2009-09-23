@@ -36,10 +36,10 @@ class ScheduleTestCase(StateClearingTestCase):
             l.append(5)
         greenhouse.schedule(f5)
 
-        greenhouse.pause()
+        greenhouse.pause_for(TESTING_TIMEOUT)
 
         l.sort()
-        assert l == [1, 2, 3, 4, 5]
+        assert l == [1, 2, 3, 4, 5], l
 
     def test_schedule_at(self):
         at = time.time() + TESTING_TIMEOUT
@@ -107,7 +107,7 @@ class ScheduleTestCase(StateClearingTestCase):
         greenhouse.pause()
 
         l.sort()
-        assert l == [1, 2, 3, 4, 5]
+        assert l == [1, 2, 3, 4, 5], l
 
     def test_schedule_recurring(self):
         l = []
@@ -117,7 +117,7 @@ class ScheduleTestCase(StateClearingTestCase):
         greenhouse.schedule_recurring(TESTING_TIMEOUT, f1, maxtimes=2)
 
         greenhouse.pause_for(TESTING_TIMEOUT * 3)
-        assert l == [1, 1]
+        assert l == [1, 1], l
 
         l = []
         @greenhouse.schedule_recurring(TESTING_TIMEOUT, maxtimes=2)
@@ -125,7 +125,7 @@ class ScheduleTestCase(StateClearingTestCase):
             l.append(2)
 
         greenhouse.pause_for(TESTING_TIMEOUT * 3)
-        assert l == [2, 2]
+        assert l == [2, 2], l
 
         l = []
         @greenhouse.schedule_recurring(TESTING_TIMEOUT, maxtimes=2, args=(3,))
@@ -133,7 +133,7 @@ class ScheduleTestCase(StateClearingTestCase):
             l.append(x)
 
         greenhouse.pause_for(TESTING_TIMEOUT * 3)
-        assert l == [3, 3]
+        assert l == [3, 3], l
 
         l = []
         @greenhouse.schedule_recurring(TESTING_TIMEOUT, maxtimes=2,
@@ -142,7 +142,7 @@ class ScheduleTestCase(StateClearingTestCase):
             l.append(x)
 
         greenhouse.pause_for(TESTING_TIMEOUT * 3)
-        assert l == [4, 4]
+        assert l == [4, 4], l
 
         l = []
         @greenhouse.compat.greenlet
@@ -235,6 +235,16 @@ class PausingTestCase(StateClearingTestCase):
         until = time.time() + TESTING_TIMEOUT
         greenhouse.pause_until(until)
         assert until + 0.03 > time.time() >= until
+
+class ExceptionsTestCase(StateClearingTestCase):
+    class CustomError(Exception): pass
+
+    def test_exceptions_raised_in_grlets(self):
+        @greenhouse.schedule
+        def f():
+            raise self.CustomError()
+
+        self.assertRaises(self.CustomError, greenhouse.pause)
 
 
 if __name__ == '__main__':

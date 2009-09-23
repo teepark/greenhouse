@@ -9,11 +9,13 @@ from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
 class PollSelectorTestCase(StateClearingTestCase):
     def setUp(self):
+        StateClearingTestCase.setUp(self)
         self._epoll = select.epoll
         self._poll = select.poll
         self._select = select.select
 
     def tearDown(self):
+        super(PollSelectorTestCase, self).tearDown()
         select.epoll = self._epoll
         select.poll = self._poll
         select.select = self._select

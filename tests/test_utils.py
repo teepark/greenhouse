@@ -104,7 +104,6 @@ class EventsTestCase(StateClearingTestCase):
 
     def test_timeout_with_exception(self):
         ev = greenhouse.Event()
-        l = [False]
 
         class CustomError(Exception): pass
 

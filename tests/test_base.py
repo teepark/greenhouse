@@ -10,6 +10,8 @@ import greenhouse
 
 TESTING_TIMEOUT = 0.05
 
+GTL = greenhouse.Lock()
+
 class StateClearingTestCase(unittest.TestCase):
     def setUp(self):
         greenhouse.unmonkeypatch()
@@ -23,3 +25,8 @@ class StateClearingTestCase(unittest.TestCase):
         state.to_run.clear()
 
         greenhouse.poller.set()
+
+        GTL.acquire()
+
+    def tearDown(self):
+        GTL.release()

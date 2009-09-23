@@ -101,6 +101,8 @@ class PoolTestCase(StateClearingTestCase):
 
         pool.close()
 
+        greenhouse.pause()
+
         pool.start()
 
         for x in xrange(30):

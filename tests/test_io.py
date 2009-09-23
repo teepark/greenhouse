@@ -220,17 +220,22 @@ class EPollSocketTestCase(StateClearingTestCase):
 
     def test_socket_timeout(self):
         with self.socketpair() as (client, handler):
-            l = []
+            client.settimeout(TESTING_TIMEOUT)
+            assert client.gettimeout() == TESTING_TIMEOUT
 
+            self.assertRaises(socket.timeout, client.recv, 10)
+
+    def test_socket_timeout_in_grlet(self):
+        with self.socketpair() as (client, handler):
             client.settimeout(TESTING_TIMEOUT)
             assert client.gettimeout() == TESTING_TIMEOUT
 
             @greenhouse.schedule
             def f():
-                l.append(client.recv(10))
+                client.recv(10)
 
             greenhouse.pause()
-            time.sleep(TESTING_TIMEOUT)
+            time.sleep(TESTING_TIMEOUT * 2)
 
             self.assertRaises(socket.timeout, greenhouse.pause)
 

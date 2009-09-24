@@ -58,7 +58,7 @@ class Socket(object):
         self._readable = utils.Event()
         self._writable = utils.Event()
 
-        # make sure these events timing out raises socket.timeout
+        # make sure these events raise socket.timeout upon timeout
         def timeout_callback():
             raise socket.timeout("timed out")
         self._readable._add_timeout_callback(timeout_callback)
@@ -115,6 +115,8 @@ class Socket(object):
                 try:
                     client, addr = self._sock.accept()
                 except socket.error, err:
+                    if isinstance(err, socket.timeout):
+                        raise
                     if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
                         self._readable.wait(self._timeout)
                         continue
@@ -176,7 +178,9 @@ class Socket(object):
                 try:
                     return self._sock.recv(nbytes)
                 except socket.error, e:
-                    if e[0] == errno.EWOULDBLOCK: #pragma: no cover
+                    if isinstance(e, socket.timeout):
+                        raise
+                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                         self._readable.wait(self._timeout)
                         continue
                     if e[0] in SOCKET_CLOSED:
@@ -203,6 +207,8 @@ class Socket(object):
         try:
             return self._sock.send(data)
         except socket.error, err: #pragma: no cover
+            if isinstance(err, socket.timeout):
+                raise
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise
@@ -218,6 +224,8 @@ class Socket(object):
         try:
             return self._sock.sendto(*args)
         except socket.error, err: #pragma: no cover
+            if isinstance(err, socket.timeout):
+                raise
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise

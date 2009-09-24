@@ -13,6 +13,25 @@ from greenhouse import scheduler
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
            "BoundedSemaphore", "Timer", "Local", "Queue"]
 
+def _debugger(cls): #pragma: no cover
+    import types
+    for name in dir(cls):
+        attr = getattr(cls, name)
+        if isinstance(attr, types.MethodType):
+            def extrascope(attr):
+                @functools.wraps(attr)
+                def wrapper(*args, **kwargs):
+                    print "%s.%s %s %s" % (cls.__name__, attr.__name__,
+                            repr(args[1:]), repr(kwargs))
+                    rc = attr(*args, **kwargs)
+                    print "%s.%s --> %s" % (cls.__name__, attr.__name__,
+                            repr(rc))
+                    return rc
+                return wrapper
+            setattr(cls, name, extrascope(attr))
+    return cls
+
+#@_debugger
 class Event(object):
     """an event for which greenlets can wait
 
@@ -21,7 +40,7 @@ class Event(object):
         self._is_set = False
         self._guid = id(self)
         self._timeout_callbacks = collections.defaultdict(list)
-        self._active_timeout_runners = set()
+        self._active_timeouts = set()
 
     def is_set(self):
         "returns True if waiting on this event will block, False if not"
@@ -35,7 +54,7 @@ class Event(object):
         woken up, and calling wait() will not block until the clear() method
         has been called"""
         self._is_set = True
-        self._active_timeout_runners.clear()
+        self._active_timeouts.clear()
         state.awoken_from_events.update(state.paused_on_events[self._guid])
         del state.paused_on_events[self._guid]
 
@@ -56,28 +75,37 @@ class Event(object):
 
         if the set() method has been called, this method will not block at
         all. otherwise it will block until the set() method is called"""
-        if not self._is_set:
-            current = greenlet.getcurrent() # the waiting greenlet
-            state.paused_on_events[self._guid].append(current)
-            if timeout is not None:
-                @scheduler.schedule_in(timeout)
-                def hit_timeout():
-                    if hit_timeout not in self._active_timeout_runners:
-                        return
-                    state.paused_on_events[self._guid].remove(current)
-                    state.awoken_from_events.add(current)
-                    error = None
-                    for cback in self._timeout_callbacks[current]:
-                        try:
-                            cback()
-                        except Exception, err:
-                            if error is None:
-                                error = err
-                    if error is not None:
-                        raise error
-                self._active_timeout_runners.add(hit_timeout)
-            scheduler.go_to_next()
+        if self._is_set:
+            return
 
+        current = greenlet.getcurrent() # the waiting greenlet
+
+        if timeout is not None:
+            self._active_timeouts.add(current)
+
+            @scheduler.schedule_in(timeout)
+            def hit_timeout():
+                if current not in self._active_timeouts:
+                    return
+
+                state.paused_on_events[self._guid].remove(current)
+                state.awoken_from_events.add(current)
+
+                error = None
+                for cb in self._timeout_callbacks[current]:
+                    try:
+                        cb()
+                    except Exception, exc:
+                        if error is None:
+                            error = exc
+
+                if error is not None:
+                    raise error
+
+        state.paused_on_events[self._guid].append(current)
+        scheduler.go_to_next()
+
+#@_debugger
 class Lock(object):
     """an object that can only be 'owned' by one greenlet at a time
 
@@ -401,21 +429,3 @@ class Queue(object):
         self.unfinished_tasks -= 1
         if not self.unfinished_tasks:
             self.all_tasks_done.set()
-
-def _debugger(cls): #pragma: no cover
-    import types
-    for name in dir(cls):
-        attr = getattr(cls, name)
-        if isinstance(attr, types.MethodType):
-            def extrascope(attr):
-                @functools.wraps(attr)
-                def wrapper(*args, **kwargs):
-                    print "%s.%s %s %s" % (cls.__name__, attr.__name__,
-                            repr(args[1:]), repr(kwargs))
-                    rc = attr(*args, **kwargs)
-                    print "%s.%s --> %s" % (cls.__name__, attr.__name__,
-                            repr(rc))
-                    return rc
-                return wrapper
-            setattr(cls, name, extrascope(attr))
-    return cls

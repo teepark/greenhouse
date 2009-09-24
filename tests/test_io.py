@@ -36,7 +36,7 @@ class MonkeyPatchingTestCase(StateClearingTestCase):
         assert open is _open
         assert file is _file
 
-class EPollSocketTestCase(StateClearingTestCase):
+class EpollSocketTestCase(StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Epoll())
@@ -235,9 +235,8 @@ class EPollSocketTestCase(StateClearingTestCase):
                 client.recv(10)
 
             greenhouse.pause()
-            time.sleep(TESTING_TIMEOUT * 2)
 
-            self.assertRaises(socket.timeout, greenhouse.pause)
+            self.assertRaises(socket.timeout, greenhouse.pause_for, TESTING_TIMEOUT * 2)
 
     def test_fromfd_from_gsock(self):
         with self.socketpair() as (client, handler):
@@ -267,12 +266,12 @@ class EPollSocketTestCase(StateClearingTestCase):
             assert client.getsockname() == handler.getpeername()
             assert client.getpeername() == handler.getsockname()
 
-class PollSocketTestCase(EPollSocketTestCase):
+class PollSocketTestCase(EpollSocketTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Poll())
 
-class SelectSocketTestCase(EPollSocketTestCase):
+class SelectSocketTestCase(EpollSocketTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Select())

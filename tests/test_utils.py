@@ -82,8 +82,8 @@ class EventsTestCase(StateClearingTestCase):
         greenhouse.pause()
         assert not l[0]
 
-        time.sleep(TESTING_TIMEOUT * 2)
-        greenhouse.pause()
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
+
         assert l[0]
 
     def test_timeout_callback(self):
@@ -95,6 +95,7 @@ class EventsTestCase(StateClearingTestCase):
             l[0] = True
 
         ev.wait(TESTING_TIMEOUT)
+        greenhouse.pause()
         assert l[0]
 
     def test_timeout_callback_goes_away(self):

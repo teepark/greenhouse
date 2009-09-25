@@ -2,6 +2,7 @@ import bisect
 import operator
 import sys
 import time
+import traceback
 
 from greenhouse._state import state
 from greenhouse.compat import greenlet, main_greenlet
@@ -9,6 +10,9 @@ from greenhouse.compat import greenlet, main_greenlet
 
 __all__ = ["get_next", "go_to_next", "pause", "pause_until", "pause_for",
            "schedule", "schedule_at", "schedule_in", "schedule_recurring"]
+
+# this is intended to be monkey-patchable from client code
+PRINT_EXCEPTIONS = True
 
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
@@ -185,11 +189,16 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 @greenlet
 def generic_parent(ended):
     while 1:
+        if not traceback:
+            # python's shutdown sequence gets out of wack when we have
+            # greenlets in play. in certain circumstances, the traceback module
+            # becomes None before this code runs.
+            break
         try:
             go_to_next()
         except Exception, exc:
-            if main_greenlet and not isinstance(exc, greenlet.GreenletExit):
-                main_greenlet.throw(sys.exc_info()[1])
+            if PRINT_EXCEPTIONS:
+                traceback.print_exception(*sys.exc_info(), file=sys.stderr)
 
 # prime the pump. if there is a traceback before the generic parent has a
 # chance to get into its 'try' block, the generic parent will die of that

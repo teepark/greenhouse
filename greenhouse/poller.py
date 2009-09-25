@@ -8,49 +8,50 @@ __all__ = ["Epoll", "Poll", "Select", "best", "set"]
 
 SHORT_TIMEOUT = 0.0001
 
-class Epoll(object):
-    "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
-    INMASK = getattr(select, 'EPOLLIN', None)
-    OUTMASK = getattr(select, 'EPOLLOUT', None)
-    ERRMASK = getattr(select, 'EPOLLERR', None)
-
-    def __init__(self):
-        self._poller = select.epoll()
-
-    def register(self, fd, eventmask=None):
-        fd = isinstance(fd, int) and fd or fd.fileno()
-        if eventmask is None:
-            return self._poller.register(fd)
-        return self._poller.register(fd, eventmask)
-
-    def unregister(self, fd):
-        fd = isinstance(fd, int) and fd or fd.fileno()
-        self._poller.unregister(fd)
-
-    def poll(self, timeout=SHORT_TIMEOUT):
-        return self._poller.poll(timeout)
-
 class Poll(object):
     "a greenhouse poller using the poll system call''"
     INMASK = getattr(select, 'POLLIN', None)
     OUTMASK = getattr(select, 'POLLOUT', None)
     ERRMASK = getattr(select, 'POLLERR', None)
 
+    _POLLER = getattr(select, "poll")
+
     def __init__(self):
-        self._poller = select.poll()
+        self._poller = self._POLLER()
+        self._registry = {}
 
     def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
         if eventmask is None:
-            return self._poller.register(fd)
-        return self._poller.register(fd, eventmask)
+            eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
+
+        if fd in self._registry:
+            reg = self._registry[fd]
+            if reg & eventmask == reg:
+                return
+
+            eventmask = reg | eventmask
+            self.unregister(fd)
+
+        rc = self._poller.register(fd, eventmask)
+        self._registry[fd] = eventmask
+        return rc
 
     def unregister(self, fd):
         fd = isinstance(fd, int) and fd or fd.fileno()
         self._poller.unregister(fd)
+        self._registry.pop(fd)
 
     def poll(self, timeout=SHORT_TIMEOUT):
         return self._poller.poll(timeout)
+
+class Epoll(Poll):
+    "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
+    INMASK = getattr(select, 'EPOLLIN', None)
+    OUTMASK = getattr(select, 'EPOLLOUT', None)
+    ERRMASK = getattr(select, 'EPOLLERR', None)
+
+    _POLLER = getattr(select, "epoll")
 
 class Select(object):
     "a greenhouse poller using the select system call"

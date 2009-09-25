@@ -244,8 +244,8 @@ class ExceptionsTestCase(StateClearingTestCase):
         def f():
             raise self.CustomError()
 
-        self.assertRaises(self.CustomError, greenhouse.pause)
-
+        # this will NOT get raised in the main greenlet any more
+        greenhouse.pause()
 
 if __name__ == '__main__':
     unittest.main()

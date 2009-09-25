@@ -232,11 +232,10 @@ class EpollSocketTestCase(StateClearingTestCase):
 
             @greenhouse.schedule
             def f():
+                self.assertRaises(socket.timeout, client.recv, 10)
                 client.recv(10)
 
             greenhouse.pause()
-
-            self.assertRaises(socket.timeout, greenhouse.pause_for, TESTING_TIMEOUT * 2)
 
     def test_fromfd_from_gsock(self):
         with self.socketpair() as (client, handler):

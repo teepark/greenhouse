@@ -41,6 +41,7 @@ class Event(object):
         self._guid = id(self)
         self._timeout_callbacks = collections.defaultdict(list)
         self._active_timeouts = set()
+        self._awoken_by_timeout = set()
 
     def is_set(self):
         "returns True if waiting on this event will block, False if not"
@@ -85,25 +86,26 @@ class Event(object):
 
             @scheduler.schedule_in(timeout)
             def hit_timeout():
-                if current not in self._active_timeouts:
-                    return
-
-                state.paused_on_events[self._guid].remove(current)
-                state.awoken_from_events.add(current)
-
-                error = None
-                for cb in self._timeout_callbacks[current]:
-                    try:
-                        cb()
-                    except Exception, exc:
-                        if error is None:
-                            error = exc
-
-                if error is not None:
-                    raise error
+                if current in self._active_timeouts:
+                    self._awoken_by_timeout.add(current)
+                    current.switch()
 
         state.paused_on_events[self._guid].append(current)
         scheduler.go_to_next()
+
+        if current in self._awoken_by_timeout:
+            self._awoken_by_timeout.remove(current)
+
+            error = None
+            for cb in self._timeout_callbacks[current]:
+                try:
+                    cb()
+                except Exception, exc:
+                    if error is None:
+                        error = exc
+
+            if error is not None:
+                raise error
 
 #@_debugger
 class Lock(object):

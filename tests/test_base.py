@@ -28,5 +28,7 @@ class StateClearingTestCase(unittest.TestCase):
 
         GTL.acquire()
 
+        greenhouse.scheduler.PRINT_EXCEPTIONS = False
+
     def tearDown(self):
         GTL.release()

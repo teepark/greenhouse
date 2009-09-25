@@ -59,6 +59,13 @@ class EpollSocketTestCase(StateClearingTestCase):
         client.close()
         handler.close()
 
+    def test_register_both_read_and_write(self):
+        with self.socketpair() as (client, handler):
+            poller = greenhouse._state.state.poller
+            poller.register(client, poller.INMASK)
+
+            poller.register(client, poller.OUTMASK)
+
     def test_sockets_basic(self):
         with self.socketpair() as (client, handler):
             client.send("howdy")

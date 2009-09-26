@@ -189,7 +189,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 @greenlet
 def generic_parent(ended):
     while 1:
-        if not traceback:
+        if not traceback: #pragma: no cover
             # python's shutdown sequence gets out of wack when we have
             # greenlets in play. in certain circumstances, the traceback module
             # becomes None before this code runs.
@@ -197,7 +197,7 @@ def generic_parent(ended):
         try:
             go_to_next()
         except Exception, exc:
-            if PRINT_EXCEPTIONS:
+            if PRINT_EXCEPTIONS: #pragma: no cover
                 traceback.print_exception(*sys.exc_info(), file=sys.stderr)
 
 # prime the pump. if there is a traceback before the generic parent has a

@@ -1,6 +1,6 @@
 try:
     from greenlet import greenlet
-except ImportError:
+except ImportError: #pragma: no cover
     from py.magic import greenlet
 
 

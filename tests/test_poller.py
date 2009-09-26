@@ -30,5 +30,31 @@ class PollSelectorTestCase(StateClearingTestCase):
         assert isinstance(greenhouse.poller.best(), greenhouse.poller.Select)
 
 
+class PollRegistryTestCase(StateClearingTestCase):
+    POLLER = greenhouse.poller.Poll
+
+    def setUp(self):
+        StateClearingTestCase.setUp(self)
+        greenhouse.poller.set(self.POLLER())
+
+    def test_skips_registering(self):
+        sock = greenhouse.Socket()
+        poller = greenhouse._state.state.poller
+
+        poller.register(sock, poller.INMASK | poller.OUTMASK)
+
+        items = poller._registry.items()
+
+        poller.register(sock, poller.INMASK)
+
+        self.assertEquals(poller._registry.items(), items)
+
+class EpollRegistryTestCase(PollRegistryTestCase):
+    POLLER = greenhouse.poller.Epoll
+
+class SelectRegistryTestCase(PollRegistryTestCase):
+    POLLER = greenhouse.poller.Select
+
+
 if __name__ == '__main__':
     unittest.main()

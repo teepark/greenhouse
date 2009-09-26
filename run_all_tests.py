@@ -43,7 +43,7 @@ def main():
         if dtfinder.find(mod):
             suite.addTest(doctest.DocTestSuite(mod))
 
-    sys.exit(bool(runner.run(suite)))
+    sys.exit(runner.run(suite).wasSuccessful())
 
 if __name__ == '__main__':
     main()

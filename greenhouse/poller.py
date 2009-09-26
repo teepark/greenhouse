@@ -27,7 +27,7 @@ class Poll(object):
 
         if fd in self._registry:
             reg = self._registry[fd]
-            if reg & eventmask == reg:
+            if reg & eventmask == eventmask:
                 return
 
             eventmask = reg | eventmask
@@ -60,23 +60,31 @@ class Select(object):
     ERRMASK = 4
 
     def __init__(self):
-        self._fds = {}
+        self._registry = {}
 
     def register(self, fd, eventmask=None):
         fd = isinstance(fd, int) and fd or fd.fileno()
         if eventmask is None:
             eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
-        isnew = fd not in self._fds
-        self._fds[fd] = eventmask
+
+        if fd in self._registry:
+            reg = self._registry[fd]
+            if reg & eventmask == eventmask:
+                return
+
+            eventmask = reg | eventmask
+
+        isnew = fd not in self._registry
+        self._registry[fd] = eventmask
         return isnew
 
     def unregister(self, fd):
         fd = isinstance(fd, int) and fd or fd.fileno()
-        del self._fds[fd]
+        del self._registry[fd]
 
     def poll(self, timeout=SHORT_TIMEOUT):
         rlist, wlist, xlist = [], [], []
-        for fd, eventmask in self._fds.iteritems():
+        for fd, eventmask in self._registry.iteritems():
             if eventmask & self.INMASK:
                 rlist.append(fd)
             if eventmask & self.OUTMASK:

@@ -115,8 +115,6 @@ class Socket(object):
                 try:
                     client, addr = self._sock.accept()
                 except socket.error, err:
-                    if isinstance(err, socket.timeout):
-                        raise
                     if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
                         self._readable.wait(self._timeout)
                         continue
@@ -178,8 +176,6 @@ class Socket(object):
                 try:
                     return self._sock.recv(nbytes)
                 except socket.error, e:
-                    if isinstance(e, socket.timeout):
-                        raise
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                         self._readable.wait(self._timeout)
                         continue
@@ -207,8 +203,6 @@ class Socket(object):
         try:
             return self._sock.send(data)
         except socket.error, err: #pragma: no cover
-            if isinstance(err, socket.timeout):
-                raise
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise
@@ -224,8 +218,6 @@ class Socket(object):
         try:
             return self._sock.sendto(*args)
         except socket.error, err: #pragma: no cover
-            if isinstance(err, socket.timeout):
-                raise
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise

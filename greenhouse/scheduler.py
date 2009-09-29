@@ -8,8 +8,8 @@ from greenhouse._state import state
 from greenhouse.compat import greenlet, main_greenlet
 
 
-__all__ = ["get_next", "go_to_next", "pause", "pause_until", "pause_for",
-           "schedule", "schedule_at", "schedule_in", "schedule_recurring"]
+__all__ = ["get_next", "pause", "pause_until", "pause_for", "schedule",
+           "schedule_at", "schedule_in", "schedule_recurring"]
 
 # this is intended to be monkey-patchable from client code
 PRINT_EXCEPTIONS = True
@@ -74,23 +74,16 @@ def get_next():
 
     return state.to_run.popleft()
 
-def go_to_next():
-    '''pause the current greenlet and switch to the next
-
-    this is different from the pause* methods in that it does not
-    reschedule the current greenlet'''
-    get_next().switch()
-
 def pause():
     'pause and reschedule the current greenlet and switch to the next'
     schedule(greenlet.getcurrent())
-    go_to_next()
+    get_next().switch()
 
 def pause_until(unixtime):
     '''pause and reschedule the current greenlet until a set time,
     then switch to the next'''
     schedule_at(unixtime, greenlet.getcurrent())
-    go_to_next()
+    get_next().switch()
 
 def pause_for(secs):
     '''pause and reschedule the current greenlet for a set number of seconds,
@@ -195,7 +188,7 @@ def generic_parent(ended):
             # becomes None before this code runs.
             break
         try:
-            go_to_next()
+            get_next().switch()
         except Exception, exc:
             if PRINT_EXCEPTIONS: #pragma: no cover
                 traceback.print_exception(*sys.exc_info(), file=sys.stderr)

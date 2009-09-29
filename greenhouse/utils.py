@@ -91,7 +91,7 @@ class Event(object):
                     current.switch()
 
         state.paused_on_events[self._guid].append(current)
-        scheduler.go_to_next()
+        scheduler.get_next().switch()
 
         if current in self._awoken_by_timeout:
             self._awoken_by_timeout.remove(current)

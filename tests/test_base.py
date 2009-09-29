@@ -14,6 +14,8 @@ GTL = greenhouse.Lock()
 
 class StateClearingTestCase(unittest.TestCase):
     def setUp(self):
+        GTL.acquire()
+
         greenhouse.unmonkeypatch()
 
         state = greenhouse._state.state
@@ -25,10 +27,6 @@ class StateClearingTestCase(unittest.TestCase):
         state.to_run.clear()
 
         greenhouse.poller.set()
-
-        GTL.acquire()
-
-        greenhouse.scheduler.PRINT_EXCEPTIONS = False
 
     def tearDown(self):
         GTL.release()

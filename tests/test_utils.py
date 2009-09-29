@@ -288,7 +288,6 @@ class ConditionRLockTestCase(StateClearingTestCase):
 
         time.sleep(TESTING_TIMEOUT * 2)
         greenhouse.pause()
-        greenhouse.pause()
 
         assert len(l) == 10, l
 

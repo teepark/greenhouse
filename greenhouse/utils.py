@@ -39,7 +39,7 @@ class Event(object):
     def __init__(self):
         self._is_set = False
         self._timeout_callbacks = collections.defaultdict(list)
-        self._queue = []
+        self._waiters = []
         self._active_timeouts = set()
         self._awoken_by_timeout = set()
 
@@ -56,8 +56,8 @@ class Event(object):
         has been called"""
         self._is_set = True
         self._active_timeouts.clear()
-        state.awoken_from_events.update(self._queue)
-        self._queue = []
+        state.awoken_from_events.update(self._waiters)
+        self._waiters = []
 
     def clear(self):
         """clear the event from being triggered
@@ -90,7 +90,7 @@ class Event(object):
                     self._awoken_by_timeout.add(current)
                     current.switch()
 
-        self._queue.append(current)
+        self._waiters.append(current)
         scheduler.get_next().switch()
 
         if current in self._awoken_by_timeout:
@@ -114,7 +114,7 @@ class Lock(object):
     mirrors the standard library threading.Lock API"""
     def __init__(self):
         self._locked = False
-        self._queue = collections.deque()
+        self._waiters = collections.deque()
 
     def locked(self):
         "returns true if the lock is already 'locked' or 'owned'"
@@ -127,7 +127,7 @@ class Lock(object):
             self._locked = True
             return not locked_already
         if self._locked:
-            self._queue.append(greenlet.getcurrent())
+            self._waiters.append(greenlet.getcurrent())
             scheduler.get_next().switch()
         self._locked = True
         return True
@@ -137,8 +137,8 @@ class Lock(object):
         if not self._locked:
             raise RuntimeError("cannot release un-acquired lock")
         self._locked = False
-        if self._queue:
-            state.awoken_from_events.add(self._queue.popleft())
+        if self._waiters:
+            state.awoken_from_events.add(self._waiters.popleft())
         else:
             self._locked = False
 
@@ -170,7 +170,7 @@ class RLock(Lock):
         if self._locked and not blocking:
             return False
         if self._locked:
-            self._queue.append(greenlet.getcurrent())
+            self._waiters.append(greenlet.getcurrent())
             scheduler.get_next().switch()
         self._owner = current
         self._locked = True
@@ -185,8 +185,8 @@ class RLock(Lock):
         self._count -= 1
         if self._count == 0:
             self._owner = None
-            if self._queue:
-                state.awoken_from_events.add(self._queue.popleft())
+            if self._waiters:
+                state.awoken_from_events.add(self._waiters.popleft())
             else:
                 self._locked = False
 
@@ -198,7 +198,7 @@ class Condition(object):
         if lock is None:
             lock = RLock()
         self._lock = lock
-        self._queue = collections.deque()
+        self._waiters = collections.deque()
         self.acquire = lock.acquire
         self.release = lock.release
         self.__enter__ = lock.__enter__
@@ -221,12 +221,12 @@ class Condition(object):
         self._lock.release()
 
         current = greenlet.getcurrent()
-        self._queue.append(current)
+        self._waiters.append(current)
 
         if timeout is not None:
             @scheduler.schedule_in(timeout)
             def hit_timeout():
-                self._queue.remove(current)
+                self._waiters.remove(current)
                 current.switch()
 
         scheduler.get_next().switch()
@@ -238,8 +238,8 @@ class Condition(object):
         you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        for i in xrange(min(num, len(self._queue))):
-            state.awoken_from_events.add(self._queue.popleft())
+        for i in xrange(min(num, len(self._waiters))):
+            state.awoken_from_events.add(self._waiters.popleft())
 
     def notify_all(self):
         """wake up all the greenlets waiting on the condition
@@ -247,8 +247,8 @@ class Condition(object):
         you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        state.awoken_from_events.update(self._queue)
-        self._queue.clear()
+        state.awoken_from_events.update(self._waiters)
+        self._waiters.clear()
     notifyAll = notify_all
 
 class Semaphore(object):
@@ -258,7 +258,7 @@ class Semaphore(object):
     def __init__(self, value=1):
         assert value >= 0, "semaphore value cannot be negative"
         self._value = value
-        self._queue = collections.deque()
+        self._waiters = collections.deque()
 
     def acquire(self, blocking=True):
         "lock or decrement the semaphore"
@@ -268,16 +268,16 @@ class Semaphore(object):
         elif not blocking:
             return False
         event = Event()
-        self._queue.append(greenlet.getcurrent())
+        self._waiters.append(greenlet.getcurrent())
         event.wait()
         return True
 
     def release(self):
         "release or increment the semaphore"
-        if self._value or not self._queue:
+        if self._value or not self._waiters:
             self._value += 1
         else:
-            state.awoken_from_events.add(self._queue.popleft())
+            state.awoken_from_events.add(self._waiters.popleft())
 
     def __enter__(self):
         return self.acquire()

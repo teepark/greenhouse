@@ -258,7 +258,7 @@ class Semaphore(object):
     def __init__(self, value=1):
         assert value >= 0, "semaphore value cannot be negative"
         self._value = value
-        self._waiters = collections.deque()
+        self._queue = collections.deque()
 
     def acquire(self, blocking=True):
         "lock or decrement the semaphore"
@@ -268,16 +268,16 @@ class Semaphore(object):
         elif not blocking:
             return False
         event = Event()
-        self._waiters.append(event)
+        self._queue.append(greenlet.getcurrent())
         event.wait()
         return True
 
     def release(self):
         "release or increment the semaphore"
-        if self._value or not self._waiters:
+        if self._value or not self._queue:
             self._value += 1
         else:
-            self._waiters.popleft().set()
+            state.awoken_from_events.add(self._queue.popleft())
 
     def __enter__(self):
         return self.acquire()

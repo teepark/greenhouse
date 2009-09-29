@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import socket
+
 import greenhouse
 
 
@@ -29,6 +31,7 @@ def main():
     print "shut it down with <Ctrl>-C"
     try:
         serversock = greenhouse.Socket()
+        serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         serversock.bind(("", PORT))
         serversock.listen(5)
         while 1:

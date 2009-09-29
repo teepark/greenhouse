@@ -38,8 +38,8 @@ class Event(object):
     mirrors the standard library threading.Event API"""
     def __init__(self):
         self._is_set = False
-        self._guid = id(self)
         self._timeout_callbacks = collections.defaultdict(list)
+        self._queue = []
         self._active_timeouts = set()
         self._awoken_by_timeout = set()
 
@@ -56,8 +56,8 @@ class Event(object):
         has been called"""
         self._is_set = True
         self._active_timeouts.clear()
-        state.awoken_from_events.update(state.paused_on_events[self._guid])
-        del state.paused_on_events[self._guid]
+        state.awoken_from_events.update(self._queue)
+        self._queue = []
 
     def clear(self):
         """clear the event from being triggered
@@ -90,7 +90,7 @@ class Event(object):
                     self._awoken_by_timeout.add(current)
                     current.switch()
 
-        state.paused_on_events[self._guid].append(current)
+        self._queue.append(current)
         scheduler.get_next().switch()
 
         if current in self._awoken_by_timeout:
@@ -114,7 +114,7 @@ class Lock(object):
     mirrors the standard library threading.Lock API"""
     def __init__(self):
         self._locked = False
-        self._event = Event()
+        self._queue = collections.deque()
 
     def locked(self):
         "returns true if the lock is already 'locked' or 'owned'"
@@ -126,8 +126,9 @@ class Lock(object):
             locked_already = self._locked
             self._locked = True
             return not locked_already
-        while self._locked:
-            self._event.wait()
+        if self._locked:
+            self._queue.append(greenlet.getcurrent())
+            scheduler.get_next().switch()
         self._locked = True
         return True
 
@@ -136,8 +137,10 @@ class Lock(object):
         if not self._locked:
             raise RuntimeError("cannot release un-acquired lock")
         self._locked = False
-        self._event.set()
-        self._event.clear()
+        if self._queue:
+            state.awoken_from_events.add(self._queue.popleft())
+        else:
+            self._locked = False
 
     def __enter__(self):
         return self.acquire()
@@ -166,8 +169,9 @@ class RLock(Lock):
             return True
         if self._locked and not blocking:
             return False
-        while self._locked:
-            self._event.wait()
+        if self._locked:
+            self._queue.append(greenlet.getcurrent())
+            scheduler.get_next().switch()
         self._owner = current
         self._locked = True
         self._count = 1
@@ -180,10 +184,11 @@ class RLock(Lock):
             raise RuntimeError("cannot release un-acquired lock")
         self._count -= 1
         if self._count == 0:
-            self._locked = False
             self._owner = None
-            self._event.set()
-            self._event.clear()
+            if self._queue:
+                state.awoken_from_events.add(self._queue.popleft())
+            else:
+                self._locked = False
 
 class Condition(object):
     """a synchronization object capable of waking all or one of its waiters

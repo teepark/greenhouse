@@ -19,7 +19,6 @@ class StateClearingTestCase(unittest.TestCase):
         greenhouse.unmonkeypatch()
 
         state = greenhouse._state.state
-        state.paused_on_events.clear()
         state.awoken_from_events.clear()
         state.timed_paused[:] = []
         state.paused[:] = []

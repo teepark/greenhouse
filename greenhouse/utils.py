@@ -198,7 +198,7 @@ class Condition(object):
         if lock is None:
             lock = RLock()
         self._lock = lock
-        self._waiters = collections.deque()
+        self._queue = collections.deque()
         self.acquire = lock.acquire
         self.release = lock.release
         self.__enter__ = lock.__enter__
@@ -219,12 +219,17 @@ class Condition(object):
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         self._lock.release()
-        event = Event()
-        self._waiters.append(event)
-        def timeout_cback():
-            self._waiters.remove(event)
-        event._add_timeout_callback(timeout_cback)
-        event.wait(timeout)
+
+        current = greenlet.getcurrent()
+        self._queue.append(current)
+
+        if timeout is not None:
+            @scheduler.schedule_in(timeout)
+            def hit_timeout():
+                self._queue.remove(current)
+                current.switch()
+
+        scheduler.get_next().switch()
         self._lock.acquire()
 
     def notify(self, num=1):
@@ -233,8 +238,8 @@ class Condition(object):
         you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        for i in xrange(min(num, len(self._waiters))):
-            self._waiters.popleft().set()
+        for i in xrange(min(num, len(self._queue))):
+            state.awoken_from_events.add(self._queue.popleft())
 
     def notify_all(self):
         """wake up all the greenlets waiting on the condition
@@ -242,7 +247,8 @@ class Condition(object):
         you must have acquired the underlying lock first"""
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        self.notify(len(self._waiters))
+        state.awoken_from_events.update(self._queue)
+        self._queue.clear()
     notifyAll = notify_all
 
 class Semaphore(object):

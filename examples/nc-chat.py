@@ -20,7 +20,7 @@ def start():
 
         while 1:
             clientsock, address = serversock.accept()
-            greenhouse.schedule(get_name, args=(clientsock,))
+            greenhouse.schedule(connection_handler, args=(clientsock,))
 
     except KeyboardInterrupt:
         print "KeyboardInterrupt caught, closing connections"
@@ -28,8 +28,14 @@ def start():
         for sock in CONNECTED.values():
             sock.close()
 
-def get_name(clientsock):
-    clientsock.sendall("enter your name up to 20 characters\n")
+def broadcast(msg, skip=None):
+    for recip in CONNECTED:
+        sock = CONNECTED.get(recip)
+        if sock and not sock._closed and skip != recip:
+            sock.sendall(msg)
+
+def connection_handler(clientsock):
+    clientsock.sendall("enter your name up to 20 characters\r\n")
     name = clientsock.recv(8192).rstrip("\r\n")
 
     if len(name) > 20:
@@ -38,38 +44,20 @@ def get_name(clientsock):
 
     CONNECTED[name] = clientsock
 
-    greenhouse.schedule(broadcast,
-        args=("*** %s has entered\n" % name,),
-        kwargs={'continuation': lambda: connection_handler(clientsock, name)})
+    greenhouse.schedule(broadcast, args=("*** %s has entered\n" % name, name))
 
-def broadcast(msg, skip=None, continuation=None):
-    for recip in CONNECTED:
-        sock = CONNECTED.get(recip)
-        if sock and not sock._closed and skip != recip:
-            sock.sendall(msg)
-
-    if continuation:
-        greenhouse.schedule(continuation)
-
-def connection_handler(clientsock, name):
+    sockfile = clientsock.makefile("r")
     while 1:
-        if clientsock._closed:
+        line = sockfile.readline()
+        if not line:
             CONNECTED.pop(name)
             break
-
-        input = received = clientsock.recv(8192)
-        if not input:
-            CONNECTED.pop(name)
-            break
-
-        while len(input) == 8192:
-            input = clientsock.recv(8192)
-            received += input
 
         greenhouse.schedule(broadcast, args=(
-            "%s: %s\n" % (name, received.rstrip("\r\n")), name))
+            "%s: %s\n" % (name, line.rstrip("\r\n")), name))
 
     broadcast("*** %s has left the building\n" % name)
+
 
 
 if __name__ == "__main__":

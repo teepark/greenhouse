@@ -1,5 +1,6 @@
 import array
 import contextlib
+import multiprocessing
 import os
 import socket
 import stat
@@ -271,6 +272,78 @@ class EpollSocketTestCase(StateClearingTestCase):
         with self.socketpair() as (client, handler):
             assert client.getsockname() == handler.getpeername()
             assert client.getpeername() == handler.getsockname()
+
+    def test_multiplexing(self):
+        def client(phase1, phase2, num_conns, servport, num):
+            conns = []
+            for i in xrange(num_conns):
+                sock = socket.socket()
+                sock.connect(("", servport))
+                conns.append(sock)
+
+            phase1.put(None)
+
+            [phase2.put(sock.recv(10)) for sock in conns]
+
+            [sock.send("phase3") for sock in conns]
+
+            [sock.close() for sock in conns]
+
+        phase1 = multiprocessing.Queue()
+        phase2 = multiprocessing.Queue()
+
+        PROCS = 10
+        CONNS_PER_PROC = 15
+
+        num_conns = PROCS * CONNS_PER_PROC
+
+        servport = port()
+        serversock = greenhouse.Socket()
+        serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        serversock.bind(("", servport))
+        serversock.listen(5)
+
+        procs = []
+        for i in xrange(PROCS):
+            procs.append(multiprocessing.Process(target=client, args=(
+                phase1, phase2, CONNS_PER_PROC, servport, i)))
+        assert len(procs) == PROCS
+
+        for proc in procs:
+            proc.start()
+
+        handlers = []
+        for i in xrange(num_conns):
+            handlers.append(serversock.accept()[0])
+        assert len(handlers) == num_conns
+        serversock.close()
+
+        results = []
+        for i in xrange(PROCS):
+            results.append(phase1.get())
+        assert len(results) == PROCS, "%d/%d" % (len(results), PROCS)
+
+        for h in handlers:
+            h.send("phase2")
+
+        results = []
+        for i in xrange(num_conns):
+            results.append(phase2.get())
+        assert len(results) == num_conns, "%d/%d" % (len(results), num_conns)
+
+        results = []
+        def parallel_recv(handler):
+            results.append(handler.recv(10))
+        for h in handlers:
+            greenhouse.schedule(parallel_recv, args=(h,))
+        greenhouse.pause_for(TESTING_TIMEOUT)
+        assert len(results) == num_conns, "%d/%d" % (len(results), num_conns)
+
+        for h in handlers:
+            h.close()
+
+        for proc in procs:
+            proc.join()
 
 class PollSocketTestCase(EpollSocketTestCase):
     def setUp(self):

@@ -18,29 +18,54 @@ class Poll(object):
 
     def __init__(self):
         self._poller = self._POLLER()
-        self._registry = {}
+        self._registry = collections.defaultdict(list)
 
     def register(self, fd, eventmask=None):
+        # integer file descriptor
         fd = isinstance(fd, int) and fd or fd.fileno()
+
+        # mask nothing by default
         if eventmask is None:
             eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
 
-        if fd in self._registry:
-            reg = self._registry[fd]
-            if reg & eventmask == eventmask:
-                return
+        # get the mask of the current registration, if any
+        registered = self._registry.get(fd)
+        registered = registered and registered[-1] or 0
 
-            eventmask = reg | eventmask
-            self.unregister(fd)
+        # make sure eventmask includes all previous masks
+        newmask = eventmask | registered
 
-        rc = self._poller.register(fd, eventmask)
-        self._registry[fd] = eventmask
+        # unregister the old mask
+        if registered:
+            self._poller.unregister(fd)
+
+        # register the new mask
+        rc = self._poller.register(fd, newmask)
+
+        # append to a list of eventmasks so we can backtrack
+        self._registry[fd].append(newmask)
+
         return rc
 
     def unregister(self, fd):
+        # integer file descriptor
         fd = isinstance(fd, int) and fd or fd.fileno()
+
+        # allow for extra noop calls
+        if not self._registry.get(fd):
+            return
+
+        # unregister the current registration
         self._poller.unregister(fd)
-        self._registry.pop(fd)
+        self._registry[fd].pop()
+
+        # re-do the previous registration, if any
+        newmask = self._registry[fd]
+        newmask = newmask and newmask[-1]
+        if newmask:
+            self._poller.register(fd, newmask)
+        else:
+            self._registry.pop(fd)
 
     def poll(self, timeout=SHORT_TIMEOUT):
         return self._poller.poll(timeout)
@@ -60,31 +85,49 @@ class Select(object):
     ERRMASK = 4
 
     def __init__(self):
-        self._registry = {}
+        self._registry = collections.defaultdict(list)
+        self._currentmasks = {}
 
     def register(self, fd, eventmask=None):
+        # integer file descriptor
         fd = isinstance(fd, int) and fd or fd.fileno()
+
+        # mask nothing by default
         if eventmask is None:
             eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
 
-        if fd in self._registry:
-            reg = self._registry[fd]
-            if reg & eventmask == eventmask:
-                return
+        # get the mask of the current registration, if any
+        registered = self._registry.get(fd)
+        registered = registered and registered[-1] or 0
 
-            eventmask = reg | eventmask
+        # make sure eventmask includes all previous masks
+        newmask = eventmask | registered
 
-        isnew = fd not in self._registry
-        self._registry[fd] = eventmask
-        return isnew
+        # apply the new mask
+        self._currentmasks[fd] = newmask
+
+        # append to the list of masks so we can backtrack
+        self._registry[fd].append(newmask)
+
+        return not registered
 
     def unregister(self, fd):
+        # integer file descriptor
         fd = isinstance(fd, int) and fd or fd.fileno()
-        del self._registry[fd]
+
+        # get rid of the last registered mask
+        self._registry[fd].pop()
+
+        # re-do the previous registration, if any
+        if self._registry[fd]:
+            self._currentmasks[fd] = self._registry[fd][-1]
+        else:
+            self._registry.pop(fd)
+            self._currentmasks.pop(fd)
 
     def poll(self, timeout=SHORT_TIMEOUT):
         rlist, wlist, xlist = [], [], []
-        for fd, eventmask in self._registry.iteritems():
+        for fd, eventmask in self._currentmasks.iteritems():
             if eventmask & self.INMASK:
                 rlist.append(fd)
             if eventmask & self.OUTMASK:

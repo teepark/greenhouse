@@ -67,6 +67,26 @@ class EpollSocketTestCase(StateClearingTestCase):
 
             poller.register(client, poller.OUTMASK)
 
+    def test_unregistering_one_leaves_the_other(self):
+        with self.socketpair() as (client, handler):
+            r = [False]
+
+            @greenhouse.schedule
+            def client_recv():
+                assert client.recv(10) == "hiya"
+                r[0] = True
+            greenhouse.pause()
+
+            client.sendall("howdy")
+            assert handler.recv(10) == "howdy"
+
+            greenhouse.pause()
+            assert not r[0]
+
+            handler.sendall("hiya")
+            greenhouse.pause_for(TESTING_TIMEOUT)
+            assert r[0]
+
     def test_sockets_basic(self):
         with self.socketpair() as (client, handler):
             client.send("howdy")

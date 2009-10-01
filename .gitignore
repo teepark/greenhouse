@@ -6,4 +6,6 @@ MANIFEST.in
 build/*
 dist/*
 html/*
+
 .coverage
+coverage_annotated/*

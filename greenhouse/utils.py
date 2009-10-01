@@ -442,3 +442,37 @@ class Queue(object):
         self.unfinished_tasks -= 1
         if not self.unfinished_tasks:
             self.all_tasks_done.set()
+
+class Channel(object):
+    def __init__(self):
+        self._dataqueue = collections.deque()
+        self._waiters = collections.deque()
+        self._balance = 0
+
+    def _go_but_come_right_back(self, to):
+        state.to_run.appendleft(greenlet.getcurrent())
+        to.switch()
+
+    def receive(self):
+        if self._dataqueue:
+            item = self._dataqueue.popleft()
+            self._go_but_come_right_back(self._waiters.popleft())
+            return item
+        else:
+            self._waiters.append(greenlet.getcurrent())
+            scheduler.get_next().switch()
+            return self._dataqueue.pop()
+
+    def send(self, item):
+        if self._waiters and not self._dataqueue:
+            self._dataqueue.append(item)
+            self._go_but_come_right_back(self._waiters.popleft())
+        else:
+            self._dataqueue.append(item)
+            self._waiters.append(greenlet.getcurrent())
+            scheduler.get_next().switch()
+
+    @property
+    def balance(self):
+        return self._dataqueue and len(self._dataqueue) or \
+                -len(self._waiters)

@@ -67,7 +67,7 @@ class EpollSocketTestCase(StateClearingTestCase):
 
             poller.register(client, poller.OUTMASK)
 
-    def test_unregistering_one_leaves_the_other(self):
+    def test_poller_registration_rollback(self):
         with self.socketpair() as (client, handler):
             r = [False]
 

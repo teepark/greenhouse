@@ -553,5 +553,91 @@ class QueueTestCase(StateClearingTestCase):
         q.put(7)
         assert q.qsize() == 3
 
+class ChannelTestCase(StateClearingTestCase):
+    def sender(self, channel):
+        return lambda item=None: channel.send(item)
+
+    def recver(self, channel, aggregator):
+        return lambda: aggregator.append(channel.receive())
+
+    def test_basic_communication(self):
+        collector = []
+        channel = greenhouse.utils.Channel()
+
+        sender = self.sender(channel)
+        recver = self.recver(channel, collector)
+
+        greenhouse.schedule(recver)
+        greenhouse.schedule(recver)
+        greenhouse.schedule(recver)
+        greenhouse.schedule(recver)
+        greenhouse.schedule(recver)
+
+        greenhouse.pause()
+
+        greenhouse.schedule(sender, (3,))
+        greenhouse.schedule(sender, (4,))
+        greenhouse.schedule(sender, (5,))
+
+        greenhouse.pause()
+
+        assert collector == [3,4,5], collector
+
+        channel.send(6)
+        channel.send(7)
+
+        assert collector == [3,4,5,6,7], collector
+
+    def test_skips_scheduler(self):
+        collector = []
+        channel = greenhouse.utils.Channel()
+        l = [False]
+
+        recver = self.recver(channel, collector)
+
+        greenhouse.schedule(recver)
+        greenhouse.schedule(recver)
+        greenhouse.schedule(recver)
+
+        greenhouse.pause()
+
+        @greenhouse.schedule
+        def f():
+            l[0] = True
+
+        channel.send('a')
+        channel.send('b')
+        channel.send('c')
+
+        assert collector == ['a', 'b', 'c'], collector
+        assert not l[0]
+
+        greenhouse.pause()
+        assert l[0]
+
+    def test_balance(self):
+        ch = greenhouse.utils.Channel()
+        sender = self.sender(ch)
+        recver = lambda: ch.receive()
+
+        for i in xrange(50):
+            greenhouse.schedule(sender)
+            greenhouse.pause()
+            assert ch.balance == i + 1, (ch.balance, i)
+
+        for i in xrange(49, -1, -1):
+            ch.receive()
+            assert ch.balance == i, (ch.balance, i)
+
+        for i in xrange(50):
+            greenhouse.schedule(recver)
+            greenhouse.pause()
+            assert ch.balance == -i - 1, (ch.balance, i)
+
+        for i in xrange(49, -1, -1):
+            ch.send(None)
+            assert ch.balance == -i, (ch.balance, i)
+
+
 if __name__ == '__main__':
     unittest.main()

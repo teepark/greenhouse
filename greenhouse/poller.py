@@ -6,7 +6,7 @@ from greenhouse._state import state
 
 __all__ = ["Epoll", "Poll", "Select", "best", "set"]
 
-SHORT_TIMEOUT = 0.0001
+POLL_TIMEOUT = 0.01
 
 class Poll(object):
     "a greenhouse poller using the poll system call''"
@@ -67,7 +67,7 @@ class Poll(object):
         else:
             self._registry.pop(fd)
 
-    def poll(self, timeout=SHORT_TIMEOUT):
+    def poll(self, timeout=POLL_TIMEOUT):
         return self._poller.poll(timeout)
 
 class Epoll(Poll):
@@ -125,7 +125,7 @@ class Select(object):
             self._registry.pop(fd)
             self._currentmasks.pop(fd)
 
-    def poll(self, timeout=SHORT_TIMEOUT):
+    def poll(self, timeout=POLL_TIMEOUT):
         rlist, wlist, xlist = [], [], []
         for fd, eventmask in self._currentmasks.iteritems():
             if eventmask & self.INMASK:

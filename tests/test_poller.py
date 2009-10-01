@@ -30,12 +30,19 @@ class PollSelectorTestCase(StateClearingTestCase):
         assert isinstance(greenhouse.poller.best(), greenhouse.poller.Select)
 
 
-class PollRegistryTestCase(StateClearingTestCase):
+class PollerTestCase(StateClearingTestCase):
     POLLER = greenhouse.poller.Poll
 
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(self.POLLER())
+
+    def test_register_both_read_and_write(self):
+        with self.socketpair() as (client, handler):
+            poller = greenhouse._state.state.poller
+            poller.register(client, poller.INMASK)
+
+            poller.register(client, poller.OUTMASK)
 
     def test_skips_registering(self):
         sock = greenhouse.Socket()
@@ -49,10 +56,30 @@ class PollRegistryTestCase(StateClearingTestCase):
 
         self.assertEquals(poller._registry.items(), items)
 
-class EpollRegistryTestCase(PollRegistryTestCase):
+    def test_poller_registration_rollback(self):
+        with self.socketpair() as (client, handler):
+            r = [False]
+
+            @greenhouse.schedule
+            def client_recv():
+                assert client.recv(10) == "hiya"
+                r[0] = True
+            greenhouse.pause()
+
+            client.sendall("howdy")
+            assert handler.recv(10) == "howdy"
+
+            greenhouse.pause()
+            assert not r[0]
+
+            handler.sendall("hiya")
+            greenhouse.pause_for(TESTING_TIMEOUT)
+            assert r[0]
+
+class EpollerTestCase(PollerTestCase):
     POLLER = greenhouse.poller.Epoll
 
-class SelectRegistryTestCase(PollRegistryTestCase):
+class SelectTestCase(PollerTestCase):
     POLLER = greenhouse.poller.Select
 
 

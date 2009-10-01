@@ -1,3 +1,6 @@
+import contextlib
+import os
+import socket
 import sys
 import unittest
 try:
@@ -7,6 +10,8 @@ except ImportError:
 
 import greenhouse
 
+
+port = lambda: 8000 + os.getpid() # because i want to run multiprocess nose
 
 TESTING_TIMEOUT = 0.05
 
@@ -29,3 +34,21 @@ class StateClearingTestCase(unittest.TestCase):
 
     def tearDown(self):
         GTL.release()
+
+    @contextlib.contextmanager
+    def socketpair(self):
+        server = greenhouse.Socket()
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("", port()))
+        server.listen(5)
+
+        client = greenhouse.Socket()
+        client.connect(("", port()))
+
+        handler, addr = server.accept()
+        server.close()
+
+        yield client, handler
+
+        client.close()
+        handler.close()

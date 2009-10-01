@@ -1,5 +1,4 @@
 import array
-import contextlib
 import multiprocessing
 import os
 import socket
@@ -12,10 +11,8 @@ import unittest
 import greenhouse
 import greenhouse.poller
 
-from test_base import TESTING_TIMEOUT, StateClearingTestCase
+from test_base import TESTING_TIMEOUT, StateClearingTestCase, port
 
-
-port = lambda: 8000 + os.getpid() # because i want to run multiprocess nose
 
 class MonkeyPatchingTestCase(StateClearingTestCase):
     def test_monkeypatch(self):
@@ -41,51 +38,6 @@ class EpollSocketTestCase(StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Epoll())
-
-    @contextlib.contextmanager
-    def socketpair(self):
-        server = greenhouse.Socket()
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind(("", port()))
-        server.listen(5)
-
-        client = greenhouse.Socket()
-        client.connect(("", port()))
-
-        handler, addr = server.accept()
-        server.close()
-
-        yield client, handler
-
-        client.close()
-        handler.close()
-
-    def test_register_both_read_and_write(self):
-        with self.socketpair() as (client, handler):
-            poller = greenhouse._state.state.poller
-            poller.register(client, poller.INMASK)
-
-            poller.register(client, poller.OUTMASK)
-
-    def test_poller_registration_rollback(self):
-        with self.socketpair() as (client, handler):
-            r = [False]
-
-            @greenhouse.schedule
-            def client_recv():
-                assert client.recv(10) == "hiya"
-                r[0] = True
-            greenhouse.pause()
-
-            client.sendall("howdy")
-            assert handler.recv(10) == "howdy"
-
-            greenhouse.pause()
-            assert not r[0]
-
-            handler.sendall("hiya")
-            greenhouse.pause_for(TESTING_TIMEOUT)
-            assert r[0]
 
     def test_sockets_basic(self):
         with self.socketpair() as (client, handler):

@@ -481,7 +481,6 @@ class QueueTestCase(StateClearingTestCase):
 
 
     def test_timeout(self):
-        #FIXME: this test failing would actually end up in deadlock
         q = greenhouse.Queue()
         self.assertRaises(q.Empty, q.get, timeout=TESTING_TIMEOUT)
 

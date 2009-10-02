@@ -71,6 +71,34 @@ class PoolTestCase(StateClearingTestCase):
 
         assert len(pool.inq.queue) == 30, len(pool.inq.queue)
 
+    def test_kills_all_coros(self):
+        class Pool(self.POOL):
+            def __init__(self, *args, **kwargs):
+                super(Pool, self).__init__(*args, **kwargs)
+                self.finished = False
+
+            def _runner(self):
+                super(Pool, self)._runner()
+                self.finished = True
+
+        def f(x):
+            return x ** 2
+
+        pool = Pool(f)
+        pool.start()
+
+        for x in xrange(30):
+            pool.put(x)
+
+        for x in xrange(30):
+            pool.get()
+
+        pool.close()
+
+        greenhouse.pause()
+
+        assert pool.finished
+
     def test_as_context_manager(self):
         def f(x):
             return x ** 2

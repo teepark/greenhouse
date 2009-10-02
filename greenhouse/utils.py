@@ -448,15 +448,60 @@ class Channel(object):
         self._dataqueue = collections.deque()
         self._waiters = collections.deque()
         self._balance = 0
+        self._preference = -1
 
-    def _go_but_come_right_back(self, to):
-        state.to_run.appendleft(greenlet.getcurrent())
-        to.switch()
+    @property
+    def balance(self):
+        return self._dataqueue and len(self._dataqueue) or \
+                -len(self._waiters)
 
+    def close(self):
+        self._closing = True
+
+    @property
+    def closed(self):
+        return self._closing and not self._dataqueue
+
+    @property
+    def closing(self):
+        return self._closing
+
+    def open(self):
+        self._closing = False
+
+    @property
+    def preference(self):
+        return self._preference
+
+    @preference.setter
+    def _set_preference(self, val):
+        if val > 0:
+            self._preference = 1
+        elif val < 0:
+            self._preference = -1
+        else:
+            self._preference = 0
+
+    @property
+    def queue(self):
+        return self._waiters and self._waiters[0] or None
+
+    #- sending, channel preference receivers: receiver wakes up immediately
+    #- sending, channel preference senders: receiver gets scheduled
+    #- receiving, channel preference receivers: sender gets scheduled
+    #- receiving, channel preference senders: sender wakes up immediately
+    #- in cases where someone else wakes up immediately, the current tasklet
+    #  is cooperatively scheduled
+    #- preference of 0 means nobody "wakes up immediately"
     def receive(self):
         if self._dataqueue:
             item = self._dataqueue.popleft()
-            self._go_but_come_right_back(self._waiters.popleft())
+            sender = self._waiters.popleft()
+            if self.preference is 1:
+                scheduler.schedule(greenlet.getcurrent())
+                sender.switch()
+            else: # also for 0, no preference
+                scheduler.schedule(sender)
             return item
         else:
             self._waiters.append(greenlet.getcurrent())
@@ -466,13 +511,12 @@ class Channel(object):
     def send(self, item):
         if self._waiters and not self._dataqueue:
             self._dataqueue.append(item)
-            self._go_but_come_right_back(self._waiters.popleft())
+            if self.preference is -1:
+                scheduler.schedule(greenlet.getcurrent())
+                self._waiters.popleft().switch()
+            else:
+                scheduler.schedule(self._waiters.popleft())
         else:
             self._dataqueue.append(item)
             self._waiters.append(greenlet.getcurrent())
             scheduler.get_next().switch()
-
-    @property
-    def balance(self):
-        return self._dataqueue and len(self._dataqueue) or \
-                -len(self._waiters)

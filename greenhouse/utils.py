@@ -474,7 +474,7 @@ class Channel(object):
         return self._preference
 
     @preference.setter
-    def _set_preference(self, val):
+    def preference(self, val):
         if val > 0:
             self._preference = 1
         elif val < 0:

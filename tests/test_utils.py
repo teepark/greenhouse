@@ -587,25 +587,24 @@ class ChannelTestCase(StateClearingTestCase):
 
     def test_balance(self):
         ch = greenhouse.utils.Channel()
-        recver = lambda: ch.receive()
 
-        for i in xrange(50):
+        for i in xrange(1, 51):
             greenhouse.schedule(ch.send, (None,))
             greenhouse.pause()
-            assert ch.balance == i + 1, (ch.balance, i)
+            assert ch.balance == i, (ch.balance, i)
 
         for i in xrange(49, -1, -1):
             ch.receive()
             assert ch.balance == i, (ch.balance, i)
 
-        for i in xrange(50):
-            greenhouse.schedule(recver)
+        for i in xrange(-1, -51, -1):
+            greenhouse.schedule(ch.receive)
             greenhouse.pause()
-            assert ch.balance == -i - 1, ch.balance
+            assert ch.balance == i, ch.balance
 
-        for i in xrange(49, -1, -1):
+        for i in xrange(-49, 1):
             ch.send(None)
-            assert ch.balance == -i, ch.balance
+            assert ch.balance == i, ch.balance
 
 
 if __name__ == '__main__':

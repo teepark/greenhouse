@@ -42,7 +42,7 @@ class ScheduleTestCase(StateClearingTestCase):
         assert l == [1, 2, 3, 4, 5], l
 
     def test_schedule_at(self):
-        at = time.time() + TESTING_TIMEOUT
+        at = time.time() + (TESTING_TIMEOUT * 2)
         l = []
 
         def f1():

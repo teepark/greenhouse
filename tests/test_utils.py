@@ -606,6 +606,63 @@ class ChannelTestCase(StateClearingTestCase):
             ch.send(None)
             assert ch.balance == i, ch.balance
 
+    def test_send_with_recver_pref(self):
+        ch = greenhouse.utils.Channel()
+        l = [False]
+        m = []
+        n = [False]
+
+        def hotpotato():
+            i = ch.receive()
+            m.append(None)
+            ch.send(i)
+
+        for i in xrange(10):
+            greenhouse.schedule(hotpotato)
+            # this hot potato chain never yields to the scheduler,
+            # so f won't run
+
+        # terminate the hot potato. after this, f will run
+        @greenhouse.schedule
+        def g():
+            ch.receive()
+            assert len(m) == 10
+            assert not l[0]
+            n[0] = True
+
+        greenhouse.pause() # block everyone on their receive() calls
+
+        @greenhouse.schedule
+        def f():
+            l[0] = True
+
+        ch.send(None)
+        assert l[0]
+        assert n[0]
+
+    def test_recv_with_recver_preference(self):
+        ch = greenhouse.utils.Channel()
+        sendcounter = []
+
+        def sender():
+            ch.send(None)
+            sendcounter.append(None)
+
+        for i in xrange(20):
+            greenhouse.schedule(sender)
+
+        greenhouse.pause()
+        assert ch.balance == 20, ch.balance
+        assert len(sendcounter) == 0
+
+        for i in xrange(20):
+            ch.receive()
+            # with recver preference, this doesn't switch to the blocked sender
+        assert len(sendcounter) == 0
+
+        greenhouse.pause() # now the sender greenlets will finish
+        assert len(sendcounter) == 20
+
 
 if __name__ == '__main__':
     unittest.main()

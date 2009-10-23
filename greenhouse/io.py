@@ -78,6 +78,7 @@ class Socket(object):
     def __del__(self):
         try:
             state.poller.unregister(self)
+            del state.descriptormap[self._fileno]
         except:
             pass
 

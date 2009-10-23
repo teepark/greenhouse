@@ -307,16 +307,18 @@ class Timer(object):
         self.kwargs = kwargs or {}
         self._glet = glet = greenlet(self._run, scheduler.generic_parent)
         self.waketime = waketime = time.time() + secs
+        self.cancelled = False
         scheduler.schedule_at(waketime, glet)
 
     def cancel(self):
         "if called before the greenlet runs, stop it from ever starting"
         tp = state.timed_paused
-        if not tp: #pragma: no cover (this should be impossible)
+        if self.cancelled or not tp:
             return
         index = bisect.bisect(tp, (self.waketime, self._glet)) - 1
         if tp[index][1] is self._glet:
             tp[index:index + 1] = []
+        self.cancelled = True
 
     def _run(self):
         return self.func(*self.args, **self.kwargs)

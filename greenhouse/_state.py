@@ -1,10 +1,9 @@
 import collections
-import threading
 
 
 __all__ = ["state"]
 
-state = threading.local()
+state = type('_greenhouse_state', (), {})()
 
 # from events that have triggered
 state.awoken_from_events = set()

@@ -1,6 +1,7 @@
 import bisect
 import operator
 import sys
+import threading
 import time
 import traceback
 
@@ -200,3 +201,28 @@ def generic_parent(ended):
 def f():
     pass
 pause()
+
+def hybridize():
+    '''change the process-global scheduler state to be thread-local
+
+    this allows multiple OS-threads to each have their own schedulers with
+    multiple greenlets in them.
+
+    it is only allowable if there is just one thread currently running. all
+    greenlets running will be assigned to the scheduler for the main thread,
+    but from this point on new greenlets will go into the scheduler for the
+    currently-running thread. it is not possible to move a greenlet to a
+    different thread.
+
+    there is no reverse operation.
+    '''
+    assert threading.active_count() == 1, "multiple threads are already active"
+    import greenhouse._state as state
+
+    procstate, state.state = state.state, threading.local()
+
+    state.state.awoken_from_events = procstate.awoken_from_events
+    state.state.timed_paused = procstate.timed_paused
+    state.state.paused = procstate.paused
+    state.state.descriptormap = procstate.descriptormap
+    state.state.to_run = procstate.to_run

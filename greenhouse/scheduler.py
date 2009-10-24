@@ -108,7 +108,9 @@ def schedule(target=None, args=(), kwargs=None):
             inner_target = target
             def target():
                 inner_target(*args, **kwargs)
-        glet = greenlet(target, generic_parent)
+        if not hasattr(state, "generic_parent"):
+            build_generic_parent()
+        glet = greenlet(target, state.generic_parent)
     state.paused.append(glet)
     return target
 
@@ -129,7 +131,9 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
             inner_target = target
             def target():
                 inner_target(*args, **kwargs)
-        glet = greenlet(target, generic_parent)
+        if not hasattr(state, "generic_parent"):
+            build_generic_parent()
+        glet = greenlet(target, state.generic_parent)
     bisect.insort(state.timed_paused, (unixtime, glet))
     return target
 
@@ -180,27 +184,31 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     return target
 
-@greenlet
-def generic_parent(ended):
-    while 1:
-        if not traceback: #pragma: no cover
-            # python's shutdown sequence gets out of wack when we have
-            # greenlets in play. in certain circumstances, the traceback module
-            # becomes None before this code runs.
-            break
-        try:
-            get_next().switch()
-        except Exception, exc:
-            if PRINT_EXCEPTIONS: #pragma: no cover
-                traceback.print_exception(*sys.exc_info(), file=sys.stderr)
+def build_generic_parent():
+    @greenlet
+    def generic_parent(ended):
+        while 1:
+            if not traceback: #pragma: no cover
+                # python's shutdown sequence gets out of wack when we have
+                # greenlets in play. in certain circumstances, the traceback
+                # module becomes None before this code runs.
+                break
+            try:
+                get_next().switch()
+            except Exception, exc:
+                if PRINT_EXCEPTIONS: #pragma: no cover
+                    traceback.print_exception(*sys.exc_info(), file=sys.stderr)
+    state.generic_parent = generic_parent
 
-# prime the pump. if there is a traceback before the generic parent has a
-# chance to get into its 'try' block, the generic parent will die of that
-# traceback and it will wind up being raised in the main greenlet
-@schedule
-def f():
-    pass
-pause()
+    # prime the pump. if there is a traceback before the generic parent has a
+    # chance to get into its 'try' block, the generic parent will die of that
+    # traceback and it will wind up being raised in the main greenlet
+    @schedule
+    def f():
+        pass
+    pause()
+
+build_generic_parent()
 
 def hybridize():
     '''change the process-global scheduler state to be thread-local
@@ -226,3 +234,4 @@ def hybridize():
     state.state.paused = procstate.paused
     state.state.descriptormap = procstate.descriptormap
     state.state.to_run = procstate.to_run
+    state.state.generic_parent = procstate.generic_parent

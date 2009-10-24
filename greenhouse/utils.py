@@ -305,7 +305,11 @@ class Timer(object):
         self.func = func
         self.args = args
         self.kwargs = kwargs or {}
-        self._glet = glet = greenlet(self._run, scheduler.generic_parent)
+
+        if not hasattr(state, "generic_parent"):
+            scheduler.build_generic_parent()
+        self._glet = glet = greenlet(self._run, state.generic_parent)
+
         self.waketime = waketime = time.time() + secs
         self.cancelled = False
         scheduler.schedule_at(waketime, glet)

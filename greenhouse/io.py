@@ -338,10 +338,7 @@ class File(object):
 
     def close(self):
         os.close(self._fileno)
-        try:
-            state.poller.unregister(self)
-        except KeyError:
-            pass
+        state.poller.unregister(self)
 
     def fileno(self):
         return self._fileno

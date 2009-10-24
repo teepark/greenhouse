@@ -9,7 +9,7 @@ import greenhouse.poller
 from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
 
-port = lambda: 8000 + os.getpid() # because i want to run multiprocess nose
+port = lambda: 8000 + os.getpid() # because i'm running multiprocess nose
 
 class ScheduleTestCase(StateClearingTestCase):
     def test_schedule(self):
@@ -171,7 +171,7 @@ class ScheduleTestCase(StateClearingTestCase):
         import gc
         gc.collect()
 
-        assert None in [x() for x in dmap[fno]]
+        assert all(x() is None for x in dmap[fno]), [x() for x in dmap(fno)]
 
         client = greenhouse.Socket()
         server = greenhouse.Socket()
@@ -263,6 +263,7 @@ class ExceptionsTestCase(StateClearingTestCase):
         greenhouse.pause()
 
         assert not l[0]
+
 
 if __name__ == '__main__':
     unittest.main()

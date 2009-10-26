@@ -6,7 +6,7 @@ import time
 import traceback
 
 from greenhouse._state import state
-from greenhouse.compat import greenlet, main_greenlet
+from greenhouse.compat import greenlet
 
 
 __all__ = ["get_next", "pause", "pause_until", "pause_for", "schedule",
@@ -198,13 +198,16 @@ def build_generic_parent():
                     traceback.print_exception(*sys.exc_info(), file=sys.stderr)
     state.generic_parent = generic_parent
 
-    # prime the pump. if there is a traceback before the generic parent has a
-    # chance to get into its 'try' block, the generic parent will die of that
-    # traceback and it will wind up being raised in the main greenlet
+    # rig it so the next get_next() call will definitely put us right back here
+    state.to_run.appendleft(greenlet.getcurrent())
+
+    # then prime the pump. if there is a traceback before the generic parent
+    # has a chance to get into its 'try' block, the generic parent will die of
+    # that traceback and it will wind up being raised in the main greenlet
     @schedule
     def f():
         pass
-    pause()
+    get_next().switch()
 
 build_generic_parent()
 
@@ -214,7 +217,7 @@ def hybridize():
     this allows multiple OS-threads to each have their own schedulers with
     multiple greenlets in them.
 
-    it is only allowable if there is just one thread currently running. all
+    it is only allowed if there is just one thread currently running. all
     greenlets running will be assigned to the scheduler for the main thread,
     but from this point on new greenlets will go into the scheduler for the
     currently-running thread. it is not possible to move a greenlet to a

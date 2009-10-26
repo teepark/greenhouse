@@ -302,13 +302,14 @@ class Timer(object):
 
     mirrors the standard library threading.Timer API"""
     def __init__(self, secs, func, args=(), kwargs=None):
+        assert hasattr(func, "__call__"), "function argument must be callable"
         self.func = func
         self.args = args
-        self.kwargs = kwargs or {}
+        self.kwargs = kwargs
 
         if not hasattr(state, "generic_parent"):
             scheduler.build_generic_parent()
-        self._glet = glet = greenlet(self._run, state.generic_parent)
+        self._glet = glet = greenlet(self.func, state.generic_parent)
 
         self.waketime = waketime = time.time() + secs
         self.cancelled = False
@@ -319,13 +320,12 @@ class Timer(object):
         tp = state.timed_paused
         if self.cancelled or not tp:
             return
-        index = bisect.bisect(tp, (self.waketime, self._glet)) - 1
-        if tp[index][1] is self._glet:
-            tp[index:index + 1] = []
         self.cancelled = True
-
-    def _run(self):
-        return self.func(*self.args, **self.kwargs)
+        index = bisect.bisect(tp, (self.waketime, None))
+        while tp[index][0] < self.waketime:
+            index += 1
+        if tp[index][1].run is self.func:
+            tp[index:index + 1] = []
 
 class Local(object):
     """class that represents greenlet-local data

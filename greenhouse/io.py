@@ -39,11 +39,7 @@ def unmonkeypatch():
 class Socket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
-        self._sock = kwargs.pop('fromsock', None)
-        if isinstance(self._sock, Socket):
-            self._sock = self._sock._sock
-        if not self._sock:
-            self._sock = _socket(*args, **kwargs)
+        self._sock = kwargs.pop('fromsock', None) or _socket(*args, **kwargs)
 
         # copy over attributes
         self.family = self._sock.family

@@ -269,6 +269,7 @@ class File(object):
     def __init__(self, name, mode='rb'):
         self.mode = mode
         self._buf = StringIO()
+        self._closed = False
 
         # translate mode into the proper open flags
         flags = self._mode_to_flags(mode)
@@ -308,6 +309,7 @@ class File(object):
         fp.mode = mode
         fp._fileno = fd
         fp._buf = StringIO()
+        fp._closed = False
 
         cls._add_flags(fd, cls._mode_to_flags(mode))
         fp._set_up_waiting()
@@ -333,6 +335,7 @@ class File(object):
             pass
 
     def close(self):
+        self._closed = True
         os.close(self._fileno)
         state.poller.unregister(self)
 

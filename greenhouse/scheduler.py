@@ -26,9 +26,8 @@ def _socketpoll():
         socks = []
         for index, weakref in enumerate(state.descriptormap[fd]):
             sock = weakref()
-            if sock is None:
-                assert state.descriptormap[fd].pop(index)() is None, \
-                        "removed a perfectly good socket"
+            if sock is None or sock._closed:
+                state.descriptormap[fd].pop(index)
             else:
                 socks.append(sock)
         if eventmap & state.poller.INMASK:

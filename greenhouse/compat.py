@@ -4,6 +4,6 @@ except ImportError: #pragma: no cover
     from py.magic import greenlet
 
 
-__all__ = ["greenlet"]
+__all__ = ["greenlet", "main_greenlet"]
 
 main_greenlet = greenlet.getcurrent()

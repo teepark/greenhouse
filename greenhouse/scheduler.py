@@ -95,7 +95,6 @@ def schedule(target=None, args=(), kwargs=None):
 
     if *target* is a function, it is wrapped in a new greenlet. the greenlet
     will be run at an undetermined time. also usable as a decorator'''
-    kwargs = kwargs or {}
     if target is None:
         def decorator(target):
             return schedule(target, args=args, kwargs=kwargs)
@@ -106,7 +105,7 @@ def schedule(target=None, args=(), kwargs=None):
         if args or kwargs:
             inner_target = target
             def target():
-                inner_target(*args, **kwargs)
+                inner_target(*args, **(kwargs or {}))
         if not hasattr(state, "generic_parent"):
             build_generic_parent()
         glet = greenlet(target, state.generic_parent)

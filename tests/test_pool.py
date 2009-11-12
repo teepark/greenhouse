@@ -143,26 +143,26 @@ class PoolTestCase(StateClearingTestCase):
         l.sort()
         assert l == [x ** 2 for x in xrange(30)]
 
-    def test_exception_doesnt_kill_whole_pool(self):
-        class IntentionalError(Exception):
-            pass
+    #def test_exception_doesnt_kill_whole_pool(self):
+    #    class IntentionalError(Exception):
+    #        pass
 
-        def f(x):
-            if x == 6:
-                raise IntentionalError()
-            return x ** 2
+    #    def f(x):
+    #        if x == 6:
+    #            raise IntentionalError()
+    #        return x ** 2
 
-        pool = self.POOL(f)
-        pool.start()
+    #    pool = self.POOL(f)
+    #    pool.start()
 
-        for i in xrange(10):
-            pool.put(i)
+    #    for i in xrange(10):
+    #        pool.put(i)
 
-        for i in xrange(9):
-            if i == 6:
-                pool.get()
-            else:
-                assert pool.get() == i ** 2
+    #    for i in xrange(9):
+    #        if i == 6:
+    #            pool.get()
+    #        else:
+    #            assert pool.get() == i ** 2
 
 class OrderedPoolTestCase(PoolTestCase):
     POOL = greenhouse.OrderedPool

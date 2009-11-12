@@ -452,6 +452,10 @@ class Channel(object):
         self._waiters = collections.deque()
         self._balance = 0
         self._preference = -1
+        self._closing = False
+
+    def __iter__(self):
+        return self
 
     @property
     def balance(self):
@@ -489,27 +493,24 @@ class Channel(object):
     def queue(self):
         return self._waiters and self._waiters[0] or None
 
-    #- sending, channel preference receivers: receiver wakes up immediately
-    #- sending, channel preference senders: receiver gets scheduled
-    #- receiving, channel preference receivers: sender gets scheduled
-    #- receiving, channel preference senders: sender wakes up immediately
-    #- in cases where someone else wakes up immediately, the current tasklet
-    #  is cooperatively scheduled
-    #- preference of 0 means nobody "wakes up immediately"
     def receive(self):
+        if self._closing and not self._dataqueue:
+            raise StopIteration()
         if self._dataqueue:
             item = self._dataqueue.popleft()
             sender = self._waiters.popleft()
             if self.preference is 1:
                 scheduler.schedule(greenlet.getcurrent())
                 sender.switch()
-            else: # also for 0, no preference
+            else:
                 scheduler.schedule(sender)
             return item
         else:
             self._waiters.append(greenlet.getcurrent())
             scheduler.get_next().switch()
             return self._dataqueue.pop()
+
+    next = receive
 
     def send(self, item):
         if self._waiters and not self._dataqueue:

@@ -1,4 +1,4 @@
-import greenhouse.scheduler
+from greenhouse.scheduler import schedule
 from greenhouse.utils import Queue
 
 
@@ -12,24 +12,22 @@ class Pool(object):
         self.size = size
         self.inq = Queue()
         self.outq = Queue()
-        self.coros = []
 
     def start(self):
-        self.coros = []
         for i in xrange(self.size):
-            self.coros.append(greenhouse.scheduler.schedule(self._runner))
+            schedule(self._runner)
 
     def close(self):
         for i in xrange(self.size):
             self.inq.put(_STOP)
-        self.coros = []
 
     def _runner(self):
         while 1:
             input = self.inq.get()
             if input is _STOP:
                 break
-            self.outq.put(self.func(input))
+            result = self.func(input)
+            self.outq.put(result)
 
     def put(self, input):
         self.inq.put(input)

@@ -139,8 +139,6 @@ class Lock(object):
         self._locked = False
         if self._waiters:
             state.awoken_from_events.add(self._waiters.popleft())
-        else:
-            self._locked = False
 
     def __enter__(self):
         return self.acquire()

@@ -18,7 +18,8 @@ PRINT_EXCEPTIONS = True
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
 
-def _socketpoll():
+def _repopulate():
+    # start with polling sockets to trigger events
     if not hasattr(state, 'poller'):
         import greenhouse.poller #pragma: no cover
     events = state.poller.poll()
@@ -38,13 +39,12 @@ def _socketpoll():
             for sock in socks:
                 sock._writable.set()
                 sock._writable.clear()
-    return events
 
-def _find_awoken():
+    # grab the greenlets that were awoken by those and other events
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
 
-def _find_timein():
+    # bisect out the greenlets that have waited out their timer
     index = bisect.bisect(state.timed_paused, (time.time(), None))
     state.to_run.extend(p[1] for p in state.timed_paused[:index])
     state.timed_paused = state.timed_paused[index:]
@@ -52,14 +52,7 @@ def _find_timein():
 def get_next():
     'update the scheduler state and figure out the next greenlet to run'
     if not state.to_run:
-        # run the socket poller to trigger network events
-        _socketpoll()
-
-        # start with events that have already triggered
-        _find_awoken()
-
-        # append timed pauses that have expired
-        _find_timein()
+        _repopulate()
 
         # append simple cooperative yields
         state.to_run.extend(state.paused)
@@ -68,9 +61,7 @@ def get_next():
         # wait for timeouts and events while we don't have anything to run
         while not state.to_run:
             time.sleep(NOTHING_TO_DO_PAUSE)
-            _socketpoll()
-            _find_awoken()
-            _find_timein()
+            _repopulate()
 
     return state.to_run.popleft()
 

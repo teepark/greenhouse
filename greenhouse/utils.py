@@ -265,9 +265,8 @@ class Semaphore(object):
             return True
         elif not blocking:
             return False
-        event = Event()
         self._waiters.append(greenlet.getcurrent())
-        event.wait()
+        scheduler.get_next().switch()
         return True
 
     def release(self):

@@ -259,12 +259,12 @@ class File(object):
             state.poller.register(self)
 
             # if we got here, poller.register worked, so set up event-based IO
-            self._wait = self._wait_event
+            self._waiter = "_wait_event"
             self._readable = utils.Event()
             self._writable = utils.Event()
             state.descriptormap[self._fileno].append(weakref.ref(self))
         except IOError:
-            self._wait = self._wait_yield
+            self._waiter = "_wait_yield"
 
     def __init__(self, name, mode='rb'):
         self.mode = mode
@@ -296,6 +296,9 @@ class File(object):
     def _wait_yield(self, reading): #pragma: no cover
         "generic wait, for when polling won't work"
         scheduler.pause()
+
+    def _wait(self, reading):
+        getattr(self, self._waiter)(reading)
 
     @staticmethod
     def _add_flags(fd, flags):

@@ -89,5 +89,4 @@ def eval(tup, func):
     for tup in _findall(tup):
         greenhouse.schedule(func, args=(tup,))
 
-def yield_():
-    greenhouse.pause()
+yield_ = greenhouse.pause

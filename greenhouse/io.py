@@ -345,6 +345,9 @@ class File(object):
     def fileno(self):
         return self._fileno
 
+    def flush(self):
+        return None
+
     def read(self, size=-1):
         chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
 

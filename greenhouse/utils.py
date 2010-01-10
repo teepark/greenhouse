@@ -304,8 +304,6 @@ class Timer(object):
         self.args = args
         self.kwargs = kwargs
 
-        if not hasattr(state, "generic_parent"):
-            scheduler.build_generic_parent()
         self._glet = glet = greenlet(self.func, state.generic_parent)
 
         self.waketime = waketime = time.time() + secs

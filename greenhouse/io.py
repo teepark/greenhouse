@@ -64,10 +64,6 @@ class Socket(object):
         self._timeout = None
         self._closed = False
 
-        # make sure we have a state.poller
-        if not hasattr(state, 'poller'):
-            import greenhouse.poller #pragma: no cover
-
         # allow for lookup by fileno
         state.descriptormap[self._fileno].append(weakref.ref(self))
 
@@ -253,8 +249,6 @@ class File(object):
         return flags
 
     def _set_up_waiting(self):
-        if not hasattr(state, 'poller'):
-            import greenhouse.poller #pragma: no cover
         try:
             state.poller.register(self)
 

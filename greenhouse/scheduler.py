@@ -5,6 +5,7 @@ import threading
 import time
 import traceback
 
+import greenhouse
 from greenhouse._state import state
 from greenhouse.compat import greenlet
 
@@ -12,16 +13,15 @@ from greenhouse.compat import greenlet
 __all__ = ["get_next", "pause", "pause_until", "pause_for", "schedule",
            "schedule_at", "schedule_in", "schedule_recurring"]
 
-# this is intended to be monkey-patchable from client code
+# these are intended to be monkey-patchable from client code
 PRINT_EXCEPTIONS = True
+EXCEPTION_FILE = sys.stderr
 
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
 
 def _repopulate():
     # start with polling sockets to trigger events
-    if not hasattr(state, 'poller'):
-        import greenhouse.poller #pragma: no cover
     events = state.poller.poll()
     for fd, eventmap in events:
         socks = []
@@ -97,8 +97,6 @@ def schedule(target=None, args=(), kwargs=None):
             inner_target = target
             def target():
                 inner_target(*args, **(kwargs or {}))
-        if not hasattr(state, "generic_parent"):
-            build_generic_parent()
         glet = greenlet(target, state.generic_parent)
     state.paused.append(glet)
     return target
@@ -120,8 +118,6 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
             inner_target = target
             def target():
                 inner_target(*args, **kwargs)
-        if not hasattr(state, "generic_parent"):
-            build_generic_parent()
         glet = greenlet(target, state.generic_parent)
     bisect.insort(state.timed_paused, (unixtime, glet))
     return target
@@ -173,34 +169,31 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     return target
 
-def build_generic_parent():
-    @greenlet
-    def generic_parent(ended):
-        while 1:
-            if not traceback: #pragma: no cover
-                # python's shutdown sequence gets out of wack when we have
-                # greenlets in play. in certain circumstances, the traceback
-                # module becomes None before this code runs.
-                break
-            try:
-                get_next().switch()
-            except Exception, exc:
-                if PRINT_EXCEPTIONS: #pragma: no cover
-                    traceback.print_exception(*sys.exc_info(), file=sys.stderr)
-    state.generic_parent = generic_parent
+@greenlet
+def generic_parent(ended):
+    while 1:
+        if not traceback or not state: #pragma: no cover
+            # python's shutdown sequence gets out of wack when we have
+            # greenlets in play. in certain circumstances, modules become
+            # None before this code runs.
+            break
+        try:
+            get_next().switch()
+        except Exception, exc:
+            if PRINT_EXCEPTIONS: #pragma: no cover
+                traceback.print_exception(*sys.exc_info(), file=EXCEPTION_FILE)
+state.generic_parent = generic_parent
 
-    # rig it so the next get_next() call will definitely put us right back here
-    state.to_run.appendleft(greenlet.getcurrent())
+# rig it so the next get_next() call will definitely put us right back here
+state.to_run.appendleft(greenlet.getcurrent())
 
-    # then prime the pump. if there is a traceback before the generic parent
-    # has a chance to get into its 'try' block, the generic parent will die of
-    # that traceback and it will wind up being raised in the main greenlet
-    @schedule
-    def f():
-        pass
-    get_next().switch()
-
-build_generic_parent()
+# then prime the pump. if there is a traceback before the generic parent
+# has a chance to get into its 'try' block, the generic parent will die of
+# that traceback and it will wind up being raised in the main greenlet
+@schedule
+def f():
+    pass
+get_next().switch()
 
 def hybridize():
     '''change the process-global scheduler state to be thread-local
@@ -227,3 +220,4 @@ def hybridize():
     state.state.descriptormap = procstate.descriptormap
     state.state.to_run = procstate.to_run
     state.state.generic_parent = procstate.generic_parent
+    greenhouse.poller.set()

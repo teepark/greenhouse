@@ -91,7 +91,7 @@ class Event(object):
                     current.switch()
 
         self._waiters.append(current)
-        scheduler.get_next().switch()
+        state.mainloop.switch()
 
         if current in self._awoken_by_timeout:
             self._awoken_by_timeout.remove(current)
@@ -128,7 +128,7 @@ class Lock(object):
             return not locked_already
         if self._locked:
             self._waiters.append(greenlet.getcurrent())
-            scheduler.get_next().switch()
+            state.mainloop.switch()
         self._locked = True
         return True
 
@@ -169,7 +169,7 @@ class RLock(Lock):
             return False
         if self._locked:
             self._waiters.append(greenlet.getcurrent())
-            scheduler.get_next().switch()
+            state.mainloop.switch()
         self._owner = current
         self._locked = True
         self._count = 1
@@ -227,7 +227,7 @@ class Condition(object):
                 self._waiters.remove(current)
                 current.switch()
 
-        scheduler.get_next().switch()
+        state.mainloop.switch()
         self._lock.acquire()
 
     def notify(self, num=1):
@@ -266,7 +266,7 @@ class Semaphore(object):
         elif not blocking:
             return False
         self._waiters.append(greenlet.getcurrent())
-        scheduler.get_next().switch()
+        state.mainloop.switch()
         return True
 
     def release(self):
@@ -304,7 +304,7 @@ class Timer(object):
         self.args = args
         self.kwargs = kwargs
 
-        self._glet = glet = greenlet(self.func, state.generic_parent)
+        self._glet = glet = greenlet(self.func, state.mainloop)
 
         self.waketime = waketime = time.time() + secs
         self.cancelled = False
@@ -505,7 +505,7 @@ class Channel(object):
             return item
         else:
             self._waiters.append(greenlet.getcurrent())
-            scheduler.get_next().switch()
+            state.mainloop.switch()
             return self._dataqueue.pop()
 
     next = receive
@@ -521,4 +521,4 @@ class Channel(object):
         else:
             self._dataqueue.append(item)
             self._waiters.append(greenlet.getcurrent())
-            scheduler.get_next().switch()
+            state.mainloop.switch()

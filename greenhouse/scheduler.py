@@ -10,8 +10,8 @@ from greenhouse._state import state
 from greenhouse.compat import greenlet
 
 
-__all__ = ["get_next", "pause", "pause_until", "pause_for", "schedule",
-           "schedule_at", "schedule_in", "schedule_recurring"]
+__all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
+        "schedule_in", "schedule_recurring"]
 
 # these are intended to be monkey-patchable from client code
 PRINT_EXCEPTIONS = True
@@ -49,7 +49,7 @@ def _repopulate():
     state.to_run.extend(p[1] for p in state.timed_paused[:index])
     state.timed_paused = state.timed_paused[index:]
 
-def get_next():
+def _get_next():
     'update the scheduler state and figure out the next greenlet to run'
     if not state.to_run:
         _repopulate()
@@ -68,13 +68,13 @@ def get_next():
 def pause():
     'pause and reschedule the current greenlet and switch to the next'
     schedule(greenlet.getcurrent())
-    get_next().switch()
+    mainloop.switch()
 
 def pause_until(unixtime):
     '''pause and reschedule the current greenlet until a set time,
     then switch to the next'''
     schedule_at(unixtime, greenlet.getcurrent())
-    get_next().switch()
+    mainloop.switch()
 
 def pause_for(secs):
     '''pause and reschedule the current greenlet for a set number of seconds,
@@ -97,7 +97,7 @@ def schedule(target=None, args=(), kwargs=None):
             inner_target = target
             def target():
                 inner_target(*args, **(kwargs or {}))
-        glet = greenlet(target, state.generic_parent)
+        glet = greenlet(target, state.mainloop)
     state.paused.append(glet)
     return target
 
@@ -118,7 +118,7 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
             inner_target = target
             def target():
                 inner_target(*args, **kwargs)
-        glet = greenlet(target, state.generic_parent)
+        glet = greenlet(target, state.mainloop)
     bisect.insort(state.timed_paused, (unixtime, glet))
     return target
 
@@ -170,7 +170,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
     return target
 
 @greenlet
-def generic_parent(ended):
+def mainloop():
     while 1:
         if not traceback or not state: #pragma: no cover
             # python's shutdown sequence gets out of wack when we have
@@ -178,13 +178,13 @@ def generic_parent(ended):
             # None before this code runs.
             break
         try:
-            get_next().switch()
+            _get_next().switch()
         except Exception, exc:
             if PRINT_EXCEPTIONS: #pragma: no cover
                 traceback.print_exception(*sys.exc_info(), file=EXCEPTION_FILE)
-state.generic_parent = generic_parent
+state.mainloop = mainloop
 
-# rig it so the next get_next() call will definitely put us right back here
+# rig it so the next _get_next() call will definitely put us right back here
 state.to_run.appendleft(greenlet.getcurrent())
 
 # then prime the pump. if there is a traceback before the generic parent
@@ -193,7 +193,7 @@ state.to_run.appendleft(greenlet.getcurrent())
 @schedule
 def f():
     pass
-get_next().switch()
+mainloop.switch()
 
 def hybridize():
     '''change the process-global scheduler state to be thread-local
@@ -219,5 +219,5 @@ def hybridize():
     state.state.paused = procstate.paused
     state.state.descriptormap = procstate.descriptormap
     state.state.to_run = procstate.to_run
-    state.state.generic_parent = procstate.generic_parent
+    state.state.mainloop = procstate.mainloop
     greenhouse.poller.set()

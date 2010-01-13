@@ -20,7 +20,7 @@ EXCEPTION_FILE = sys.stderr
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
 
-def _repopulate():
+def _repopulate(include_paused=True):
     # start with polling sockets to trigger events
     events = state.poller.poll()
     for fd, eventmap in events:
@@ -49,21 +49,10 @@ def _repopulate():
     state.to_run.extend(p[1] for p in state.timed_paused[:index])
     state.timed_paused = state.timed_paused[index:]
 
-def _get_next():
-    'update the scheduler state and figure out the next greenlet to run'
-    if not state.to_run:
-        _repopulate()
-
+    if include_paused:
         # append simple cooperative yields
         state.to_run.extend(state.paused)
         state.paused = []
-
-        # wait for timeouts and events while we don't have anything to run
-        while not state.to_run:
-            time.sleep(NOTHING_TO_DO_PAUSE)
-            _repopulate()
-
-    return state.to_run.popleft()
 
 def pause():
     'pause and reschedule the current greenlet and switch to the next'
@@ -178,13 +167,23 @@ def mainloop():
             # None before this code runs.
             break
         try:
-            _get_next().switch()
+            if not state.to_run:
+                _repopulate()
+
+                # wait for timeouts and events while we have nothing to run
+                while not state.to_run:
+                    time.sleep(NOTHING_TO_DO_PAUSE)
+
+                    # no need to check the simple cooperative yields again here
+                    _repopulate(include_paused=False)
+
+            state.to_run.popleft().switch()
         except Exception, exc:
             if PRINT_EXCEPTIONS: #pragma: no cover
                 traceback.print_exception(*sys.exc_info(), file=EXCEPTION_FILE)
 state.mainloop = mainloop
 
-# rig it so the next _get_next() call will definitely put us right back here
+# rig it so the next mainloop.switch() call will definitely put us back here
 state.to_run.appendleft(greenlet.getcurrent())
 
 # then prime the pump. if there is a traceback before the generic parent

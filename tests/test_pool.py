@@ -75,11 +75,11 @@ class PoolTestCase(StateClearingTestCase):
         class Pool(self.POOL):
             def __init__(self, *args, **kwargs):
                 super(Pool, self).__init__(*args, **kwargs)
-                self.finished = False
+                self.finished = []
 
             def _runner(self):
                 super(Pool, self)._runner()
-                self.finished = True
+                self.finished.append(None)
 
         def f(x):
             return x ** 2
@@ -97,7 +97,7 @@ class PoolTestCase(StateClearingTestCase):
 
         greenhouse.pause()
 
-        assert pool.finished
+        self.assertEqual(len(pool.finished), pool.size)
 
     def test_as_context_manager(self):
         def f(x):

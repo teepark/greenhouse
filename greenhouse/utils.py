@@ -317,8 +317,6 @@ class Timer(object):
             return
         self.cancelled = True
         index = bisect.bisect(tp, (self.waketime, None))
-        while tp[index][0] < self.waketime:
-            index += 1
         if tp[index][1].run is self.func:
             tp[index:index + 1] = []
 

@@ -11,7 +11,6 @@ Contents:
 .. toctree::
     :maxdepth: 2
 
-    greenhouse.rst
     greenhouse/scheduler
     greenhouse/utils
     greenhouse/io

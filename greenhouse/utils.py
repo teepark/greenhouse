@@ -328,15 +328,13 @@ class Local(object):
         object.__setattr__(self, "data", {})
 
     def __getattr__(self, name):
-        local = object.__getattribute__(self, "data").setdefault(
-                greenlet.getcurrent(), {})
+        local = self.data.setdefault(greenlet.getcurrent(), {})
         if name not in local:
             raise AttributeError, "Local object has no attribute %s" % name
         return local[name]
 
     def __setattr__(self, name, value):
-        object.__getattribute__(self, "data").setdefault(greenlet.getcurrent(),
-                {})[name] = value
+        self.data.setdefault(greenlet.getcurrent(), {})[name] = value
 
 class Queue(object):
     """a producer-consumer queue

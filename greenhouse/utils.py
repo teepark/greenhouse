@@ -4,6 +4,7 @@ import bisect
 import collections
 import functools
 import time
+import weakref
 
 from greenhouse._state import state
 from greenhouse.compat import greenlet
@@ -325,7 +326,7 @@ class Local(object):
 
     mirrors the standard library threading.local API"""
     def __init__(self):
-        object.__setattr__(self, "data", {})
+        object.__setattr__(self, "data", weakref.WeakKeyDictionary())
 
     def __getattr__(self, name):
         local = self.data.setdefault(greenlet.getcurrent(), {})

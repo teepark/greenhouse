@@ -39,7 +39,7 @@ class Event(object):
     mirrors the standard library threading.Event API"""
     def __init__(self):
         self._is_set = False
-        self._timeout_callbacks = collections.defaultdict(list)
+        self._timeout_callbacks = []
         self._waiters = []
         self._active_timeouts = set()
         self._awoken_by_timeout = set()
@@ -67,10 +67,8 @@ class Event(object):
         set() method has been called"""
         self._is_set = False
 
-    def _add_timeout_callback(self, func, for_glet=None):
-        if for_glet is None:
-            for_glet = greenlet.getcurrent()
-        self._timeout_callbacks[for_glet].append(func)
+    def _add_timeout_callback(self, func):
+        self._timeout_callbacks.append(func)
 
     def wait(self, timeout=None):
         """pause the current coroutine until this event is set
@@ -98,7 +96,7 @@ class Event(object):
             self._awoken_by_timeout.remove(current)
 
             error = None
-            for cb in self._timeout_callbacks[current]:
+            for cb in self._timeout_callbacks:
                 try:
                     cb()
                 except Exception, exc:

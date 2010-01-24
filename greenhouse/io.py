@@ -57,8 +57,8 @@ class Socket(object):
         # make sure these events raise socket.timeout upon timeout
         def timeout_callback():
             raise socket.timeout("timed out")
-        self._readable._add_global_timeout_callback(timeout_callback)
-        self._writable._add_global_timeout_callback(timeout_callback)
+        self._readable._add_timeout_callback(timeout_callback)
+        self._writable._add_timeout_callback(timeout_callback)
 
         # some more housekeeping
         self._timeout = None

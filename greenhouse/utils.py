@@ -3,6 +3,7 @@ from __future__ import with_statement
 import bisect
 import collections
 import functools
+import sys
 import time
 import weakref
 
@@ -101,17 +102,17 @@ class Event(object):
         if current in self._awoken_by_timeout:
             self._awoken_by_timeout.remove(current)
 
-            error = None
+            klass, exc, tb = None, None, None
             for cb in (self._timeout_callbacks[current] +
                     self._global_timeout_callbacks):
                 try:
                     cb()
-                except Exception, exc:
-                    if error is None:
-                        error = exc
+                except Exception:
+                    if klass is None:
+                        klass, exc, tb = sys.exc_info()
 
-            if error is not None:
-                raise error
+            if klass is not None:
+                raise klass, exc, tb
 
 #@_debugger
 class Lock(object):

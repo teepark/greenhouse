@@ -189,6 +189,8 @@ class OrderedPoolTestCase(PoolTestCase):
         def f(x):
             if x % 2:
                 greenhouse.pause()
+                greenhouse.pause()
+                greenhouse.pause()
             return x ** 2
 
         pool = self.POOL(f)

@@ -321,6 +321,13 @@ class Timer(object):
         if tp[index][1].run is self.func:
             tp[index:index + 1] = []
 
+    @classmethod
+    def wrap(cls, secs, args=(), kwargs=None):
+        "a classmethod decorator to immediately turn a function into a timer"
+        def decorator(func):
+            return cls(secs, func, args, kwargs)
+        return decorator
+
 class Local(object):
     """class that represents greenlet-local data
 

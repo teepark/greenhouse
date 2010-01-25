@@ -6,48 +6,11 @@ import greenhouse.poller
 from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
 
-class PoolTestCase(StateClearingTestCase):
-    POOL = greenhouse.Pool
+class OneWayPoolTestCase(StateClearingTestCase):
+    POOL = greenhouse.OneWayPool
 
-    def test_basic(self):
-        def f(x):
-            return x ** 2
-
-        pool = self.POOL(f)
-        pool.start()
-
-        for x in xrange(30):
-            pool.put(x)
-
-        l = []
-        for x in xrange(30):
-            l.append(pool.get())
-
-        l.sort()
-        assert l == [x ** 2 for x in xrange(30)]
-
-        pool.close()
-
-    def test_with_blocking(self):
-        def f(x):
-            if x % 2:
-                greenhouse.pause()
-            return x ** 2
-
-        pool = self.POOL(f)
-        pool.start()
-
-        for x in xrange(30):
-            pool.put(x)
-
-        l = []
-        for x in xrange(30):
-            l.append(pool.get())
-
-        l.sort()
-        assert l == [x ** 2 for x in xrange(30)]
-
-        pool.close()
+    def empty_out(self, pool, size):
+        return []
 
     def test_shuts_down(self):
         def f(x):
@@ -59,8 +22,7 @@ class PoolTestCase(StateClearingTestCase):
         for x in xrange(30):
             pool.put(x)
 
-        for x in xrange(30):
-            pool.get()
+        self.empty_out(pool, 30)
 
         pool.close()
 
@@ -90,14 +52,37 @@ class PoolTestCase(StateClearingTestCase):
         for x in xrange(30):
             pool.put(x)
 
-        for x in xrange(30):
-            pool.get()
+        self.empty_out(pool, 30)
 
         pool.close()
 
         greenhouse.pause()
 
         self.assertEqual(len(pool.finished), pool.size)
+
+    def test_as_context_manager(self):
+        l = []
+
+        def f(x):
+            l.append(x ** 2)
+
+        with self.POOL(f) as pool:
+            for x in xrange(30):
+                pool.put(x)
+
+        greenhouse.pause()
+        greenhouse.pause()
+        greenhouse.pause()
+
+        l.sort()
+        assert l == [x ** 2 for x in xrange(30)]
+
+
+class PoolTestCase(OneWayPoolTestCase):
+    POOL = greenhouse.Pool
+
+    def empty_out(self, pool, size):
+        return [pool.get() for i in xrange(size)]
 
     def test_as_context_manager(self):
         def f(x):
@@ -107,12 +92,27 @@ class PoolTestCase(StateClearingTestCase):
             for x in xrange(30):
                 pool.put(x)
 
-            l = []
-            for x in xrange(30):
-                l.append(pool.get())
+            l = self.empty_out(pool, 30)
 
-            l.sort()
-            assert l == [x ** 2 for x in xrange(30)]
+        l.sort()
+        assert l == [x ** 2 for x in xrange(30)]
+
+    def test_basic_two_way(self):
+        def f(x):
+            return x ** 2
+
+        pool = self.POOL(f)
+        pool.start()
+
+        for x in xrange(30):
+            pool.put(x)
+
+        l = self.empty_out(pool, 30)
+
+        l.sort()
+        assert l == [x ** 2 for x in xrange(30)]
+
+        pool.close()
 
     def test_starting_back_up(self):
         def f(x):
@@ -124,8 +124,7 @@ class PoolTestCase(StateClearingTestCase):
         for x in xrange(30):
             pool.put(x)
 
-        for x in xrange(30):
-            pool.get()
+        self.empty_out(pool, 30)
 
         pool.close()
 
@@ -136,33 +135,30 @@ class PoolTestCase(StateClearingTestCase):
         for x in xrange(30):
             pool.put(x)
 
-        l = []
-        for x in xrange(30):
-            l.append(pool.get())
+        l = self.empty_out(pool, 30)
 
         l.sort()
         assert l == [x ** 2 for x in xrange(30)]
 
-    #def test_exception_doesnt_kill_whole_pool(self):
-    #    class IntentionalError(Exception):
-    #        pass
+    def test_two_way_with_blocking(self):
+        def f(x):
+            if x % 2:
+                greenhouse.pause()
+            return x ** 2
 
-    #    def f(x):
-    #        if x == 6:
-    #            raise IntentionalError()
-    #        return x ** 2
+        pool = self.POOL(f)
+        pool.start()
 
-    #    pool = self.POOL(f)
-    #    pool.start()
+        for x in xrange(30):
+            pool.put(x)
 
-    #    for i in xrange(10):
-    #        pool.put(i)
+        l = self.empty_out(pool, 30)
 
-    #    for i in xrange(9):
-    #        if i == 6:
-    #            pool.get()
-    #        else:
-    #            assert pool.get() == i ** 2
+        l.sort()
+        assert l == [x ** 2 for x in xrange(30)]
+
+        pool.close()
+
 
 class OrderedPoolTestCase(PoolTestCase):
     POOL = greenhouse.OrderedPool

@@ -7,10 +7,6 @@ __all__ = ["Pool", "OrderedPool"]
 _STOP = object()
 
 
-class _PoolCoroExit(Exception):
-    pass
-
-
 class OneWayPool(object):
     def __init__(self, func, size=10):
         self.func = func
@@ -26,16 +22,13 @@ class OneWayPool(object):
             self.inq.put(_STOP)
 
     def _runner(self):
-        try:
-            while 1:
-                self._handle_one()
-        except _PoolCoroExit:
-            pass
+        while 1:
+            input = self.inq.get()
+            if input is _STOP:
+                break
+            self._handle_one(input)
 
-    def _handle_one(self):
-        input = self.inq.get()
-        if input is _STOP:
-            raise _PoolCoroExit()
+    def _handle_one(self, input):
         self.func(*(input[0]), **(input[1]))
 
     def put(self, *args, **kwargs):
@@ -54,10 +47,7 @@ class Pool(OneWayPool):
         super(Pool, self).__init__(*args, **kwargs)
         self.outq = Queue()
 
-    def _handle_one(self):
-        input = self.inq.get()
-        if input is _STOP:
-            raise _PoolCoroExit()
+    def _handle_one(self, input):
         self.outq.put(self.func(*(input[0]), **(input[1])))
 
     def get(self):
@@ -71,10 +61,7 @@ class OrderedPool(Pool):
         self._getcount = 0
         self._cache = {}
 
-    def _handle_one(self):
-        input = self.inq.get()
-        if input is _STOP:
-            raise _PoolCoroExit()
+    def _handle_one(self, input):
         count, input = input
         self.outq.put((count, self.func(*(input[0]), **(input[1]))))
 

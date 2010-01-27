@@ -272,10 +272,10 @@ class Semaphore(object):
 
     def release(self):
         "release or increment the semaphore"
-        if self._value or not self._waiters:
-            self._value += 1
-        else:
+        if self._waiters:
             state.awoken_from_events.add(self._waiters.popleft())
+        else:
+            self._value += 1
 
     def __enter__(self):
         return self.acquire()

@@ -17,7 +17,7 @@ returns it, or None if no match was found. (it is in_ without the removal)
 out takes a tuple (with no ANYs) and stores it in the tuple space
 
 eval takes a tuple which may have ANYs, and a function, and for every tuple
-matching the argument that is found, schedules the function, passing that tuple
+matching the argument that is found schedules the function, passing that tuple
 as the only argument
 """
 
@@ -51,6 +51,8 @@ def _findall(tup):
     return tuples
 
 def _findone(tup):
+    # we find matching tuples by process of elimination via set intersection,
+    # so to identify even one match we have to find them all anyway
     tuples = _findall(tup)
     return (tuples and (iter(tuples).next(),) or (None,))[0]
 

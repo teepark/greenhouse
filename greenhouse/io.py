@@ -270,7 +270,7 @@ class File(object):
 
         # if write or append mode and the file doesn't exist, create it
         if flags & (os.O_WRONLY | os.O_RDWR) and not os.path.exists(name):
-            os.mknod(name, 0644, stat.S_IFREG)
+            os.mknod(name, 0644)
 
         # open the file, get a descriptor
         self._fileno = os.open(name, flags)

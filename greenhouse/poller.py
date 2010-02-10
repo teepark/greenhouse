@@ -14,7 +14,7 @@ class Poll(object):
     OUTMASK = getattr(select, 'POLLOUT', None)
     ERRMASK = getattr(select, 'POLLERR', None)
 
-    _POLLER = getattr(select, "poll")
+    _POLLER = getattr(select, "poll", None)
 
     def __init__(self):
         self._poller = self._POLLER()
@@ -76,7 +76,7 @@ class Epoll(Poll):
     OUTMASK = getattr(select, 'EPOLLOUT', None)
     ERRMASK = getattr(select, 'EPOLLERR', None)
 
-    _POLLER = getattr(select, "epoll")
+    _POLLER = getattr(select, "epoll", None)
 
 class Select(object):
     "a greenhouse poller using the select system call"

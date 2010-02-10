@@ -34,7 +34,7 @@ class MonkeyPatchingTestCase(StateClearingTestCase):
         assert open is _open
         assert file is _file
 
-class PollerMixin(object):
+class SocketPollerMixin(object):
     def test_sockets_basic(self):
         with self.socketpair() as (client, handler):
             client.send("howdy")
@@ -242,18 +242,18 @@ class PollerMixin(object):
             assert client.getpeername() == handler.getsockname()
 
 if greenhouse.poller.Epoll._POLLER:
-    class EpollSocketTestCase(PollerMixin, StateClearingTestCase):
+    class EpollSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         def setUp(self):
             StateClearingTestCase.setUp(self)
             greenhouse.poller.set(greenhouse.poller.Epoll())
 
 if greenhouse.poller.Poll._POLLER:
-    class PollSocketTestCase(PollerMixin, StateClearingTestCase):
+    class PollSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         def setUp(self):
             StateClearingTestCase.setUp(self)
             greenhouse.poller.set(greenhouse.poller.Poll())
 
-class SelectSocketTestCase(PollerMixin, StateClearingTestCase):
+class SelectSocketTestCase(SocketPollerMixin, StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Select())

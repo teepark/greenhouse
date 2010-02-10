@@ -109,16 +109,6 @@ class SocketPollerMixin(object):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR)
 
-    # shutting down the reading end seems to have no effect on stdlib sockets,
-    # so verify that it has no effect on greenhouse.Sockets either
-    def test_shutdown_reading(self):
-        with self.socketpair() as (client, handler):
-            client.shutdown(socket.SHUT_RD)
-
-            handler.send("hello again")
-            r = client.recv(11)
-            assert r == "hello again", r
-
     def test_shutdown_writing(self):
         with self.socketpair() as (client, handler):
             client.shutdown(socket.SHUT_WR)

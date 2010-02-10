@@ -10,29 +10,30 @@ from test_base import TESTING_TIMEOUT, StateClearingTestCase
 class PollSelectorTestCase(StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
-        self._epoll = select.epoll
-        self._poll = select.poll
-        self._select = select.select
+        self._epoll = getattr(select, "epoll", None)
+        self._poll = getattr(select, "poll", None)
 
     def tearDown(self):
         super(PollSelectorTestCase, self).tearDown()
-        select.epoll = self._epoll
+        if self._epoll:
+            select.epoll = self._epoll
+        if self._poll:
         select.poll = self._poll
-        select.select = self._select
 
     def test_best(self):
-        assert isinstance(greenhouse.poller.best(), greenhouse.poller.Epoll)
+        if hasattr(select, "epoll"):
+            assert isinstance(greenhouse.poller.best(),
+                    greenhouse.poller.Epoll)
+            del select.epoll
 
-        del select.epoll
-        assert isinstance(greenhouse.poller.best(), greenhouse.poller.Poll)
+        if hasattr(select, "poll"):
+            assert isinstance(greenhouse.poller.best(), greenhouse.poller.Poll)
+            del select.poll
 
-        del select.poll
         assert isinstance(greenhouse.poller.best(), greenhouse.poller.Select)
 
 
-class PollerTestCase(StateClearingTestCase):
-    POLLER = greenhouse.poller.Poll
-
+class PollerMixin(object):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(self.POLLER())
@@ -76,10 +77,15 @@ class PollerTestCase(StateClearingTestCase):
             greenhouse.pause_for(TESTING_TIMEOUT)
             assert r[0]
 
-class EpollerTestCase(PollerTestCase):
-    POLLER = greenhouse.poller.Epoll
+if greenhouse.poller.Epoll._POLLER:
+    class EpollerTestCase(PollerMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Epoll
 
-class SelectTestCase(PollerTestCase):
+if greenhouse.poller.Poll._POLLER:
+    class PollerTestCase(PollerMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Poll
+
+class SelectTestCase(PollerMixin, StateClearingTestCase):
     POLLER = greenhouse.poller.Select
 
 

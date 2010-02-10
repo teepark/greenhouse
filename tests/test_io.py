@@ -435,11 +435,7 @@ class FileWithSelectTestCase(FilePollerMixin, StateClearingTestCase):
         self.fname = tempfile.mktemp()
         greenhouse.poller.set(greenhouse.poller.Select())
 
-class PipeWithEpollTestCase(StateClearingTestCase):
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        greenhouse.poller.set(greenhouse.poller.Select())
-
+class PipePollerMixin(object):
     def test_basic(self):
         rfp, wfp = greenhouse.pipe()
         try:
@@ -469,12 +465,19 @@ class PipeWithEpollTestCase(StateClearingTestCase):
             rfp.close()
             wfp.close()
 
-class PipeWithPollTestCase(PipeWithEpollTestCase):
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        greenhouse.poller.set(greenhouse.poller.Poll())
+if greenhouse.poller.Epoll._POLLER:
+    class PipeWithEpollTestCase(PipePollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            greenhouse.poller.set(greenhouse.poller.Epoll())
 
-class PipeWithSelectTestCase(PipeWithEpollTestCase):
+if greenhouse.poller.Poll._POLLER:
+    class PipeWithPollTestCase(PipePollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            greenhouse.poller.set(greenhouse.poller.Poll())
+
+class PipeWithSelectTestCase(PipePollerMixin, StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Select())

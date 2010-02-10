@@ -258,14 +258,9 @@ class SelectSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         StateClearingTestCase.setUp(self)
         greenhouse.poller.set(greenhouse.poller.Select())
 
-class FileWithEpollTestCase(StateClearingTestCase):
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        self.fname = tempfile.mktemp()
-        greenhouse.poller.set(greenhouse.poller.Epoll())
-
+class FilePollerMixin(object):
     def tearDown(self):
-        super(FileWithEpollTestCase, self).tearDown()
+        super(FilePollerMixin, self).tearDown()
         if os.path.exists(self.fname):
             os.unlink(self.fname)
 
@@ -420,11 +415,19 @@ test""")
         with open(self.fname) as fp:
             assert fp.read() == "".join(lines)
 
-class FileWithPollTestCase(FileWithEpollTestCase):
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        self.fname = tempfile.mktemp()
-        greenhouse.poller.set(greenhouse.poller.Poll())
+if greenhouse.poller.Epoll._POLLER:
+    class FileWithEpollTestCase(FilePollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            self.fname = tempfile.mktemp()
+            greenhouse.poller.set(greenhouse.poller.Epoll())
+
+if greenhouse.poller.Poll._POLLER:
+    class FileWithPollTestCase(FilePollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            self.fname = tempfile.mktemp()
+            greenhouse.poller.set(greenhouse.poller.Poll())
 
 class FileWithSelectTestCase(FileWithEpollTestCase):
     def setUp(self):

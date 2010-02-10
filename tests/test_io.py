@@ -429,7 +429,7 @@ if greenhouse.poller.Poll._POLLER:
             self.fname = tempfile.mktemp()
             greenhouse.poller.set(greenhouse.poller.Poll())
 
-class FileWithSelectTestCase(FileWithEpollTestCase):
+class FileWithSelectTestCase(FilePollerMixin, StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
         self.fname = tempfile.mktemp()

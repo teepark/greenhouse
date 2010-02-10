@@ -10,6 +10,7 @@ try:
 except ImportError: #pragma: no cover
     from StringIO import StringIO
 
+import greenhouse
 from greenhouse import utils
 from greenhouse._state import state
 
@@ -51,8 +52,8 @@ class Socket(object):
         self.setblocking(False)
 
         # create events
-        self._readable = utils.Event()
-        self._writable = utils.Event()
+        self._readable = greenhouse.Event()
+        self._writable = greenhouse.Event()
 
         # make sure these events raise socket.timeout upon timeout
         def timeout_callback():
@@ -254,8 +255,8 @@ class File(object):
 
             # if we got here, poller.register worked, so set up event-based IO
             self._waiter = "_wait_event"
-            self._readable = utils.Event()
-            self._writable = utils.Event()
+            self._readable = greenhouse.Event()
+            self._writable = greenhouse.Event()
             state.descriptormap[self._fileno].append(weakref.ref(self))
         except IOError:
             self._waiter = "_wait_yield"
@@ -270,7 +271,7 @@ class File(object):
 
         # if write or append mode and the file doesn't exist, create it
         if flags & (os.O_WRONLY | os.O_RDWR) and not os.path.exists(name):
-            os.mknod(name, 0644)
+            greenhouse.mkfile(name)
 
         # open the file, get a descriptor
         self._fileno = os.open(name, flags)

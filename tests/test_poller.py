@@ -18,7 +18,7 @@ class PollSelectorTestCase(StateClearingTestCase):
         if self._epoll:
             select.epoll = self._epoll
         if self._poll:
-        select.poll = self._poll
+            select.poll = self._poll
 
     def test_best(self):
         if hasattr(select, "epoll"):

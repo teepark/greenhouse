@@ -265,7 +265,7 @@ class FilePollerMixin(object):
             os.unlink(self.fname)
 
     def touch(self, path):
-        os.mknod(path, 0644, stat.S_IFREG)
+        os.mknod(path, 0644)
 
     def test_basic_io(self):
         fp = greenhouse.File(self.fname, 'w')

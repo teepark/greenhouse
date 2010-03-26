@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import traceback
+import weakref
 
 import greenhouse
 from greenhouse._state import state
@@ -13,9 +14,7 @@ from greenhouse.compat import greenlet
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_in", "schedule_recurring"]
 
-# these are intended to be monkey-patchable from client code
-PRINT_EXCEPTIONS = True
-EXCEPTION_FILE = sys.stderr
+_exception_handlers = []
 
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
@@ -25,8 +24,8 @@ def _repopulate(include_paused=True):
     events = state.poller.poll()
     for fd, eventmap in events:
         socks = []
-        for index, weakref in enumerate(state.descriptormap[fd]):
-            sock = weakref()
+        for index, weak in enumerate(state.descriptormap[fd]):
+            sock = weak()
             if sock is None or sock._closed:
                 state.descriptormap[fd].pop(index)
             else:
@@ -179,20 +178,40 @@ def mainloop():
 
             state.to_run.popleft().switch()
         except Exception, exc:
-            if PRINT_EXCEPTIONS: #pragma: no cover
-                traceback.print_exception(*sys.exc_info(), file=EXCEPTION_FILE)
+			_consume_exception(*sys.exc_info())
 state.mainloop = mainloop
 
 # rig it so the next mainloop.switch() call will definitely put us back here
 state.to_run.appendleft(greenlet.getcurrent())
 
-# then prime the pump. if there is a traceback before the generic parent
-# has a chance to get into its 'try' block, the generic parent will die of
-# that traceback and it will wind up being raised in the main greenlet
+# then prime the pump. if there is a traceback before the mainloop greenlet
+# has a chance to get into its 'try' block, the mainloop will die of that
+# traceback and it will wind up being raised in the main greenlet
 @schedule
 def f():
     pass
 mainloop.switch()
+
+def _consume_exception(klass, exc, tb):
+	_purge_exception_handlers()
+
+	for weak in _exception_handlers:
+		try:
+			weak()(klass, exc, tb)
+		except Exception:
+			# exceptions from within exception handlers get
+			# squashed so as not to create an infinite loop
+			pass
+
+def _purge_exception_handlers():
+	bad = [i for i, weak in enumerate(_exception_handlers) if weak() is None]
+	for i in bad[::-1]:
+		_exception_handlers.pop(i)
+
+def add_exception_handler(handler):
+	if not hasattr(handler, "__call__"):
+		raise TypeError("exception handlers must be callable")
+	_exception_handlers.append(weakref.ref(handler))
 
 def hybridize():
     '''change the process-global scheduler state to be thread-local

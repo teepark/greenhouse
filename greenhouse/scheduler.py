@@ -12,7 +12,7 @@ from greenhouse.compat import greenlet
 
 
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
-        "schedule_in", "schedule_recurring"]
+        "schedule_in", "schedule_recurring", "add_exception_handler"]
 
 _exception_handlers = []
 

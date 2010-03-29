@@ -239,16 +239,6 @@ class PausingTestCase(StateClearingTestCase):
 class ExceptionsTestCase(StateClearingTestCase):
     class CustomError(Exception): pass
 
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        self._oldprintexc = greenhouse.scheduler.PRINT_EXCEPTIONS
-
-        greenhouse.scheduler.PRINT_EXCEPTIONS = False
-
-    def tearDown(self):
-        greenhouse.scheduler.PRINT_EXCEPTIONS = self._oldprintexc
-        StateClearingTestCase.tearDown(self)
-
     def test_exceptions_raised_in_grlets(self):
         l = [False]
 

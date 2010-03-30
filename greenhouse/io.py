@@ -274,7 +274,12 @@ class File(object):
             greenhouse.mkfile(name)
 
         # open the file, get a descriptor
-        self._fileno = os.open(name, flags)
+        try:
+            self._fileno = os.open(name, flags)
+        except OSError, exc:
+            # stdlib open() raises IOError if the file doesn't exist, os.open
+            # raises OSError. pfft, whatever.
+            raise IOError(*exc.args)
 
         # try to drive the asyncronous waiting off of the polling interface,
         # but epoll doesn't seem to support filesystem descriptors, so fall

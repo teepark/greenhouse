@@ -159,8 +159,8 @@ class Socket(object):
     def listen(self, backlog):
         return self._sock.listen(backlog)
 
-    def makefile(self, mode='r', bufsize=None):
-        return socket._fileobject(self)
+    def makefile(self, mode='r', bufsize=-1):
+        return socket._fileobject(self, mode, bufsize)
 
     def recv(self, nbytes):
         with self._registered('r'):

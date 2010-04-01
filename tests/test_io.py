@@ -270,7 +270,7 @@ class FilePollerMixin(object):
         assert text == "this is testing text"
 
     def test_fails_to_read_missing_file(self):
-        self.assertRaises(OSError, greenhouse.File, self.fname, 'r')
+        self.assertRaises(IOError, greenhouse.File, self.fname, 'r')
 
     def test_fromfd(self):
         self.touch(self.fname)

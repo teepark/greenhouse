@@ -178,7 +178,8 @@ def mainloop():
 
             state.to_run.popleft().switch()
         except Exception, exc:
-            _consume_exception(*sys.exc_info())
+            if sys:
+                _consume_exception(*sys.exc_info())
 state.mainloop = mainloop
 
 # rig it so the next mainloop.switch() call will definitely put us back here

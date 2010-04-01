@@ -178,7 +178,7 @@ def mainloop():
 
             state.to_run.popleft().switch()
         except Exception, exc:
-			_consume_exception(*sys.exc_info())
+            _consume_exception(*sys.exc_info())
 state.mainloop = mainloop
 
 # rig it so the next mainloop.switch() call will definitely put us back here
@@ -193,25 +193,25 @@ def f():
 mainloop.switch()
 
 def _consume_exception(klass, exc, tb):
-	_purge_exception_handlers()
+    _purge_exception_handlers()
 
-	for weak in _exception_handlers:
-		try:
-			weak()(klass, exc, tb)
-		except Exception:
-			# exceptions from within exception handlers get
-			# squashed so as not to create an infinite loop
-			pass
+    for weak in _exception_handlers:
+        try:
+            weak()(klass, exc, tb)
+        except Exception:
+            # exceptions from within exception handlers get
+            # squashed so as not to create an infinite loop
+            pass
 
 def _purge_exception_handlers():
-	bad = [i for i, weak in enumerate(_exception_handlers) if weak() is None]
-	for i in bad[::-1]:
-		_exception_handlers.pop(i)
+    bad = [i for i, weak in enumerate(_exception_handlers) if weak() is None]
+    for i in bad[::-1]:
+        _exception_handlers.pop(i)
 
 def add_exception_handler(handler):
-	if not hasattr(handler, "__call__"):
-		raise TypeError("exception handlers must be callable")
-	_exception_handlers.append(weakref.ref(handler))
+    if not hasattr(handler, "__call__"):
+        raise TypeError("exception handlers must be callable")
+    _exception_handlers.append(weakref.ref(handler))
 
 def hybridize():
     '''change the process-global scheduler state to be thread-local

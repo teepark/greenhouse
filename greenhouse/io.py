@@ -40,7 +40,11 @@ def unmonkeypatch():
 class Socket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
-        self._sock = kwargs.pop('fromsock', None) or _socket(*args, **kwargs)
+        sock = kwargs.pop('fromsock', None) or _socket(*args, **kwargs)
+        if hasattr(sock, "_sock"):
+            self._sock = sock._sock
+        else:
+            self._sock = sock
 
         # copy over attributes
         self.family = self._sock.family
@@ -120,8 +124,10 @@ class Socket(object):
         return self._sock.bind(*args, **kwargs)
 
     def close(self):
-        self._closed = True
-        return self._sock.close()
+        # as much as this sucks, it's necessary for sufficient stdlib socket
+        # compatibility to make httplib (and by extension urllib, urllib2)
+        # work. the problem is it calls close(), then recv(). WTF
+        pass
 
     def connect(self, address):
         with self._registered('w'):

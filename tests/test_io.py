@@ -56,7 +56,6 @@ class SocketPollerMixin(object):
     def test_recv_with_closed_sock(self):
         with self.socketpair() as (client, handler):
             client.close()
-            client._sock.close()
             self.assertRaises(socket.error, client.recv, 10)
 
     def test_recvfrom(self):
@@ -183,7 +182,6 @@ class SocketPollerMixin(object):
             assert not results
 
             client.close()
-            client._sock.close()
             greenhouse.pause()
             assert results[0] == "this is a test"
 

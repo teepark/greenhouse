@@ -24,6 +24,8 @@ _file = __builtins__['file']
 
 SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 
+_more_sock_methods = ("accept", "dup", "makefile")
+
 def monkeypatch():
     """replace functions in the standard library socket module
     with their non-blocking greenhouse equivalents"""
@@ -36,8 +38,26 @@ def unmonkeypatch():
     __builtins__['open'] = _open
     __builtins__['file'] = _file
 
-#@utils._debugger
+
 class Socket(object):
+	__slots__ = ["_sock", "__weakref__"]
+
+	def __init__(self, *args, **kwargs):
+		self._sock = _InnerSocket(*args, **kwargs)
+
+	def close(self):
+		self._sock = socket._closedsocket()
+
+	_socket_methods = set(socket._delegate_methods + socket._socketmethods +
+			_more_sock_methods)
+
+	def __getattr__(self, name):
+		if name in self._socket_methods:
+			return getattr(self._sock, name)
+
+
+#@utils._debugger
+class _InnerSocket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
         sock = kwargs.pop('fromsock', None) or _socket(*args, **kwargs)
@@ -233,6 +253,7 @@ class Socket(object):
 
     def settimeout(self, timeout):
         self._timeout = timeout
+
 
 #@utils._debugger
 class File(object):

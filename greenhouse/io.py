@@ -24,7 +24,7 @@ _file = __builtins__['file']
 
 SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 
-_more_sock_methods = ("accept", "dup", "makefile")
+_more_sock_methods = ("accept", "makefile")
 
 def monkeypatch():
     """replace functions in the standard library socket module
@@ -40,20 +40,25 @@ def unmonkeypatch():
 
 
 class Socket(object):
-	__slots__ = ["_sock", "__weakref__"]
+    __slots__ = ["_sock", "__weakref__"]
 
-	def __init__(self, *args, **kwargs):
-		self._sock = _InnerSocket(*args, **kwargs)
+    def __getattr__(self, name):
+        if name in self._socket_methods:
+            return getattr(self._sock, name)
 
-	def close(self):
-		self._sock = socket._closedsocket()
+    def __init__(self, *args, **kwargs):
+        self._sock = _InnerSocket(*args, **kwargs)
 
-	_socket_methods = set(socket._delegate_methods + socket._socketmethods +
-			_more_sock_methods)
+    def close(self):
+        self._sock = socket._closedsocket()
 
-	def __getattr__(self, name):
-		if name in self._socket_methods:
-			return getattr(self._sock, name)
+    def dup(self):
+        copy = object.__new__(type(self))
+        copy._sock = self._sock.dup()
+        return copy
+
+    _socket_methods = set(socket._delegate_methods + socket._socketmethods +
+            _more_sock_methods)
 
 
 #@utils._debugger

@@ -348,6 +348,82 @@ class Queue(object):
     """a producer-consumer queue
 
     mirrors the standard library Queue.Queue API"""
+
+    # IMPLEMENTATION
+    #
+    # _waiters deque has either would-be putters or getters
+    #    - they never exist simultaneously so we only need the one deque
+    #
+    # _data deque has data from the would-be putters
+    #    - if _data is empty then _waiters holds getters
+    #
+    # _open_tasks is just an int
+    #    - it gets incremented on put()
+    #    - it gets decremented on task_done()
+    #
+    # _jobs_done is an event
+    #    - join() waits on _jobs_done
+    #    - task_done() sets it if _open_tasks hits 0
+    #    - put() clears it when _open_tasks leaves 0
+
+    class Empty(Exception):
+        pass
+
+    class Full(Exception):
+        pass
+
+    def __init__(self, maxsize=0):
+        self._maxsize = maxsize
+        self._waiters = collections.deque()
+        self._data = collections.deque()
+        self._open_tasks = 0
+        self._jobs_done = Event()
+        self._jobs_done.clear()
+
+    def _balance(self):
+        # < 0: number of waiting putters
+        # > 0: number of waiting getters
+        # == 0: no waiting putters or getters
+        if self._data:
+            return -1 * len(self._waiters)
+        return len(self._waiters)
+
+    def empty(self):
+        "without blocking, returns True if the queue is empty"
+        return not self._data
+
+    def full(self):
+        """returns True if the queue is full without blocking
+
+        if the queue has no `maxsize`, this will always return False"""
+        return self._maxsize > 0 and len(self._data) == self._maxsize
+
+    def get_nowait(self):
+        "immediately return an item from the queue or raise Queue.Empty"
+        return self.get(False)
+
+    def put_nowait(self, item):
+        "immediately place an item into the queue or raise Query.Full"
+        return self.put(item, False)
+
+    def qsize(self):
+        "return the number of items in the queue, without blocking"
+        return len(self._data)
+
+    def task_done(self):
+        "mark thata job (corresponding to a put() call) is finished"
+        if not self._open_tasks:
+            raise ValueError("task_done() called too many times")
+        self._open_tasks -= 1
+        if not self._open_tasks:
+            self._jobs_done.set()
+
+    def join(self):
+        "block until every put() call has had a corresponding task_done() call"
+        self._jobs_done.wait()
+
+
+class OldQueue(object):
     class Empty(Exception):
         pass
 

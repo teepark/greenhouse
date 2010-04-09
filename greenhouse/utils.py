@@ -349,7 +349,6 @@ class Queue(object):
     """a producer-consumer queue
 
     mirrors the standard library Queue.Queue API"""
-
     class Empty(Exception):
         pass
 
@@ -363,14 +362,6 @@ class Queue(object):
         self._open_tasks = 0
         self._jobs_done = Event()
         self._jobs_done.clear()
-
-    def _balance(self):
-        # < 0: number of waiting putters
-        # > 0: number of waiting getters
-        # == 0: no waiting putters or getters
-        if self._data:
-            return -1 * len(self._waiters)
-        return len(self._waiters)
 
     def empty(self):
         "without blocking, returns True if the queue is empty"

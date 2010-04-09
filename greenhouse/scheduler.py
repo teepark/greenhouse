@@ -182,17 +182,6 @@ def mainloop():
                 _consume_exception(*sys.exc_info())
 state.mainloop = mainloop
 
-# rig it so the next mainloop.switch() call will definitely put us back here
-state.to_run.appendleft(greenlet.getcurrent())
-
-# then prime the pump. if there is a traceback before the mainloop greenlet
-# has a chance to get into its 'try' block, the mainloop will die of that
-# traceback and it will wind up being raised in the main greenlet
-@schedule
-def f():
-    pass
-mainloop.switch()
-
 def _consume_exception(klass, exc, tb):
     _purge_exception_handlers()
 
@@ -213,6 +202,7 @@ def add_exception_handler(handler):
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
     _exception_handlers.append(weakref.ref(handler))
+
 
 def hybridize():
     '''change the process-global scheduler state to be thread-local

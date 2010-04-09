@@ -31,7 +31,7 @@ class OneWayPoolTestCase(StateClearingTestCase):
 
         greenhouse.pause()
 
-        assert len(pool.inq.queue) == 30, len(pool.inq.queue)
+        self.assertEqual(len(pool.inq._data), 30)
 
     def test_kills_all_coros(self):
         class Pool(self.POOL):

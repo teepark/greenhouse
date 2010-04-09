@@ -344,27 +344,11 @@ class Local(object):
     def __setattr__(self, name, value):
         self.data.setdefault(greenlet.getcurrent(), {})[name] = value
 
+
 class Queue(object):
     """a producer-consumer queue
 
     mirrors the standard library Queue.Queue API"""
-
-    # IMPLEMENTATION
-    #
-    # _waiters deque has either would-be putters or getters
-    #    - they never exist simultaneously so we only need the one deque
-    #
-    # _data deque has data from the would-be putters
-    #    - if _data is empty then _waiters holds getters
-    #
-    # _open_tasks is just an int
-    #    - it gets incremented on put()
-    #    - it gets decremented on task_done()
-    #
-    # _jobs_done is an event
-    #    - join() waits on _jobs_done
-    #    - task_done() sets it if _open_tasks hits 0
-    #    - put() clears it when _open_tasks leaves 0
 
     class Empty(Exception):
         pass
@@ -395,16 +379,86 @@ class Queue(object):
     def full(self):
         """returns True if the queue is full without blocking
 
-        if the queue has no `maxsize`, this will always return False"""
+        if the queue has no *maxsize*, this will always return False"""
         return self._maxsize > 0 and len(self._data) == self._maxsize
+
+    def get(self, blocking=True, timeout=None):
+        """get an item out of the queue
+
+        if *blocking* is True (default), the method will block until an item is
+        available, or until *timeout* seconds, whichever comes first. if it
+        times out, it will raise a Queue.Empty exception
+
+        if *blocking* is False, it will immediately either return an item or
+        raise a Queue.Empty exception
+        """
+        if not self._data:
+            if not blocking:
+                raise self.Empty()
+
+            glet = greenlet.getcurrent()
+            self._waiters.append(glet)
+
+            if timeout:
+                @Timer.wrap(timeout)
+                def timer():
+                    self._waiters.remove(glet)
+                    glet.throw(self.Empty)
+
+            state.mainloop.switch()
+
+            if timeout:
+                timer.cancel()
+
+        if self.full() and self._waiters:
+            scheduler.schedule(self._waiters.popleft())
+
+        return self._data.popleft()
 
     def get_nowait(self):
         "immediately return an item from the queue or raise Queue.Empty"
-        return self.get(False)
+        return self.get(blocking=False)
+
+    def put(self, item, blocking=True, timeout=None):
+        """put an item into the queue
+
+        if *blocking* is True (default) and the queue has a maxsize, the method
+        will block until a spot in the queue has been made available, or
+        *timeout* seconds has passed, whichever comes first. if it times out,
+        it will raise a Queue.Full exception
+
+        if *blocking* is False, it will immediately either place the item in
+        the queue or raise a Query.Full exception"""
+        if self.full():
+            if not blocking:
+                raise self.Full()
+
+            glet = greenlet.getcurrent()
+            self._waiters.append(glet)
+
+            if timeout:
+                @Timer.wrap(timeout)
+                def timer():
+                    sef._waiters.remove(glet)
+                    glet.throw(self.Full)
+
+            state.mainloop.switch()
+
+            if timeout:
+                timer.cancel()
+
+        if self._waiters and not self.full():
+            scheduler.schedule(self._waiters.popleft())
+
+        if not self._open_tasks:
+            self._jobs_done.clear()
+        self._open_tasks += 1
+
+        self._data.append(item)
 
     def put_nowait(self, item):
         "immediately place an item into the queue or raise Query.Full"
-        return self.put(item, False)
+        return self.put(item, blocking=False)
 
     def qsize(self):
         "return the number of items in the queue, without blocking"
@@ -422,107 +476,6 @@ class Queue(object):
         "block until every put() call has had a corresponding task_done() call"
         self._jobs_done.wait()
 
-
-class OldQueue(object):
-    class Empty(Exception):
-        pass
-
-    class Full(Exception):
-        pass
-
-    def __init__(self, maxsize=0):
-        self.maxsize = maxsize
-        self.queue = collections.deque()
-        self.unfinished_tasks = 0
-        self.not_empty = Condition()
-        self.not_full = Condition()
-        self.all_tasks_done = Event()
-        self.all_tasks_done.set()
-
-    def empty(self):
-        "without blocking, returns True if the queue is empty"
-        return not self.queue
-
-    def full(self):
-        """returns True if the queue is full without blocking
-
-        if the queue has no *maxsize* this will always return False"""
-        return self.maxsize > 0 and len(self.queue) == self.maxsize
-
-    def _unsafe_get(self):
-        with self.not_full:
-            self.not_full.notify()
-        return self.queue.popleft()
-
-    def get(self, blocking=True, timeout=None):
-        """get an item out of the queue
-
-        if *blocking* is True (default), the method will block until an item is
-        available, or until *timeout* seconds, whichever comes first. if it
-        times out, it will raise a Queue.Empty exception
-
-        if *blocking* is False, it will immediately either return an item or
-        raise a Queue.Empty exception"""
-        if not self.queue:
-            if blocking:
-                with self.not_empty:
-                    self.not_empty.wait(timeout)
-                if self.queue:
-                    return self._unsafe_get()
-            raise self.Empty()
-        return self._unsafe_get()
-
-    def get_nowait(self):
-        "immediately return an item from the queue or raise Queue.Empty"
-        return self.get(False)
-
-    def join(self):
-        "block until every put() call has had a corresponding task_done() call"
-        self.all_tasks_done.wait()
-
-    def _unsafe_put(self, item):
-        with self.not_empty:
-            self.not_empty.notify()
-        self.queue.append(item)
-        if not self.unfinished_tasks:
-            self.all_tasks_done.clear()
-        self.unfinished_tasks += 1
-
-    def put(self, item, blocking=True, timeout=None):
-        """put an item into the queue
-
-        if *blocking* is True (default) and the queue has a maxsize, the method
-        will block until a spot in the queue has been made available, or
-        *timeout* seconds has passed, whichever comes first. if it times out,
-        it will raise a Queue.Full exception
-
-        if *blocking* is False, it will immediately either place the item in
-        the queue or raise a Query.Full exception"""
-        if self.maxsize and len(self.queue) >= self.maxsize:
-            if not blocking:
-                raise self.Full()
-            with self.not_full:
-                self.not_full.wait(timeout)
-            if len(self.queue) < self.maxsize:
-                self._unsafe_put(item)
-        else:
-            self._unsafe_put(item)
-
-    def put_nowait(self, item):
-        "immediately place an item into the queue or raise Query.Full"
-        self.put(item, False)
-
-    def qsize(self):
-        "return the number of items in the queue, without blocking"
-        return len(self.queue)
-
-    def task_done(self):
-        "mark that a job (corresponding to a put() call) is finished"
-        if not self.unfinished_tasks:
-            raise ValueError('task_done() called too many times')
-        self.unfinished_tasks -= 1
-        if not self.unfinished_tasks:
-            self.all_tasks_done.set()
 
 class Channel(object):
     def __init__(self):

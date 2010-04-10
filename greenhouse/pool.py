@@ -86,3 +86,4 @@ def map(func, items, pool_size=10):
 
     for i in xrange(l):
         yield op.get()
+    op.close()

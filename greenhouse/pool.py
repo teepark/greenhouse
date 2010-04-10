@@ -78,12 +78,9 @@ class OrderedPool(Pool):
 
 
 def map(func, items, pool_size=10):
-    op = OrderedPool(func, pool_size)
-    op.start()
-    l = len(items)
-    for item in items:
-        op.put(item)
+    with OrderedPool(func, pool_size) as op:
+        for item in items:
+            op.put(item)
 
-    for i in xrange(l):
-        yield op.get()
-    op.close()
+        for item in items:
+            yield op.get()

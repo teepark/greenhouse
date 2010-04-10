@@ -149,10 +149,8 @@ class _InnerSocket(object):
         return self._sock.bind(*args, **kwargs)
 
     def close(self):
-        # as much as this sucks, it's necessary for sufficient stdlib socket
-        # compatibility to make httplib (and by extension urllib, urllib2)
-        # work. the problem is it calls close(), then recv(). WTF
-        pass
+        self._closed = True
+        self._sock.close()
 
     def connect(self, address):
         with self._registered('w'):

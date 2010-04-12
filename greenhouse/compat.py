@@ -13,7 +13,14 @@ except ImportError, error: #pragma: no cover
 
 __all__ = ["greenlet", "main_greenlet", "GreenletExit", "mkfile"]
 
-main_greenlet = greenlet.getcurrent()
+# it's conceivable that we might not be in the main greenlet at import time,
+# so chase the parent tree until we get to it
+def _find_main():
+    glet = greenlet.getcurrent()
+    while glet.parent:
+        glet = glet.parent
+    return glet
+main_greenlet = _find_main()
 
 # for whatever reason, os.mknod isn't working on FreeBSD 8 (at least)
 if sys.platform.lower().startswith("freebsd"):

@@ -2,7 +2,7 @@ from greenhouse.scheduler import schedule
 from greenhouse.utils import Queue
 
 
-__all__ = ["OneWayPool", "Pool", "OrderedPool"]
+__all__ = ["OneWayPool", "Pool", "OrderedPool", "map"]
 
 _STOP = object()
 

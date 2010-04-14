@@ -218,6 +218,21 @@ class ConditionRLockTestCase(StateClearingTestCase):
         self.assertRaises(RuntimeError, cond.wait)
         self.assertRaises(RuntimeError, cond.notify_all)
 
+    def test_owned_by_someone_else(self):
+        cond = greenhouse.Condition(self.LOCK())
+
+        @greenhouse.schedule
+        def f():
+            cond.acquire()
+            greenhouse.pause()
+        greenhouse.pause()
+
+        self.assertRaises(RuntimeError, cond.notify)
+        self.assertRaises(RuntimeError, cond.wait)
+        self.assertRaises(RuntimeError, cond.notify_all)
+
+        greenhouse.pause()
+
     def test_notify_wakes_up_one_at_a_time(self):
         cond = greenhouse.Condition(self.LOCK())
         l = []

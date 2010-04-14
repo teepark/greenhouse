@@ -113,7 +113,11 @@ class Lock(object):
     mirrors the standard library threading.Lock API"""
     def __init__(self):
         self._locked = False
+        self._owner = None
         self._waiters = collections.deque()
+
+    def _is_owned(self):
+        return self._owner is greenlet.getcurrent()
 
     def locked(self):
         "returns true if the lock is already 'locked' or 'owned'"
@@ -121,13 +125,17 @@ class Lock(object):
 
     def acquire(self, blocking=True):
         "lock the lock, or block until it is available"
+        current = greenlet.getcurrent()
         if not blocking:
             locked_already = self._locked
             self._locked = True
+            if not locked_already:
+                self._owner = current
             return not locked_already
         if self._locked:
-            self._waiters.append(greenlet.getcurrent())
+            self._waiters.append(current)
             state.mainloop.switch()
+        self._owner = current
         self._locked = True
         return True
 
@@ -136,6 +144,7 @@ class Lock(object):
         if not self._locked:
             raise RuntimeError("cannot release un-acquired lock")
         self._locked = False
+        self._owner = None
         if self._waiters:
             state.awoken_from_events.add(self._waiters.popleft())
 
@@ -151,11 +160,7 @@ class RLock(Lock):
     mirrors the standard library threading.RLock API"""
     def __init__(self):
         super(RLock, self).__init__()
-        self._owner = None
         self._count = 0
-
-    def _is_owned(self):
-        return self._owner is greenlet.getcurrent()
 
     def acquire(self, blocking=True):
         """if the lock is owned by a different greenlet, block until it is

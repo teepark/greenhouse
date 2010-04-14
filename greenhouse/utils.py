@@ -226,13 +226,16 @@ class Condition(object):
         self._waiters.append(current)
 
         if timeout is not None:
-            @scheduler.schedule_in(timeout)
-            def hit_timeout():
+            @Timer.wrap(timeout)
+            def timer():
                 self._waiters.remove(current)
                 current.switch()
 
         state.mainloop.switch()
         self._lock.acquire()
+
+        if timeout is not None:
+            timer.cancel()
 
     def notify(self, num=1):
         """wake up a set number (default 1) of the waiting greenlets
@@ -318,11 +321,18 @@ class Timer(object):
         "if called before the greenlet runs, stop it from ever starting"
         tp = state.timed_paused
         if self.cancelled or not tp:
-            return
+            return False
         self.cancelled = True
         index = bisect.bisect(tp, (self.waketime, None))
         if tp[index][1].run is self.func:
             tp[index:index + 1] = []
+        else:
+            try:
+                state.to_run.remove(self._glet)
+            except ValueError:
+                return False
+        return True
+
 
     @classmethod
     def wrap(cls, secs, args=(), kwargs=None):

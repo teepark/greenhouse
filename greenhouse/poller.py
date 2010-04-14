@@ -1,7 +1,7 @@
 import collections
 import select
 
-from greenhouse._state import state
+from greenhouse.scheduler import state
 
 
 __all__ = ["Epoll", "Poll", "Select", "best", "set"]

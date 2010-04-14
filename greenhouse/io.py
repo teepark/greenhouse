@@ -11,8 +11,8 @@ except ImportError: #pragma: no cover
     from StringIO import StringIO
 
 import greenhouse
-from greenhouse import utils
-from greenhouse._state import state
+from greenhouse import compat, utils
+from greenhouse.scheduler import state
 
 
 __all__ = ["Socket", "File", "monkeypatch", "unmonkeypatch", "pipe"]
@@ -301,7 +301,7 @@ class File(object):
 
         # if write or append mode and the file doesn't exist, create it
         if flags & (os.O_WRONLY | os.O_RDWR) and not os.path.exists(name):
-            greenhouse.mkfile(name)
+            compat.mkfile(name)
 
         # open the file, get a descriptor
         try:

@@ -1,4 +1,5 @@
-from greenhouse._state import *
+from __future__ import with_statement
+
 from greenhouse.compat import *
 from greenhouse.scheduler import *
 from greenhouse.utils import *

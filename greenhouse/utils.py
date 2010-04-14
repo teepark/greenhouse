@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import bisect
 import collections
 import functools
@@ -7,7 +5,7 @@ import sys
 import time
 import weakref
 
-from greenhouse._state import state
+from greenhouse.scheduler import state
 from greenhouse.compat import greenlet
 from greenhouse import scheduler
 

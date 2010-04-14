@@ -1,4 +1,5 @@
 import bisect
+import collections
 import operator
 import sys
 import threading
@@ -7,7 +8,6 @@ import traceback
 import weakref
 
 import greenhouse
-from greenhouse._state import state
 from greenhouse.compat import greenlet
 
 
@@ -18,6 +18,25 @@ _exception_handlers = []
 
 # pause 5ms when there are no greenlets to run
 NOTHING_TO_DO_PAUSE = 0.005
+
+
+state = type('_greenhouse_state', (), {})()
+
+# from events that have triggered
+state.awoken_from_events = set()
+
+# cooperatively yielded for a set timeout
+state.timed_paused = []
+
+# executed a simple cooperative yield
+state.paused = []
+
+# map of file numbers to the sockets/files on that descriptor
+state.descriptormap = collections.defaultdict(list)
+
+# lined up to run right away
+state.to_run = collections.deque()
+
 
 def _repopulate(include_paused=True):
     # start with polling sockets to trigger events
@@ -202,31 +221,3 @@ def add_exception_handler(handler):
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
     _exception_handlers.append(weakref.ref(handler))
-
-
-def hybridize():
-    '''change the process-global scheduler state to be thread-local
-
-    this allows multiple OS-threads to each have their own schedulers with
-    multiple greenlets in them.
-
-    it is only allowed if there is just one thread currently running. all
-    greenlets running will be assigned to the scheduler for the main thread,
-    but from this point on new greenlets will go into the scheduler for the
-    currently-running thread. it is not possible to move a greenlet to a
-    different thread.
-
-    there is no reverse operation.
-    '''
-    assert threading.active_count() == 1, "multiple threads are already active"
-    import greenhouse._state as state
-
-    procstate, state.state = state.state, threading.local()
-
-    state.state.awoken_from_events = procstate.awoken_from_events
-    state.state.timed_paused = procstate.timed_paused
-    state.state.paused = procstate.paused
-    state.state.descriptormap = procstate.descriptormap
-    state.state.to_run = procstate.to_run
-    state.state.mainloop = procstate.mainloop
-    greenhouse.poller.set()

@@ -210,18 +210,51 @@ class _InnerSocket(object):
 
     def recv_into(self, buffer, nbytes):
         with self._registered('r'):
-            self._readable.wait(self._timeout)
-            return self._sock.recv_into(buffer, nbytes)
+            while 1:
+                if self._closed:
+                    raise socket.error(errno.EBADF, "Bad file descriptor")
+                try:
+                    return self._sock.recv_into(buffer, nbytes)
+                except socket.error, e:
+                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                        self._readable.wait(self._timeout)
+                        continue
+                    if e[0] in SOCKET_CLOSED:
+                        self._closed = True
+                        return
+                    raise
 
     def recvfrom(self, nbytes):
         with self._registered('r'):
-            self._readable.wait(self._timeout)
-            return self._sock.recvfrom(nbytes)
+            while 1:
+                if self._closed:
+                    raise socket.error(errno.EBADF, "Bad file descriptor")
+                try:
+                    return self._sock.recvfrom(nbytes)
+                except socket.error, e:
+                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                        self._readable.wait(self._timeout)
+                        continue
+                    if e[0] in SOCKET_CLOSED:
+                        self._closed = True
+                        return '', (None, 0)
+                    raise
 
     def recvfrom_into(self, buffer, nbytes):
         with self._registered('r'):
-            self._readable.wait(self._timeout)
-            return self._sock.recvfrom_into(buffer, nbytes)
+            while 1:
+                if self._closed:
+                    raise socket.error(errno.EBADF, "Bad file descriptor")
+                try:
+                    return self._sock.recvfrom_into(buffer, nbytes)
+                except socket.error, e:
+                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                        self._readable.wait(self._timeout)
+                        continue
+                    if e[0] in SOCKET_CLOSED:
+                        self._closed = True
+                        return '', (None, 0)
+                    raise
 
     def send(self, data):
         try:

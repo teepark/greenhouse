@@ -45,6 +45,7 @@ class Socket(object):
     def __getattr__(self, name):
         if name in self._socket_methods:
             return getattr(self._sock, name)
+        raise AttributeError("'Socket' object has not attribute '%s'" % name)
 
     def __init__(self, *args, **kwargs):
         self._sock = _InnerSocket(*args, **kwargs)

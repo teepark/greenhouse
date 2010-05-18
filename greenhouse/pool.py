@@ -21,6 +21,8 @@ class OneWayPool(object):
         for i in xrange(self.size):
             self.inq.put(_STOP)
 
+    __del__ = close
+
     def _runner(self):
         while 1:
             input = self.inq.get()

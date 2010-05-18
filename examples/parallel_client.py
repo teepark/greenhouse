@@ -127,7 +127,7 @@ def get_urls_ordered_pool(urls, parallelism=None):
 #
 
 def get_urls_ordered_map(urls, parallelism=None):
-    return greenhouse.pool.map(
+    return greenhouse.map(
             lambda u: urllib2.urlopen(u).read(),
             urls,
             pool_size=parallelism or len(urls))

@@ -23,7 +23,7 @@ class StateClearingTestCase(unittest.TestCase):
 
         greenhouse.unmonkeypatch()
 
-        state = greenhouse._state.state
+        state = greenhouse.scheduler.state
         state.awoken_from_events.clear()
         state.timed_paused[:] = []
         state.paused[:] = []

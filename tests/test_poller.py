@@ -40,14 +40,14 @@ class PollerMixin(object):
 
     def test_register_both_read_and_write(self):
         with self.socketpair() as (client, handler):
-            poller = greenhouse._state.state.poller
+            poller = greenhouse.scheduler.state.poller
             poller.register(client, poller.INMASK)
 
             poller.register(client, poller.OUTMASK)
 
     def test_skips_registering(self):
         sock = greenhouse.Socket()
-        poller = greenhouse._state.state.poller
+        poller = greenhouse.scheduler.state.poller
 
         poller.register(sock, poller.INMASK | poller.OUTMASK)
 

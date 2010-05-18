@@ -165,7 +165,7 @@ class ScheduleTestCase(StateClearingTestCase):
                 TESTING_TIMEOUT, f, maxtimes=2)
 
     def test_deleted_sock_gets_cleared(self):
-        dmap = greenhouse._state.state.descriptormap
+        dmap = greenhouse.scheduler.state.descriptormap
         fno = greenhouse.Socket().fileno()
 
         import gc

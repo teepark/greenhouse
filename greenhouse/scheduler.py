@@ -16,8 +16,8 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
 
 _exception_handlers = []
 
-# pause 5ms when there are no greenlets to run
-NOTHING_TO_DO_PAUSE = 0.005
+FAST_POLL_TIMEOUT = 0.01
+SLOW_POLL_TIMEOUT = 1.0
 
 
 state = type('_greenhouse_state', (), {})()
@@ -38,9 +38,8 @@ state.descriptormap = collections.defaultdict(list)
 state.to_run = collections.deque()
 
 
-def _repopulate(include_paused=True):
-    # start with polling sockets to trigger events
-    events = state.poller.poll()
+def _hit_poller(timeout):
+    events = state.poller.poll(timeout)
     for fd, eventmap in events:
         socks = []
         for index, weak in enumerate(state.descriptormap[fd]):
@@ -57,18 +56,15 @@ def _repopulate(include_paused=True):
             for sock in socks:
                 sock._writable.set()
                 sock._writable.clear()
-
-    # grab the greenlets that were awoken by those and other events
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
 
-    # bisect out the greenlets that have waited out their timer
+def _check_paused(skip_simple=False):
     index = bisect.bisect(state.timed_paused, (time.time(), None))
     state.to_run.extend(p[1] for p in state.timed_paused[:index])
     state.timed_paused = state.timed_paused[index:]
 
-    if include_paused:
-        # append simple cooperative yields
+    if not skip_simple:
         state.to_run.extend(state.paused)
         state.paused = []
 
@@ -209,14 +205,20 @@ def mainloop():
             break
         try:
             if not state.to_run:
-                _repopulate()
+                _hit_poller(FAST_POLL_TIMEOUT)
+                _check_paused()
 
-                # wait for timeouts and events while we have nothing to run
                 while not state.to_run:
-                    time.sleep(NOTHING_TO_DO_PAUSE)
-
-                    # no need to check the simple cooperative yields again here
-                    _repopulate(include_paused=False)
+                    # if there are timed-paused greenlets, we can
+                    # just wait until the first of them wakes up
+                    if state.timed_paused:
+                        until = state.timed_paused[0][0]
+                        _hit_poller(until - time.time())
+                        while time.time() < until:
+                            _hit_poller(FAST_POLL_TIMEOUT)
+                        _check_paused(True)
+                    else:
+                        _hit_poller(SLOW_POLL_TIMEOUT)
 
             state.to_run.popleft().switch()
         except Exception, exc:

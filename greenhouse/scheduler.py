@@ -176,6 +176,29 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     return target
 
+def schedule_to_top(target=None, args=(), kwargs=None):
+    '''set up a function or greenlet to run, skipping to the front of the line
+
+    if *target* is a function, it is wrapped in a new greenlet. the greenlet
+    will be the next greenlet run, unless you call this function again before
+    the next blocking action, in which case that one will have skipped to the
+    front as well.
+    '''
+    if target is None:
+        def decorator(target):
+            return schedule_to_top(target, args, kwargs)
+        return decorator
+    if isinstance(target, greenlet):
+        glet = target
+    else:
+        if args or kwargs:
+            inner_target = target
+            def target():
+                inner_target(*args, **(kwargs or {}))
+        glet = greenlet(target, state.mainloop)
+    state.to_run.appendleft(glet)
+    return target
+
 @greenlet
 def mainloop():
     while 1:

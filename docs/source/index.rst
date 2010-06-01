@@ -12,8 +12,8 @@ Contents:
     :maxdepth: 2
 
     greenhouse/scheduler
-    greenhouse/utils
     greenhouse/io
+    greenhouse/utils
     greenhouse/pool
     greenhouse/poller
     greenhouse/compat

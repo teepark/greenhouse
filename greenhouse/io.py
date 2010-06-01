@@ -79,7 +79,7 @@ class _InnerSocket(object):
         self._fileno = self._sock.fileno()
 
         # make the underlying socket non-blocking
-        self.setblocking(False)
+        self._sock.setblocking(False)
 
         # create events
         self._readable = greenhouse.Event()
@@ -192,13 +192,13 @@ class _InnerSocket(object):
     def makefile(self, mode='r', bufsize=-1):
         return socket._fileobject(self, mode, bufsize)
 
-    def recv(self, nbytes):
+    def recv(self, nbytes, flags=0):
         with self._registered('r'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
                 try:
-                    return self._sock.recv(nbytes)
+                    return self._sock.recv(nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                         self._readable.wait(self._timeout)
@@ -208,13 +208,13 @@ class _InnerSocket(object):
                         return ''
                     raise #pragma: no cover
 
-    def recv_into(self, buffer, nbytes):
+    def recv_into(self, buffer, nbytes=0, flags=0):
         with self._registered('r'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
                 try:
-                    return self._sock.recv_into(buffer, nbytes)
+                    return self._sock.recv_into(buffer, nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                         self._readable.wait(self._timeout)
@@ -224,13 +224,13 @@ class _InnerSocket(object):
                         return
                     raise
 
-    def recvfrom(self, nbytes):
+    def recvfrom(self, nbytes, flags=0):
         with self._registered('r'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
                 try:
-                    return self._sock.recvfrom(nbytes)
+                    return self._sock.recvfrom(nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                         self._readable.wait(self._timeout)
@@ -240,13 +240,13 @@ class _InnerSocket(object):
                         return '', (None, 0)
                     raise
 
-    def recvfrom_into(self, buffer, nbytes):
+    def recvfrom_into(self, buffer, nbytes=0, flags=0):
         with self._registered('r'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
                 try:
-                    return self._sock.recvfrom_into(buffer, nbytes)
+                    return self._sock.recvfrom_into(buffer, nbytes, flags=0)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
                         self._readable.wait(self._timeout)
@@ -256,7 +256,7 @@ class _InnerSocket(object):
                         return '', (None, 0)
                     raise
 
-    def send(self, data):
+    def send(self, data, flags=0):
         try:
             return self._sock.send(data)
         except socket.error, err: #pragma: no cover
@@ -264,12 +264,12 @@ class _InnerSocket(object):
                 return 0
             raise
 
-    def sendall(self, data):
+    def sendall(self, data, flags=0):
         with self._registered('w'):
-            sent = self.send(data)
+            sent = self.send(data, flags)
             while sent < len(data): #pragma: no cover
                 self._writable.wait(self._timeout)
-                sent += self.send(data[sent:])
+                sent += self.send(data[sent:], flags)
 
     def sendto(self, *args):
         try:
@@ -280,7 +280,7 @@ class _InnerSocket(object):
             raise
 
     def setblocking(self, flag):
-        return self._sock.setblocking(flag)
+        pass
 
     def setsockopt(self, level, option, value):
         return self._sock.setsockopt(level, option, value)
@@ -289,7 +289,7 @@ class _InnerSocket(object):
         return self._sock.shutdown(flag)
 
     def settimeout(self, timeout):
-        self._timeout = timeout
+        self._timeout = float(timeout)
 
 
 #@utils._debugger
@@ -358,7 +358,7 @@ class File(object):
             self._writable.wait()
 
     def _wait_yield(self, reading): #pragma: no cover
-        "generic wait, for when polling won't work"
+        "generic busy wait, for when polling won't work"
         scheduler.pause()
 
     def _wait(self, reading):

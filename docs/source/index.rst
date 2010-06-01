@@ -14,6 +14,9 @@ Contents:
     greenhouse/scheduler
     greenhouse/utils
     greenhouse/io
+    greenhouse/pool
+    greenhouse/poller
+    greenhouse/compat
 
 Indices and tables
 ==================

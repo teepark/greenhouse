@@ -15,3 +15,4 @@ import greenhouse.poller
 def f():
     pass
 pause()
+del f

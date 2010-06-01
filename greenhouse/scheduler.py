@@ -1,10 +1,7 @@
 import bisect
 import collections
-import operator
 import sys
-import threading
 import time
-import traceback
 import weakref
 
 import greenhouse
@@ -198,7 +195,7 @@ def schedule_to_top(target=None, args=(), kwargs=None):
 @greenlet
 def mainloop():
     while 1:
-        if not traceback or not state: #pragma: no cover
+        if not state: #pragma: no cover
             # python's shutdown sequence gets out of wack when we have
             # greenlets in play. in certain circumstances, modules become
             # None before this code runs.

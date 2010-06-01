@@ -11,7 +11,7 @@ except ImportError, error: #pragma: no cover
         raise error
 
 
-__all__ = ["greenlet", "main_greenlet", "GreenletExit", "mkfile"]
+__all__ = ["greenlet", "main_greenlet", "GreenletExit"]
 
 # it's conceivable that we might not be in the main greenlet at import time,
 # so chase the parent tree until we get to it

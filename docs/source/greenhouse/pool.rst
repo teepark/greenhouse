@@ -3,6 +3,7 @@
 ================================================
 
 .. module:: greenhouse.pool
+.. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 
 .. class:: OneWayPool
 

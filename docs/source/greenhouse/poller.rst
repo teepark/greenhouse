@@ -3,6 +3,7 @@
 ====================================================================
 
 .. module:: greenhouse.poller
+.. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 
 The poller module is mainly internal to greenhouse, but the building blocks it
 provides are also generally useful.

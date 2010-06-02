@@ -3,6 +3,7 @@
 ================================================
 
 .. module:: greenhouse.io
+.. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 
 .. class:: Socket
 

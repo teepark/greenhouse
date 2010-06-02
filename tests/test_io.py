@@ -9,6 +9,7 @@ import time
 import unittest
 
 import greenhouse
+import greenhouse.compat
 import greenhouse.poller
 
 from test_base import TESTING_TIMEOUT, StateClearingTestCase, port
@@ -256,7 +257,7 @@ class FilePollerMixin(object):
             os.unlink(self.fname)
 
     def touch(self, path):
-        greenhouse.mkfile(path)
+        greenhouse.compat.mkfile(path)
 
     def test_basic_io(self):
         fp = greenhouse.File(self.fname, 'w')

@@ -3,6 +3,7 @@
 ========================================================================
 
 .. module:: greenhouse.scheduler
+.. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 
 .. function:: pause()
 

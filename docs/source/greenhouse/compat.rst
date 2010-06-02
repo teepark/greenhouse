@@ -3,6 +3,7 @@
 ============================================================
 
 .. module:: greenhouse.compat
+.. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 
 .. class:: greenlet
 

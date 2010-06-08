@@ -190,7 +190,7 @@ class _InnerSocket(object):
         return self._sock.listen(backlog)
 
     def makefile(self, mode='r', bufsize=-1):
-        return socket._fileobject(self, mode, bufsize)
+        return SocketFile(self, mode)
 
     def recv(self, nbytes, flags=0):
         with self._registered('r'):
@@ -292,10 +292,100 @@ class _InnerSocket(object):
         self._timeout = float(timeout)
 
 
-#@utils._debugger
-class File(object):
+class FileBase(object):
     CHUNKSIZE = 8192
     NEWLINE = "\n"
+
+    def __init__(self):
+        self._rbuf = StringIO()
+
+    def __iter__(self):
+        line = self.readline()
+        while line:
+            yield line
+            line = self.readline()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+    def read(self, size=-1):
+        chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
+
+        buf = self._rbuf
+        buf.seek(0, os.SEEK_END)
+        collected = buf.tell()
+
+        while 1:
+            if size >= 0 and collected >= size:
+                # we have read enough already
+                break
+
+            output = self._read_chunk(chunksize)
+            if output is None:
+                continue
+
+            if not output:
+                # nothing more to read
+                break
+
+            collected += len(output)
+            buf.write(output)
+
+        # get rid of the old buffer
+        rc = buf.getvalue()
+        buf.seek(0)
+        buf.truncate()
+
+        if size >= 0:
+            # leave the overflow in the buffer
+            buf.write(rc[size:])
+            return rc[:size]
+        return rc
+
+    def readline(self):
+        buf = self._rbuf
+        newline, chunksize = self.NEWLINE, self.CHUNKSIZE
+        buf.seek(0)
+
+        text = buf.read()
+        while text.find(newline) < 0:
+            text = self._read_chunk(chunksize)
+            if text is None:
+                continue
+            if not text:
+                break
+            buf.write(text)
+        else:
+            # found a newline
+            rc = buf.getvalue()
+            index = rc.find(newline) + len(newline)
+
+            buf.seek(0)
+            buf.truncate()
+            buf.write(rc[index:])
+            return rc[:index]
+
+        # hit the end of the file, no more newlines
+        rc = buf.getvalue()
+        buf.seek(0)
+        buf.truncate()
+        return rc
+
+    def readlines(self):
+        return list(self.__iter__())
+
+    def write(self, data):
+        while data:
+            went = self._write_chunk(data)
+            if went is None:
+                continue
+            data = data[went:]
+
+    def writelines(self, lines):
+        self.write("".join(lines))
 
     @staticmethod
     def _mode_to_flags(mode):
@@ -313,21 +403,36 @@ class File(object):
 
         return flags
 
-    def _set_up_waiting(self):
-        try:
-            state.poller.register(self)
 
-            # if we got here, poller.register worked, so set up event-based IO
-            self._waiter = "_wait_event"
-            self._readable = greenhouse.Event()
-            self._writable = greenhouse.Event()
-            state.descriptormap[self._fileno].append(weakref.ref(self))
-        except IOError:
-            self._waiter = "_wait_yield"
+class SocketFile(FileBase):
+	def __init__(self, sock, mode='b', bufsize=-1):
+		super(SocketFile, self).__init__()
+		self._sock = sock
+		self.mode = mode
+		if bufsize > 0:
+			self.CHUNKSIZE = bufsize
 
+	def close(self):
+		self._sock.close()
+
+	def fileno(self):
+		return self._sock.fileno()
+
+	def flush(self):
+		pass
+
+	def _read_chunk(self, size):
+		return self._sock.recv(size)
+
+	def _write_chunk(self, data):
+		return self._sock.write(data)
+
+
+#@utils._debugger
+class File(FileBase):
     def __init__(self, name, mode='rb'):
+        super(File, self).__init__()
         self.mode = mode
-        self._buf = StringIO()
         self._closed = False
 
         # translate mode into the proper open flags
@@ -349,6 +454,18 @@ class File(object):
         # but epoll doesn't seem to support filesystem descriptors, so fall
         # back to a waiting with a simple yield
         self._set_up_waiting()
+
+    def _set_up_waiting(self):
+        try:
+            state.poller.register(self)
+
+            # if we got here, poller.register worked, so set up event-based IO
+            self._waiter = "_wait_event"
+            self._readable = greenhouse.Event()
+            self._writable = greenhouse.Event()
+            state.descriptormap[self._fileno].append(weakref.ref(self))
+        except IOError:
+            self._waiter = "_wait_yield"
 
     def _wait_event(self, reading): #pragma: no cover
         "wait on our events"
@@ -375,25 +492,13 @@ class File(object):
         fp = object.__new__(cls) # bypass __init__
         fp.mode = mode
         fp._fileno = fd
-        fp._buf = StringIO()
+        fp._rbuf = StringIO()
         fp._closed = False
 
         cls._add_flags(fd, cls._mode_to_flags(mode))
         fp._set_up_waiting()
 
         return fp
-
-    def __iter__(self):
-        line = self.readline()
-        while line:
-            yield line
-            line = self.readline()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
 
     def __del__(self):
         try:
@@ -412,111 +517,35 @@ class File(object):
     def flush(self):
         return None
 
-    def read(self, size=-1):
-        chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
+    def _read_chunk(self, size):
+        try:
+            return os.read(self._fileno, size)
+        except EnvironmentError, err:
+            if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                self._wait(reading=True)
+                return None
+            raise
 
-        buf = self._buf
-        buf.seek(0, os.SEEK_END)
-        collected = buf.tell()
-
-        while 1:
-            if size >= 0 and collected >= size:
-                # we have read enough already
-                break
-
-            try:
-                output = os.read(self._fileno, chunksize)
-            except (OSError, IOError), err: #pragma: no cover
-                if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                    # would have blocked
-                    self._wait(reading=True)
-                    continue
-                else:
-                    raise
-
-            if not output:
-                # nothing more to read
-                break
-
-            collected += len(output)
-            buf.write(output)
-
-        # get rid of the old buffer
-        rc = buf.getvalue()
-        buf.seek(0)
-        buf.truncate()
-
-        if size >= 0:
-            # leave the overflow in the buffer
-            buf.write(rc[size:])
-            return rc[:size]
-        return rc
-
-    def readline(self):
-        buf = self._buf
-        newline, chunksize = self.NEWLINE, self.CHUNKSIZE
-        buf.seek(0)
-
-        text = buf.read()
-        while text.find(newline) < 0:
-            try:
-                text = os.read(self._fileno, chunksize)
-            except (OSError, IOError), err: #pragma: no cover
-                if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                    # would have blocked
-                    self._wait(reading=True)
-                    continue
-                else:
-                    raise
-            if not text:
-                break
-            buf.write(text)
-        else:
-            # found a newline
-            rc = buf.getvalue()
-            index = rc.find(newline) + len(newline)
-
-            buf.seek(0)
-            buf.truncate()
-            buf.write(rc[index:])
-            return rc[:index]
-
-        # hit the end of the file, no more newlines
-        rc = buf.getvalue()
-        buf.seek(0)
-        buf.truncate()
-        return rc
-
-    def readlines(self):
-        return list(self.__iter__())
+    def _write_chunk(self, data):
+        try:
+            return os.write(self._fileno, data)
+        except EnvironmentError, err:
+            if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                self._wait(reading=False)
+                return None
+            raise
 
     def seek(self, pos, modifier=0):
         os.lseek(self._fileno, pos, modifier)
 
         # clear out the buffer
-        buf = self._buf
+        buf = self._rbuf
         buf.seek(0)
         buf.truncate()
 
     def tell(self):
         with os.fdopen(os.dup(self._fileno)) as fp:
             return fp.tell()
-
-    def write(self, data):
-        while data:
-            try:
-                went = os.write(self._fileno, data)
-            except (OSError, IOError), err: #pragma: no cover
-                if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                    self._wait(reading=False)
-                    continue
-                else:
-                    raise
-
-            data = data[went:]
-
-    def writelines(self, lines):
-        self.write("".join(lines))
 
 def pipe():
     r, w = os.pipe()

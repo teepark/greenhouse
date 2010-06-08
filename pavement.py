@@ -5,10 +5,20 @@ from paver.setuputils import setup
 
 setup(
     name="greenhouse",
+    description="An I/O parallelism library making use of coroutines",
     packages=["greenhouse"],
     version="0.1",
     author="Travis Parker",
-    author_email="travis.parker@gmail.com"
+    author_email="travis.parker@gmail.com",
+    url="http://github.com/teepark/greenhouse",
+    license="BSD",
+    classifiers = [
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Programming Language :: Python",
+    ]
 )
 
 MANIFEST = (

@@ -210,9 +210,7 @@ def mainloop():
                     # just wait until the first of them wakes up
                     if state.timed_paused:
                         until = state.timed_paused[0][0]
-                        _hit_poller(until - time.time())
-                        while time.time() < until:
-                            _hit_poller(FAST_POLL_TIMEOUT)
+                        _hit_poller(until - time.time() + FAST_POLL_TIMEOUT)
                         _check_paused(True)
                     else:
                         _hit_poller(SLOW_POLL_TIMEOUT)

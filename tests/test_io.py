@@ -1,5 +1,6 @@
+from __future__ import with_statement
+
 import array
-import multiprocessing
 import os
 import socket
 import stat

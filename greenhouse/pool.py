@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 from greenhouse.scheduler import schedule
 from greenhouse.utils import Queue
 

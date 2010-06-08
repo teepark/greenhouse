@@ -511,18 +511,18 @@ class Channel(object):
     def open(self):
         self._closing = False
 
-    @property
-    def preference(self):
+    def _get_preference(self):
         return self._preference
 
-    @preference.setter
-    def preference(self, val):
+    def _set_preference(self, val):
         if val > 0:
             self._preference = 1
         elif val < 0:
             self._preference = -1
         else:
             self._preference = 0
+
+    preference = property(_get_preference, _set_preference)
 
     @property
     def queue(self):

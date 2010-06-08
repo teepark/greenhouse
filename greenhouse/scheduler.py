@@ -4,7 +4,6 @@ import sys
 import time
 import weakref
 
-import greenhouse
 from greenhouse.compat import greenlet
 
 

@@ -5,7 +5,6 @@ import errno
 import fcntl
 import os
 import socket
-import stat
 import weakref
 try:
     from cStringIO import StringIO
@@ -13,7 +12,7 @@ except ImportError: #pragma: no cover
     from StringIO import StringIO
 
 import greenhouse
-from greenhouse import compat, utils
+from greenhouse import compat
 from greenhouse.scheduler import state
 
 
@@ -64,7 +63,6 @@ class Socket(object):
             _more_sock_methods)
 
 
-#@utils._debugger
 class _InnerSocket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
@@ -430,7 +428,6 @@ class SocketFile(FileBase):
 		return self._sock.write(data)
 
 
-#@utils._debugger
 class File(FileBase):
     def __init__(self, name, mode='rb'):
         super(File, self).__init__()

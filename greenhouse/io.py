@@ -318,6 +318,12 @@ class FileBase(object):
         buf.seek(0, os.SEEK_END)
         collected = buf.tell()
 
+        if size >= 0 and collected:
+            rc = buf.getvalue()
+            buf.seek(0)
+            buf.truncate()
+            return rc
+
         while 1:
             if size >= 0 and collected >= size:
                 # we have read enough already

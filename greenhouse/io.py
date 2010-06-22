@@ -425,7 +425,7 @@ class SocketFile(FileBase):
 		return self._sock.recv(size)
 
 	def _write_chunk(self, data):
-		return self._sock.write(data)
+		return self._sock.send(data)
 
 
 class File(FileBase):

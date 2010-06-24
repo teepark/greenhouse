@@ -85,12 +85,6 @@ class _InnerSocket(object):
         self._readable = greenhouse.Event()
         self._writable = greenhouse.Event()
 
-        # make sure these events raise socket.timeout upon timeout
-        def timeout_callback():
-            raise socket.timeout("timed out")
-        self._readable._add_timeout_callback(timeout_callback)
-        self._writable._add_timeout_callback(timeout_callback)
-
         # some more housekeeping
         self._timeout = None
         self._closed = False
@@ -140,7 +134,8 @@ class _InnerSocket(object):
                     client, addr = self._sock.accept()
                 except socket.error, err:
                     if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
-                        self._readable.wait(self._timeout)
+                        if self._readable.wait(self._timeout):
+                            raise socket.timeout("timed out")
                         continue
                     else:
                         raise #pragma: no cover
@@ -159,7 +154,8 @@ class _InnerSocket(object):
                 err = self.connect_ex(address)
                 if err in (errno.EINPROGRESS, errno.EALREADY,
                         errno.EWOULDBLOCK):
-                    self._writable.wait(self._timeout)
+                    if self._writable.wait(self._timeout):
+                        raise socket.timeout("timed out")
                     continue
                 if err not in (0, errno.EISCONN): #pragma: no cover
                     raise socket.error(err, errno.errorcode[err])
@@ -201,7 +197,8 @@ class _InnerSocket(object):
                     return self._sock.recv(nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        self._readable.wait(self._timeout)
+                        if self._readable.wait(self._timeout):
+                            raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -217,7 +214,8 @@ class _InnerSocket(object):
                     return self._sock.recv_into(buffer, nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        self._readable.wait(self._timeout)
+                        if self._readable.wait(self._timeout):
+                            raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -233,7 +231,8 @@ class _InnerSocket(object):
                     return self._sock.recvfrom(nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        self._readable.wait(self._timeout)
+                        if self._readable.wait(self._timeout):
+                            raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -249,7 +248,8 @@ class _InnerSocket(object):
                     return self._sock.recvfrom_into(buffer, nbytes, flags=0)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        self._readable.wait(self._timeout)
+                        if self._readable.wait(self._timeout):
+                            raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -268,7 +268,8 @@ class _InnerSocket(object):
         with self._registered('w'):
             sent = self.send(data, flags)
             while sent < len(data): #pragma: no cover
-                self._writable.wait(self._timeout)
+                if self._writable.wait(self._timeout):
+                    raise socket.timeout("timed out")
                 sent += self.send(data[sent:], flags)
 
     def sendto(self, *args):
@@ -469,9 +470,11 @@ class File(FileBase):
     def _wait_event(self, reading): #pragma: no cover
         "wait on our events"
         if reading:
-            self._readable.wait()
+            if self._readable.wait():
+                raise socket.timeout("timed out")
         else:
-            self._writable.wait()
+            if self._writable.wait():
+                raise socket.timeout("timed out")
 
     def _wait_yield(self, reading): #pragma: no cover
         "generic busy wait, for when polling won't work"

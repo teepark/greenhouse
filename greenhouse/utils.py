@@ -38,10 +38,26 @@ class Event(object):
     mirrors the standard library threading.Event API"""
     def __init__(self):
         self._is_set = False
-        self._timeout_callbacks = []
         self._waiters = []
-        self._active_timeouts = set()
-        self._awoken_by_timeout = set()
+        self._reset_timers(clear=False)
+
+    def _reset_timers(self, clear=True):
+        if clear:
+            for timer in self._timers.itervalues():
+                timer.cancel()
+            self._timers.clear()
+        else:
+            self._timers = {}
+        self._timer_counter = 1
+
+    def _add_timer(self, timer):
+        counter = self._timer_counter
+        self._timer_counter += 1
+        self._timers[counter] = timer
+        return counter
+
+    def _remove_timer(self, timer_key):
+        return bool(self._timers.pop(timer_key, False))
 
     def is_set(self):
         "returns True if waiting on this event will block, False if not"
@@ -55,9 +71,9 @@ class Event(object):
         woken up, and calling wait() will not block until the clear() method
         has been called"""
         self._is_set = True
-        self._active_timeouts.clear()
         state.awoken_from_events.update(self._waiters)
         self._waiters = []
+        self._reset_timers()
 
     def clear(self):
         """clear the event from being triggered
@@ -66,45 +82,32 @@ class Event(object):
         set() method has been called"""
         self._is_set = False
 
-    def _add_timeout_callback(self, func):
-        self._timeout_callbacks.append(func)
-
     def wait(self, timeout=None):
         """pause the current coroutine until this event is set
 
         if the set() method has been called, this method will not block at
-        all. otherwise it will block until the set() method is called"""
+        all. otherwise it will block until the set() method is called.
+
+        returns True if a timeout was provided and was hit, otherwise False"""
         if self._is_set:
             return
 
         current = greenlet.getcurrent() # the waiting greenlet
+        awoken = [False]
 
         if timeout is not None:
-            self._active_timeouts.add(current)
+            @Timer.wrap(timeout)
+            def timer():
+                self._remove_timer(timer_key)
+                awoken[0] = True
+                current.switch()
 
-            @scheduler.schedule_in(timeout)
-            def hit_timeout():
-                if current in self._active_timeouts:
-                    self._active_timeouts.remove(current)
-                    self._awoken_by_timeout.add(current)
-                    current.switch()
+            timer_key = self._add_timer(timer)
 
         self._waiters.append(current)
         state.mainloop.switch()
 
-        if current in self._awoken_by_timeout:
-            self._awoken_by_timeout.remove(current)
-
-            klass, exc, tb = None, None, None
-            for cb in self._timeout_callbacks:
-                try:
-                    cb()
-                except Exception:
-                    if klass is None:
-                        klass, exc, tb = sys.exc_info()
-
-            if klass is not None:
-                raise klass, exc, tb
+        return awoken[0]
 
 #@_debugger
 class Lock(object):

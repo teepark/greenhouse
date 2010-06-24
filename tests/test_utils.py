@@ -89,50 +89,6 @@ class EventsTestCase(StateClearingTestCase):
 
         assert l[0]
 
-    def test_timeout_callback(self):
-        ev = greenhouse.Event()
-        l = [False]
-
-        @ev._add_timeout_callback
-        def c():
-            l[0] = True
-
-        ev.wait(TESTING_TIMEOUT)
-        greenhouse.pause()
-        assert l[0]
-
-    def test_timeout_callback_goes_away(self):
-        ev = greenhouse.Event()
-        l = [False]
-
-        @ev._add_timeout_callback
-        def c():
-            l[0] = True
-
-        @greenhouse.schedule_in(TESTING_TIMEOUT)
-        def f():
-            ev.set()
-
-        # this should be cleared before the timeout hits
-        ev.wait(TESTING_TIMEOUT * 2)
-
-        # and this should get us past when the timeout would hit
-        time.sleep(TESTING_TIMEOUT)
-        greenhouse.pause()
-
-        assert not l[0]
-
-    def test_timeout_with_exception(self):
-        ev = greenhouse.Event()
-
-        class CustomError(Exception): pass
-
-        @ev._add_timeout_callback
-        def c():
-            raise CustomError()
-
-        self.assertRaises(CustomError, ev.wait, TESTING_TIMEOUT)
-
 class LockTestCase(StateClearingTestCase):
     LOCK = greenhouse.Lock
 

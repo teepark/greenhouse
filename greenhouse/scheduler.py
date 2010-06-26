@@ -52,6 +52,12 @@ def _hit_poller(timeout):
             for sock in socks:
                 sock._writable.set()
                 sock._writable.clear()
+        if eventmap & state.poller.ERRMASK:
+            for sock in socks:
+                sock._readable.set()
+                sock._readable.clear()
+                sock._writable.set()
+                sock._writable.clear()
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
 

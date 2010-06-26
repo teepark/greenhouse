@@ -9,9 +9,9 @@ __all__ = ["Epoll", "Poll", "Select", "best", "set"]
 
 class Poll(object):
     "a greenhouse poller using the poll system call''"
-    INMASK = getattr(select, 'POLLIN', None)
-    OUTMASK = getattr(select, 'POLLOUT', None)
-    ERRMASK = getattr(select, 'POLLERR', None)
+    INMASK = getattr(select, 'POLLIN', 0)
+    OUTMASK = getattr(select, 'POLLOUT', 0)
+    ERRMASK = getattr(select, 'POLLERR', 0) | getattr(select, "POLLHUP", 0)
 
     _POLLER = getattr(select, "poll", None)
 
@@ -71,9 +71,9 @@ class Poll(object):
 
 class Epoll(Poll):
     "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
-    INMASK = getattr(select, 'EPOLLIN', None)
-    OUTMASK = getattr(select, 'EPOLLOUT', None)
-    ERRMASK = getattr(select, 'EPOLLERR', None)
+    INMASK = getattr(select, 'EPOLLIN', 0)
+    OUTMASK = getattr(select, 'EPOLLOUT', 0)
+    ERRMASK = getattr(select, 'EPOLLERR', 0) | getattr(select, "EPOLLHUP", 0)
 
     _POLLER = getattr(select, "epoll", None)
 

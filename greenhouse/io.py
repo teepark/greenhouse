@@ -128,7 +128,7 @@ class _InnerSocket(object):
             raise
 
     def accept(self):
-        with self._registered('r'):
+        with self._registered('re'):
             while 1:
                 try:
                     client, addr = self._sock.accept()
@@ -149,7 +149,7 @@ class _InnerSocket(object):
         self._sock.close()
 
     def connect(self, address):
-        with self._registered('w'):
+        with self._registered('we'):
             while True:
                 err = self.connect_ex(address)
                 if err in (errno.EINPROGRESS, errno.EALREADY,
@@ -189,7 +189,7 @@ class _InnerSocket(object):
         return SocketFile(self, mode)
 
     def recv(self, nbytes, flags=0):
-        with self._registered('r'):
+        with self._registered('re'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
@@ -206,7 +206,7 @@ class _InnerSocket(object):
                     raise #pragma: no cover
 
     def recv_into(self, buffer, nbytes=0, flags=0):
-        with self._registered('r'):
+        with self._registered('re'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
@@ -223,7 +223,7 @@ class _InnerSocket(object):
                     raise
 
     def recvfrom(self, nbytes, flags=0):
-        with self._registered('r'):
+        with self._registered('re'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
@@ -240,7 +240,7 @@ class _InnerSocket(object):
                     raise
 
     def recvfrom_into(self, buffer, nbytes=0, flags=0):
-        with self._registered('r'):
+        with self._registered('re'):
             while 1:
                 if self._closed:
                     raise socket.error(errno.EBADF, "Bad file descriptor")
@@ -265,7 +265,7 @@ class _InnerSocket(object):
             raise
 
     def sendall(self, data, flags=0):
-        with self._registered('w'):
+        with self._registered('we'):
             sent = self.send(data, flags)
             while sent < len(data): #pragma: no cover
                 if self._writable.wait(self._timeout):

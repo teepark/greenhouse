@@ -529,7 +529,7 @@ class Channel(object):
 
     @property
     def queue(self):
-        return self._waiters and self._waiters[0] or None
+        return self._waiters[0] if self._waiters else None
 
     def receive(self):
         if self._closing and not self._dataqueue:

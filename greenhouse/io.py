@@ -8,7 +8,7 @@ import socket
 import weakref
 try:
     from cStringIO import StringIO
-except ImportError: #pragma: no cover
+except ImportError:
     from StringIO import StringIO
 
 import greenhouse
@@ -109,11 +109,11 @@ class _InnerSocket(object):
                 mask |= poller.INMASK
             if 'w' in events:
                 mask |= poller.OUTMASK
-            if 'e' in events: #pragma: no cover
+            if 'e' in events:
                 mask |= poller.ERRMASK
         try:
             poller.register(self, mask)
-        except (IOError, OSError), error: #pragma: no cover
+        except (IOError, OSError), error:
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
@@ -122,7 +122,7 @@ class _InnerSocket(object):
 
         try:
             poller.unregister(self)
-        except (IOError, OSError), error: #pragma: no cover
+        except (IOError, OSError), error:
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
@@ -138,7 +138,7 @@ class _InnerSocket(object):
                             raise socket.timeout("timed out")
                         continue
                     else:
-                        raise #pragma: no cover
+                        raise
                 return type(self)(fromsock=client), addr
 
     def bind(self, *args, **kwargs):
@@ -157,7 +157,7 @@ class _InnerSocket(object):
                     if self._writable.wait(self._timeout):
                         raise socket.timeout("timed out")
                     continue
-                if err not in (0, errno.EISCONN): #pragma: no cover
+                if err not in (0, errno.EISCONN):
                     raise socket.error(err, errno.errorcode[err])
                 return
 
@@ -203,7 +203,7 @@ class _InnerSocket(object):
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
                         return ''
-                    raise #pragma: no cover
+                    raise
 
     def recv_into(self, buffer, nbytes=0, flags=0):
         with self._registered('re'):
@@ -259,7 +259,7 @@ class _InnerSocket(object):
     def send(self, data, flags=0):
         try:
             return self._sock.send(data)
-        except socket.error, err: #pragma: no cover
+        except socket.error, err:
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise
@@ -267,7 +267,7 @@ class _InnerSocket(object):
     def sendall(self, data, flags=0):
         with self._registered('we'):
             sent = self.send(data, flags)
-            while sent < len(data): #pragma: no cover
+            while sent < len(data):
                 if self._writable.wait(self._timeout):
                     raise socket.timeout("timed out")
                 sent += self.send(data[sent:], flags)
@@ -275,7 +275,7 @@ class _InnerSocket(object):
     def sendto(self, *args):
         try:
             return self._sock.sendto(*args)
-        except socket.error, err: #pragma: no cover
+        except socket.error, err:
             if err[0] in (errno.EWOULDBLOCK, errno.ENOTCONN):
                 return 0
             raise
@@ -467,7 +467,7 @@ class File(FileBase):
         except IOError:
             self._waiter = "_wait_yield"
 
-    def _wait_event(self, reading): #pragma: no cover
+    def _wait_event(self, reading):
         "wait on our events"
         if reading:
             if self._readable.wait():
@@ -476,7 +476,7 @@ class File(FileBase):
             if self._writable.wait():
                 raise socket.timeout("timed out")
 
-    def _wait_yield(self, reading): #pragma: no cover
+    def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"
         scheduler.pause()
 

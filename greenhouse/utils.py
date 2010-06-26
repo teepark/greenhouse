@@ -13,7 +13,7 @@ from greenhouse import scheduler
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
            "BoundedSemaphore", "Timer", "Local", "Queue"]
 
-def _debugger(cls): #pragma: no cover
+def _debugger(cls):
     import types
     for name in dir(cls):
         attr = getattr(cls, name)
@@ -35,7 +35,8 @@ def _debugger(cls): #pragma: no cover
 class Event(object):
     """an event for which greenlets can wait
 
-    mirrors the standard library threading.Event API"""
+    mirrors the standard library threading.Event API
+    """
     def __init__(self):
         self._is_set = False
         self._waiters = []
@@ -69,7 +70,8 @@ class Event(object):
 
         after calling this method, all greenlets waiting on this event will be
         woken up, and calling wait() will not block until the clear() method
-        has been called"""
+        has been called
+        """
         self._is_set = True
         state.awoken_from_events.update(self._waiters)
         self._waiters = []
@@ -79,7 +81,8 @@ class Event(object):
         """clear the event from being triggered
 
         after calling this method, waiting on this event will block until the
-        set() method has been called"""
+        set() method has been called
+        """
         self._is_set = False
 
     def wait(self, timeout=None):
@@ -88,7 +91,8 @@ class Event(object):
         if the set() method has been called, this method will not block at
         all. otherwise it will block until the set() method is called.
 
-        returns True if a timeout was provided and was hit, otherwise False"""
+        returns True if a timeout was provided and was hit, otherwise False
+        """
         if self._is_set:
             return
 
@@ -113,7 +117,8 @@ class Event(object):
 class Lock(object):
     """an object that can only be 'owned' by one greenlet at a time
 
-    mirrors the standard library threading.Lock API"""
+    mirrors the standard library threading.Lock API
+    """
     def __init__(self):
         self._locked = False
         self._owner = None
@@ -160,14 +165,16 @@ class Lock(object):
 class RLock(Lock):
     """a lock which may be acquired more than once by the same greenlet
 
-    mirrors the standard library threading.RLock API"""
+    mirrors the standard library threading.RLock API
+    """
     def __init__(self):
         super(RLock, self).__init__()
         self._count = 0
 
     def acquire(self, blocking=True):
         """if the lock is owned by a different greenlet, block until it is
-        fully released. then increment the acquired count by one"""
+        fully released. then increment the acquired count by one
+        """
         current = greenlet.getcurrent()
         if self._owner is current:
             self._count += 1
@@ -184,7 +191,8 @@ class RLock(Lock):
 
     def release(self):
         """decrement the owned count by one. if it reaches zero, fully release
-        the lock, waking up a waiting greenlet"""
+        the lock, waking up a waiting greenlet
+        """
         if not self._locked or self._owner is not greenlet.getcurrent():
             raise RuntimeError("cannot release un-acquired lock")
         self._count -= 1
@@ -198,7 +206,8 @@ class RLock(Lock):
 class Condition(object):
     """a synchronization object capable of waking all or one of its waiters
 
-    mirrors the standard library threading.Condition API"""
+    mirrors the standard library threading.Condition API
+    """
     def __init__(self, lock=None):
         if lock is None:
             lock = RLock()
@@ -220,7 +229,8 @@ class Condition(object):
     def wait(self, timeout=None):
         """wait to be woken up by the condition
 
-        you must have acquired the underlying lock first"""
+        you must have acquired the underlying lock first
+        """
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         self._lock.release()
@@ -243,7 +253,8 @@ class Condition(object):
     def notify(self, num=1):
         """wake up a set number (default 1) of the waiting greenlets
 
-        you must have acquired the underlying lock first"""
+        you must have acquired the underlying lock first
+        """
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         for i in xrange(min(num, len(self._waiters))):
@@ -252,7 +263,8 @@ class Condition(object):
     def notify_all(self):
         """wake up all the greenlets waiting on the condition
 
-        you must have acquired the underlying lock first"""
+        you must have acquired the underlying lock first
+        """
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         state.awoken_from_events.update(self._waiters)
@@ -262,7 +274,8 @@ class Condition(object):
 class Semaphore(object):
     """a synchronization object with a counter that blocks when it reaches 0
 
-    mirrors the api of threading.Semaphore"""
+    mirrors the api of threading.Semaphore
+    """
     def __init__(self, value=1):
         assert value >= 0, "semaphore value cannot be negative"
         self._value = value
@@ -293,7 +306,7 @@ class Semaphore(object):
         return self.release()
 
 class BoundedSemaphore(Semaphore):
-    """a semaphore with an upper limit to the counter"""
+    "a semaphore with an upper limit to the counter"
     def __init__(self, value=1):
         super(BoundedSemaphore, self).__init__(value)
         self._initial_value = value
@@ -307,7 +320,8 @@ class BoundedSemaphore(Semaphore):
 class Timer(object):
     """creates a greenlet from *func* and schedules it to run in *secs* seconds
 
-    mirrors the standard library threading.Timer API"""
+    mirrors the standard library threading.Timer API
+    """
     def __init__(self, secs, func, args=(), kwargs=None):
         assert hasattr(func, "__call__"), "function argument must be callable"
         self.func = func
@@ -347,7 +361,8 @@ class Timer(object):
 class Local(object):
     """class that represents greenlet-local data
 
-    mirrors the standard library threading.local API"""
+    mirrors the standard library threading.local API
+    """
     def __init__(self):
         object.__setattr__(self, "data", weakref.WeakKeyDictionary())
 
@@ -364,7 +379,8 @@ class Local(object):
 class Queue(object):
     """a producer-consumer queue
 
-    mirrors the standard library Queue.Queue API"""
+    mirrors the standard library Queue.Queue API
+    """
     class Empty(Exception):
         pass
 
@@ -386,7 +402,8 @@ class Queue(object):
     def full(self):
         """returns True if the queue is full without blocking
 
-        if the queue has no *maxsize*, this will always return False"""
+        if the queue has no *maxsize*, this will always return False
+        """
         return self._maxsize > 0 and len(self._data) == self._maxsize
 
     def get(self, blocking=True, timeout=None):
@@ -435,7 +452,8 @@ class Queue(object):
         it will raise a Queue.Full exception
 
         if *blocking* is False, it will immediately either place the item in
-        the queue or raise a Query.Full exception"""
+        the queue or raise a Query.Full exception
+        """
         if self.full():
             if not blocking:
                 raise self.Full()

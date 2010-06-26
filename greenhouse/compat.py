@@ -2,7 +2,7 @@ import os
 import sys
 try:
     from greenlet import greenlet, GreenletExit
-except ImportError, error: #pragma: no cover
+except ImportError, error:
     try:
         from py.magic import greenlet
         GreenletExit = greenlet.GreenletExit

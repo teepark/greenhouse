@@ -139,7 +139,7 @@ class Select(object):
             events[fd] |= self.INMASK
         for fd in wlist:
             events[fd] |= self.OUTMASK
-        for fd in xlist: #pragma: no cover
+        for fd in xlist:
             events[fd] |= self.ERRMASK
         return events.items()
 

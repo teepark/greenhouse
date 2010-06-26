@@ -16,7 +16,7 @@ FAST_POLL_TIMEOUT = 0.01
 SLOW_POLL_TIMEOUT = 1.0
 
 
-state = type('_greenhouse_state', (), {})()
+state = type('GreenhouseState', (), {})()
 
 # from events that have triggered
 state.awoken_from_events = set()
@@ -200,7 +200,7 @@ def schedule_to_top(target=None, args=(), kwargs=None):
 @greenlet
 def mainloop():
     while 1:
-        if not state: #pragma: no cover
+        if not state:
             # python's shutdown sequence gets out of wack when we have
             # greenlets in play. in certain circumstances, modules become
             # None before this code runs.

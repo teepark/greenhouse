@@ -355,6 +355,7 @@ class FileBase(object):
         while text.find(newline) < 0:
             text = self._read_chunk(chunksize)
             if text is None:
+                text = ''
                 continue
             if not text:
                 break
@@ -375,7 +376,7 @@ class FileBase(object):
         buf.truncate()
         return rc
 
-    def readlines(self):
+    def readlines(self, bufsize=-1):
         return list(self.__iter__())
 
     def write(self, data):
@@ -483,6 +484,24 @@ class File(FileBase):
     def _wait(self, reading):
         getattr(self, self._waiter)(reading)
 
+    def _read_chunk(self, size):
+        try:
+            return os.read(self._fileno, size)
+        except EnvironmentError, err:
+            if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                self._wait(reading=True)
+                return None
+            raise
+
+    def _write_chunk(self, data):
+        try:
+            return os.write(self._fileno, data)
+        except EnvironmentError, err:
+            if err.args[0] in (errno.EAGAIN, errno.EINTR):
+                self._wait(reading=False)
+                return None
+            raise
+
     @staticmethod
     def _add_flags(fd, flags):
         fdflags = fcntl.fcntl(fd, fcntl.F_GETFL)
@@ -519,23 +538,8 @@ class File(FileBase):
     def flush(self):
         return None
 
-    def _read_chunk(self, size):
-        try:
-            return os.read(self._fileno, size)
-        except EnvironmentError, err:
-            if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                self._wait(reading=True)
-                return None
-            raise
-
-    def _write_chunk(self, data):
-        try:
-            return os.write(self._fileno, data)
-        except EnvironmentError, err:
-            if err.args[0] in (errno.EAGAIN, errno.EINTR):
-                self._wait(reading=False)
-                return None
-            raise
+    def isatty(self):
+        return self._fileno in (0, 1, 2)
 
     def seek(self, pos, modifier=0):
         os.lseek(self._fileno, pos, modifier)

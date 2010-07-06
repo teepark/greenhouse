@@ -528,14 +528,12 @@ class QueueTestCase(StateClearingTestCase):
         assert q.qsize() == 3
 
 class ChannelTestCase(StateClearingTestCase):
-    def recver(self, channel, aggregator):
-        return lambda: aggregator.append(channel.receive())
-
     def test_basic_communication(self):
         collector = []
         channel = greenhouse.utils.Channel()
 
-        recver = self.recver(channel, collector)
+        def recver():
+            collector.append(channel.receive())
 
         greenhouse.schedule(recver)
         greenhouse.schedule(recver)
@@ -579,62 +577,74 @@ class ChannelTestCase(StateClearingTestCase):
             ch.send(None)
             assert ch.balance == i, ch.balance
 
-    def test_send_with_recver_pref(self):
+    def test_receiver_preference(self):
+        l = []
         ch = greenhouse.utils.Channel()
-        l = [False]
-        m = []
-        n = [False]
+        self.assertEqual(ch.preference, -1)
 
-        def hotpotato():
-            i = ch.receive()
-            m.append(None)
-            ch.send(i)
-
-        for i in xrange(10):
-            greenhouse.schedule(hotpotato)
-            # this hot potato chain never yields to the scheduler,
-            # so f won't run
-
-        # terminate the hot potato. after this, f will run
         @greenhouse.schedule
-        def g():
+        def receiver():
             ch.receive()
-            assert len(m) == 10
-            assert not l[0]
-            n[0] = True
-
-        greenhouse.pause() # block everyone on their receive() calls
+            l.append(2)
 
         @greenhouse.schedule
-        def f():
-            l[0] = True
-
-        ch.send(None)
-        assert l[0]
-        assert n[0]
-
-    def test_recv_with_recver_preference(self):
-        ch = greenhouse.utils.Channel()
-        sendcounter = []
-
         def sender():
             ch.send(None)
-            sendcounter.append(None)
-
-        for i in xrange(20):
-            greenhouse.schedule(sender)
+            l.append(1)
 
         greenhouse.pause()
-        assert ch.balance == 20, ch.balance
-        assert len(sendcounter) == 0
 
-        for i in xrange(20):
+        self.assertEqual(l, [2])
+
+        greenhouse.pause()
+
+        self.assertEqual(l, [2, 1])
+
+    def test_sender_preference(self):
+        l = []
+        ch = greenhouse.utils.Channel()
+        ch.preference = 1
+
+        @greenhouse.schedule
+        def sender():
+            ch.send(None)
+            l.append(1)
+
+        @greenhouse.schedule
+        def receiver():
             ch.receive()
-            # with recver preference, this doesn't switch to the blocked sender
-        assert len(sendcounter) == 0
+            l.append(2)
 
-        greenhouse.pause() # now the sender greenlets will finish
-        assert len(sendcounter) == 20
+        greenhouse.pause()
+
+        self.assertEqual(l, [1])
+
+        greenhouse.pause()
+
+        self.assertEqual(l, [1, 2])
+
+    def test_no_preference(self):
+        l = []
+        ch = greenhouse.utils.Channel()
+        ch.preference = 0
+
+        @greenhouse.schedule
+        def receiver():
+            ch.receive()
+            l.append(1)
+
+        @greenhouse.schedule
+        def sender():
+            ch.send(None)
+            l.append(2)
+
+        greenhouse.pause()
+
+        self.assertEqual(l, [2])
+
+        greenhouse.pause()
+
+        self.assertEqual(l, [2, 1])
 
 
 if __name__ == '__main__':

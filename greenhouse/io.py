@@ -459,6 +459,7 @@ class File(FileBase):
     def _set_up_waiting(self):
         try:
             state.poller.register(self)
+            state.poller.unregister(self)
 
             # if we got here, poller.register worked, so set up event-based IO
             self._waiter = "_wait_event"
@@ -471,11 +472,19 @@ class File(FileBase):
     def _wait_event(self, reading):
         "wait on our events"
         if reading:
-            if self._readable.wait():
-                raise socket.timeout("timed out")
+            state.poller.register(self, state.poller.INMASK)
+            try:
+                if self._readable.wait():
+                    raise socket.timeout("timed out")
+            finally:
+                state.poller.unregister(self)
         else:
-            if self._writable.wait():
-                raise socket.timeout("timed out")
+            state.poller.register(self, state.poller.OUTMASK)
+            try:
+                if self._writable.wait():
+                    raise socket.timeout("timed out")
+            finally:
+                state.poller.unregister(self)
 
     def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"
@@ -530,7 +539,6 @@ class File(FileBase):
     def close(self):
         self._closed = True
         os.close(self._fileno)
-        state.poller.unregister(self)
 
     def fileno(self):
         return self._fileno

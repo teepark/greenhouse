@@ -165,9 +165,10 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
         # pass in the time scheduled instead of just checking
         # time.time() so that delays don't add up
         if not maxtimes or count < maxtimes:
+            tstamp += interval
             func(*args, **kwargs)
             schedule_at(tstamp, run_and_schedule_one,
-                    args=(tstamp + interval, count + 1))
+                    args=(tstamp, count + 1))
 
     firstrun = starting_at + interval
     schedule_at(firstrun, run_and_schedule_one, args=(firstrun, 0))

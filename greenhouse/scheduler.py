@@ -1,5 +1,6 @@
 import bisect
 import collections
+import errno
 import sys
 import time
 import weakref
@@ -208,18 +209,45 @@ def mainloop():
             break
         try:
             if not state.to_run:
-                _hit_poller(FAST_POLL_TIMEOUT)
+                while 1:
+                    try:
+                        _hit_poller(FAST_POLL_TIMEOUT)
+                        break
+                    except EnvironmentError, err:
+                        # interrupted system call, try again
+                        if err.args[0] == errno.EINTR:
+                            continue
+                        raise
+
                 _check_paused()
 
                 while not state.to_run:
                     # if there are timed-paused greenlets, we can
                     # just wait until the first of them wakes up
                     if state.timed_paused:
-                        until = state.timed_paused[0][0]
-                        _hit_poller(until - time.time() + FAST_POLL_TIMEOUT)
+                        until = state.timed_paused[0][0] + FAST_POLL_TIMEOUT
+                        while 1:
+                            try:
+                                _hit_poller(until - time.time())
+                                break
+                            except EnvironmentError, err:
+                                # interrupted system call
+                                if err.args[0] == errno.EINTR:
+                                    continue
+                                raise
                         _check_paused(True)
                     else:
-                        _hit_poller(SLOW_POLL_TIMEOUT)
+                        until = time.time() + SLOW_POLL_TIMEOUT
+                        while 1:
+                            try:
+                                _hit_poller(time.time() - until)
+                                break
+                            except EnvironmentError, err:
+                                # interrupted system call
+                                if err.args[0] == errno.EINTR:
+                                    continue
+                                raise
+
 
             state.to_run.popleft().switch()
         except Exception, exc:

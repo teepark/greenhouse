@@ -488,7 +488,7 @@ class File(FileBase):
 
     def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"
-        scheduler.pause()
+        greenhouse.pause()
 
     def _wait(self, reading):
         getattr(self, self._waiter)(reading)

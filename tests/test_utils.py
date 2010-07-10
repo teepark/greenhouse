@@ -362,6 +362,34 @@ class TimerTestCase(StateClearingTestCase):
         greenhouse.pause()
         assert not l[0]
 
+    def test_args(self):
+        l = [False]
+
+        def f(x, y):
+            l[0] = (x, y)
+
+        timer = greenhouse.Timer(TESTING_TIMEOUT, f, args=(3, 76))
+
+        assert not l[0]
+
+        time.sleep(TESTING_TIMEOUT)
+        greenhouse.pause()
+        self.assertEqual(l[0], (3, 76))
+
+    def test_kwargs(self):
+        l = [False]
+
+        def f(**kwargs):
+            l[0] = kwargs
+
+        timer = greenhouse.Timer(TESTING_TIMEOUT, f, kwargs={'a': 1, 'b': 2})
+
+        assert not l[0]
+
+        time.sleep(TESTING_TIMEOUT)
+        greenhouse.pause()
+        self.assertEqual(l[0], {'a': 1, 'b': 2})
+
 class LocalTestCase(StateClearingTestCase):
     def test_different_values(self):
         #1

@@ -324,11 +324,15 @@ class Timer(object):
     """
     def __init__(self, secs, func, args=(), kwargs=None):
         assert hasattr(func, "__call__"), "function argument must be callable"
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
 
-        self._glet = glet = greenlet(self.func, state.mainloop)
+        if args or kwargs:
+            def run():
+                return func(*args, **(kwargs or {}))
+            self.run = run
+        else:
+            self.run = func
+
+        self._glet = glet = greenlet(self.run, state.mainloop)
 
         self.waketime = waketime = time.time() + secs
         self.cancelled = False
@@ -341,7 +345,7 @@ class Timer(object):
             return False
         self.cancelled = True
         index = bisect.bisect(tp, (self.waketime, None))
-        if tp[index][1].run is self.func:
+        if tp[index][1].run is self.run:
             tp[index:index + 1] = []
         else:
             try:

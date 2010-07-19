@@ -59,6 +59,9 @@ def _hit_poller(timeout):
                 sock._readable.clear()
                 sock._writable.set()
                 sock._writable.clear()
+    _check_events()
+
+def _check_events():
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
 
@@ -233,8 +236,12 @@ def mainloop():
                             except EnvironmentError, err:
                                 # interrupted system call
                                 if err.args[0] == errno.EINTR:
-                                    continue
-                                raise
+                                    _check_events()
+                                    _check_paused()
+                                    if not state.to_run:
+                                        continue
+                                else:
+                                    raise
                         _check_paused(True)
                     else:
                         until = time.time() + SLOW_POLL_TIMEOUT
@@ -245,8 +252,12 @@ def mainloop():
                             except EnvironmentError, err:
                                 # interrupted system call
                                 if err.args[0] == errno.EINTR:
-                                    continue
-                                raise
+                                    _check_events()
+                                    _check_paused()
+                                    if not state.to_run:
+                                        continue
+                                else:
+                                    raise
 
 
             state.to_run.popleft().switch()

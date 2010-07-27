@@ -11,7 +11,7 @@ except ImportError, error:
         raise error
 
 
-__all__ = ["greenlet", "main_greenlet", "GreenletExit"]
+__all__ = ["main_greenlet", "GreenletExit"]
 
 # it's conceivable that we might not be in the main greenlet at import time,
 # so chase the parent tree until we get to it

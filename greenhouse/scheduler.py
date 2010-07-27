@@ -5,11 +5,11 @@ import sys
 import time
 import weakref
 
-from greenhouse.compat import greenlet
+from greenhouse import compat
 
 
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
-        "schedule_in", "schedule_recurring", "add_exception_handler"]
+        "schedule_in", "schedule_recurring", "add_exception_handler", "greenlet"]
 
 _exception_handlers = []
 
@@ -74,15 +74,23 @@ def _check_paused(skip_simple=False):
         state.to_run.extend(state.paused)
         state.paused = []
 
+def greenlet(func, args=(), kwargs=None):
+    if args or kwargs:
+        def target():
+            return func(*args, **(kwargs or {}))
+    else:
+        target = func
+    return compat.greenlet(target, mainloop)
+
 def pause():
     'pause and reschedule the current greenlet and switch to the next'
-    schedule(greenlet.getcurrent())
+    schedule(compat.greenlet.getcurrent())
     mainloop.switch()
 
 def pause_until(unixtime):
     '''pause and reschedule the current greenlet until a set time,
     then switch to the next'''
-    schedule_at(unixtime, greenlet.getcurrent())
+    schedule_at(unixtime, compat.greenlet.getcurrent())
     mainloop.switch()
 
 def pause_for(secs):
@@ -99,14 +107,10 @@ def schedule(target=None, args=(), kwargs=None):
         def decorator(target):
             return schedule(target, args=args, kwargs=kwargs)
         return decorator
-    if isinstance(target, greenlet):
+    if isinstance(target, compat.greenlet):
         glet = target
     else:
-        if args or kwargs:
-            inner_target = target
-            def target():
-                inner_target(*args, **(kwargs or {}))
-        glet = greenlet(target, state.mainloop)
+        glet = greenlet(target, args, kwargs)
     state.paused.append(glet)
     return target
 
@@ -115,19 +119,14 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
 
     if *target* is a function, it is wrapped in a new greenlet. the greenlet
     will be run sometime after *unixtime*, a timestamp'''
-    kwargs = kwargs or {}
     if target is None:
         def decorator(target):
             return schedule_at(unixtime, target, args=args, kwargs=kwargs)
         return decorator
-    if isinstance(target, greenlet):
+    if isinstance(target, compat.greenlet):
         glet = target
     else:
-        if args or kwargs:
-            inner_target = target
-            def target():
-                inner_target(*args, **kwargs)
-        glet = greenlet(target, state.mainloop)
+        glet = greenlet(target, args, kwargs)
     bisect.insort(state.timed_paused, (unixtime, glet))
     return target
 
@@ -150,17 +149,16 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     if *starting_at* is greater than 0, the recurring runs will begin at that
     unix timestamp, instead of ``time.time() + interval``'''
-    kwargs = kwargs or {}
     starting_at = starting_at or time.time()
 
     if target is None:
         def decorator(target):
-            return schedule_recurring(interval, target, maxtimes, starting_at,
-                                      args, kwargs)
+            return schedule_recurring(
+                    interval, target, maxtimes, starting_at, args, kwargs)
         return decorator
 
     func = target
-    if isinstance(target, greenlet):
+    if isinstance(target, compat.greenlet):
         if target.dead:
             raise TypeError("can't schedule a dead greenlet")
         func = target.run
@@ -170,7 +168,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
         # time.time() so that delays don't add up
         if not maxtimes or count < maxtimes:
             tstamp += interval
-            func(*args, **kwargs)
+            func(*args, **(kwargs or {}))
             schedule_at(tstamp, run_and_schedule_one,
                     args=(tstamp, count + 1))
 
@@ -191,18 +189,18 @@ def schedule_to_top(target=None, args=(), kwargs=None):
         def decorator(target):
             return schedule_to_top(target, args, kwargs)
         return decorator
-    if isinstance(target, greenlet):
+    if isinstance(target, compat.greenlet):
         glet = target
     else:
         if args or kwargs:
             inner_target = target
             def target():
                 inner_target(*args, **(kwargs or {}))
-        glet = greenlet(target, state.mainloop)
+        glet = compat.greenlet(target, state.mainloop)
     state.to_run.appendleft(glet)
     return target
 
-@greenlet
+@compat.greenlet
 def mainloop():
     while 1:
         if not state:
@@ -258,7 +256,6 @@ def mainloop():
                                         continue
                                 else:
                                     raise
-
 
             state.to_run.popleft().switch()
         except Exception, exc:

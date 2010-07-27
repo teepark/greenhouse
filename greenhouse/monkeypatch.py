@@ -81,6 +81,7 @@ _condition = threading_module.Condition
 _semaphore = threading_module.Semaphore
 _boundedsemaphore = threading_module.BoundedSemaphore
 _timer = threading_module.Timer
+_thread = threading_module.Thread
 _local = threading_module.local
 
 def threading(enable=True):
@@ -92,6 +93,7 @@ def threading(enable=True):
         threading_module.Semaphore = utils.Semaphore
         threading_module.BoundedSemaphore = utils.BoundedSemaphore
         threading_module.Timer = utils.Timer
+        threading_module.Thread = utils.Thread
         threading_module.local = utils.Local
     else:
         threading_module.Event = _event
@@ -101,6 +103,7 @@ def threading(enable=True):
         threading_module.Semaphore = _semaphore
         threading_module.BoundedSemaphore = _boundedsemaphore
         threading_module.Timer = _timer
+        threading_module.Thread = _thread
         threading_module.local = _local
 
 

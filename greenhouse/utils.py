@@ -390,6 +390,94 @@ class Local(object):
         self.data.setdefault(greenlet.getcurrent(), {})[name] = value
 
 
+class Thread(object):
+    """
+
+    """
+    def __init__(
+            self,
+            group=None,
+            target=None,
+            name=None,
+            args=(),
+            kwargs=None,
+            verbose=None):
+        assert group is None, "group argument must be None for now" #[sic]
+
+        self._target = target
+        self.name = str(name) or self._newname()
+        self._args = args or ()
+        self._kwargs = kwargs or {}
+        self._started = False
+        self._finished = Event()
+        self._glet = None
+        # verbose is ignored
+
+    def __repr__(self):
+        status = "initial"
+        if self._started:
+            status = "started"
+        if not self._finished.is_set():
+            status = "stopped"
+        return "<%s (%s, %s)>" % (type(self).__name__, self.name, status)
+
+    def start(self):
+        def run():
+            try:
+                self.run()
+            finally:
+                self._finished.set()
+        self._glet = glet = greenlet(run)
+        scheduler.schedule(glet)
+        self._started = True
+
+    def run(self):
+        if self._args or self._kwargs:
+            self._target(*self._args, **self._kwargs)
+        else:
+            self._target()
+
+    def join(self, timeout=None):
+        if not self._started:
+            raise RuntimeError("cannot join thread before it is started")
+        if greenlet.getcurrent() is self._glet:
+            raise RuntimeError("cannot join current thread")
+        self._finished.wait(timeout)
+
+    @property
+    def ident(self):
+        return id(self._glet) if self._glet is not None else None
+
+    def is_alive(self):
+        return self._started and self._finished.is_set()
+    isAlive = is_alive
+
+    def is_daemon(self):
+        return False
+    isDaemon = is_daemon
+
+    def set_daemon(self, daemonic):
+        if daemonic:
+            raise RuntimeError("green threads don't support daemonic operation")
+    setDaemon = set_daemon
+
+    daemon = property(is_daemon, set_daemon)
+
+    def get_name(self):
+        return self.name
+    getName = get_name
+
+    def set_name(self, name):
+        self.name = name
+    setName = set_name
+
+    _counter = 0
+    @classmethod
+    def _newname(cls):
+        cls._counter += 1
+        return "Thread-%d" % cls._counter
+
+
 class Queue(object):
     """a producer-consumer queue
 

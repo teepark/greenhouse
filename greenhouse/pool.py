@@ -31,12 +31,16 @@ class OneWayPool(object):
             if input is _STOP:
                 break
             self._handle_one(input)
+            self.inq.task_done()
 
     def _handle_one(self, input):
         self.func(*(input[0]), **(input[1]))
 
     def put(self, *args, **kwargs):
         self.inq.put((args, kwargs))
+
+    def join(self):
+        self.inq.join()
 
     def __enter__(self):
         self.start()

@@ -152,6 +152,38 @@ class LockTestCase(StateClearingTestCase):
         greenhouse.pause()
         assert l[0] == 2
 
+    def test_release_race(self):
+        lock = self.LOCK()
+        l = []
+
+        @greenhouse.schedule
+        def f():
+            lock.acquire()
+            greenhouse.pause()
+            print 'releasing'
+            lock.release()
+
+        @greenhouse.schedule
+        def g1():
+            lock.acquire()
+            l.append(1)
+
+        @greenhouse.schedule
+        def g2():
+            lock.acquire()
+            l.append(2)
+
+        # let f grab the lock and the gs get blocked
+        greenhouse.pause()
+
+        # this time f releases, and it should only wake up one of the gs
+        greenhouse.pause()
+        greenhouse.pause()
+        greenhouse.pause()
+
+        self.assertEquals(len(l), 1)
+
+
 class RLockTestCase(LockTestCase):
     LOCK = greenhouse.RLock
 

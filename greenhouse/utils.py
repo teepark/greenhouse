@@ -136,25 +136,30 @@ class Lock(object):
         current = greenlet.getcurrent()
         if not blocking:
             locked_already = self._locked
-            self._locked = True
             if not locked_already:
+                self._locked = True
                 self._owner = current
             return not locked_already
         if self._locked:
             self._waiters.append(current)
             state.mainloop.switch()
-        self._owner = current
-        self._locked = True
+        else:
+            self._locked = True
+            self._owner = current
         return True
 
     def release(self):
         "open the lock back up to wake up greenlets waiting on this lock"
         if not self._locked:
             raise RuntimeError("cannot release un-acquired lock")
-        self._locked = False
-        self._owner = None
         if self._waiters:
-            state.awoken_from_events.add(self._waiters.popleft())
+            waiter = self._waiters.popleft()
+            self._locked = True
+            self._owner = waiter
+            state.awoken_from_events.add(waiter)
+        else:
+            self._locked = False
+            self._owner = None
 
     def __enter__(self):
         return self.acquire()
@@ -184,8 +189,9 @@ class RLock(Lock):
         if self._locked:
             self._waiters.append(greenlet.getcurrent())
             state.mainloop.switch()
-        self._owner = current
-        self._locked = True
+        else:
+            self._locked = True
+            self._owner = current
         self._count = 1
         return True
 
@@ -199,9 +205,13 @@ class RLock(Lock):
         if self._count == 0:
             self._owner = None
             if self._waiters:
-                state.awoken_from_events.add(self._waiters.popleft())
+                waiter = self._waiters.popleft()
+                self._locked = True
+                self._owner = waiter
+                state.awoken_from_events.add(waiter)
             else:
                 self._locked = False
+                self._owner = None
 
 class Condition(object):
     """a synchronization object capable of waking all or one of its waiters

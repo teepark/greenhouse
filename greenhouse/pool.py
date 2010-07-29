@@ -1,5 +1,7 @@
 from __future__ import with_statement
 
+import sys
+
 from greenhouse.scheduler import schedule
 from greenhouse.utils import Queue
 
@@ -34,7 +36,14 @@ class OneWayPool(object):
             self.inq.task_done()
 
     def _handle_one(self, input):
-        self.func(*(input[0]), **(input[1]))
+        self.run_func(*input)
+
+    def run_func(self, args, kwargs):
+        try:
+            return self.func(*args, **kwargs), True
+        except Exception:
+            klass, exc, tb = sys.exc_info()
+            return (klass, exc, tb), False
 
     def put(self, *args, **kwargs):
         self.inq.put((args, kwargs))
@@ -56,10 +65,14 @@ class Pool(OneWayPool):
         self.outq = Queue()
 
     def _handle_one(self, input):
-        self.outq.put(self.func(*(input[0]), **(input[1])))
+        self.outq.put(self.run_func(*input))
 
     def get(self):
-        return self.outq.get()
+        result, succeeded = self.outq.get()
+        if not succeeded:
+            klass, exc, tb = result
+            raise klass, exc, tb
+        return result
 
 
 class OrderedPool(Pool):
@@ -71,7 +84,7 @@ class OrderedPool(Pool):
 
     def _handle_one(self, input):
         count, input = input
-        self.outq.put((count, self.func(*(input[0]), **(input[1]))))
+        self.outq.put((count, self.run_func(*input)))
 
     def put(self, *args, **kwargs):
         self.inq.put((self._putcount, (args, kwargs)))
@@ -81,8 +94,14 @@ class OrderedPool(Pool):
         while self._getcount not in self._cache:
             counter, result = self.outq.get()
             self._cache[counter] = result
+
+        result, succeeded = self._cache.pop(self._getcount)
         self._getcount += 1
-        return self._cache.pop(self._getcount - 1)
+
+        if not succeeded:
+            klass, exc, tb = result
+            raise klass, exc, tb
+        return result
 
 
 def map(func, items, pool_size=10):

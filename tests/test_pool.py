@@ -79,6 +79,33 @@ class OneWayPoolTestCase(StateClearingTestCase):
         l.sort()
         assert l == [x ** 2 for x in xrange(30)]
 
+    def test_exception_resiliency(self):
+        l = []
+
+        count = 5
+
+        def runner(item):
+            if item < count:
+                raise AttributeError("blah")
+            l.append(item ** 2)
+
+        pool = self.POOL(runner, count)
+        pool.start()
+
+        for i in xrange(count):
+            pool.put(i)
+
+        greenhouse.pause()
+        self.assertEqual(l, [])
+
+        for i in xrange(count, count * 3):
+            pool.put(i)
+
+        greenhouse.pause()
+        self.assertEqual(sorted(l), [x ** 2 for x in xrange(count, count * 3)])
+
+        pool.close()
+
 
 class PoolTestCase(OneWayPoolTestCase):
     POOL = greenhouse.Pool
@@ -158,6 +185,35 @@ class PoolTestCase(OneWayPoolTestCase):
 
         l.sort()
         assert l == [x ** 2 for x in xrange(30)]
+
+        pool.close()
+
+    def test_get_raises(self):
+        count = 5
+
+        def runner(item):
+            if item < count:
+                raise AttributeError("blah")
+            else:
+                return item ** 2
+
+        pool = self.POOL(runner, count)
+        pool.start()
+
+        for i in xrange(count):
+            pool.put(i)
+
+        for i in xrange(count):
+            self.assertRaises(AttributeError, pool.get)
+
+        for i in xrange(count, count * 3):
+            pool.put(i)
+
+        l = []
+        for i in xrange(count * 2):
+            l.append(pool.get())
+
+        self.assertEqual(sorted(l), [x ** 2 for x in xrange(count, count * 3)])
 
         pool.close()
 

@@ -13,7 +13,7 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
 
 _exception_handlers = []
 
-FAST_POLL_TIMEOUT = 0.01
+FAST_POLL_TIMEOUT = 0.001
 SLOW_POLL_TIMEOUT = 1.0
 
 
@@ -35,8 +35,22 @@ state.descriptormap = collections.defaultdict(list)
 state.to_run = collections.deque()
 
 
-def _hit_poller(timeout):
-    events = state.poller.poll(timeout)
+def _hit_poller(timeout, interruption=None):
+    interruption = interruption or (lambda: False)
+    until = time.time() + timeout
+    events = []
+    while 1:
+        try:
+            events = state.poller.poll(timeout)
+            break
+        except EnvironmentError, exc:
+            if exc.args[0] != errno.EINTR:
+                raise
+            # interrupted by a signal
+            if not interruption():
+                break
+            timeout = until - time.time()
+
     for fd, eventmap in events:
         socks = []
         for index, weak in enumerate(state.descriptormap[fd]):
@@ -200,6 +214,11 @@ def schedule_to_top(target=None, args=(), kwargs=None):
     state.to_run.appendleft(glet)
     return target
 
+def _interruption_check():
+    _check_events()
+    _check_paused()
+    return not state.to_run
+
 @compat.greenlet
 def mainloop():
     while 1:
@@ -210,16 +229,7 @@ def mainloop():
             break
         try:
             if not state.to_run:
-                while 1:
-                    try:
-                        _hit_poller(FAST_POLL_TIMEOUT)
-                        break
-                    except EnvironmentError, err:
-                        # interrupted system call, try again
-                        if err.args[0] == errno.EINTR:
-                            continue
-                        raise
-
+                _hit_poller(FAST_POLL_TIMEOUT)
                 _check_paused()
 
                 while not state.to_run:
@@ -227,35 +237,10 @@ def mainloop():
                     # just wait until the first of them wakes up
                     if state.timed_paused:
                         until = state.timed_paused[0][0] + FAST_POLL_TIMEOUT
-                        while 1:
-                            try:
-                                _hit_poller(until - time.time())
-                                break
-                            except EnvironmentError, err:
-                                # interrupted system call
-                                if err.args[0] == errno.EINTR:
-                                    _check_events()
-                                    _check_paused()
-                                    if not state.to_run:
-                                        continue
-                                else:
-                                    raise
+                        _hit_poller(until - time.time(), _interruption_check)
                         _check_paused(True)
                     else:
-                        until = time.time() + SLOW_POLL_TIMEOUT
-                        while 1:
-                            try:
-                                _hit_poller(time.time() - until)
-                                break
-                            except EnvironmentError, err:
-                                # interrupted system call
-                                if err.args[0] == errno.EINTR:
-                                    _check_events()
-                                    _check_paused()
-                                    if not state.to_run:
-                                        continue
-                                else:
-                                    raise
+                        _hit_poller(SLOW_POLL_TIMEOUT, _interruption_check)
 
             state.to_run.popleft().switch()
         except Exception, exc:

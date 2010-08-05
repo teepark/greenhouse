@@ -213,6 +213,21 @@ class ScheduleTestCase(StateClearingTestCase):
         greenhouse.pause()
         assert l[0]
 
+	def test_order(self):
+		l = []
+
+		@greenhouse.schedule
+		def f():
+			l.append(1)
+
+		@greenhouse.schedule
+		def f():
+			l.append(2)
+
+		greenhouse.pause()
+
+		self.assertEqual(l, [1, 2])
+
 class PausingTestCase(StateClearingTestCase):
     def test_pause(self):
         l = [False]

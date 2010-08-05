@@ -405,7 +405,7 @@ class Thread(object):
         assert group is None, "group argument must be None for now" #[sic]
 
         self._target = target
-        self.name = str(name) or self._newname()
+        self.name = str(name or self._newname())
         self._args = args or ()
         self._kwargs = kwargs or {}
         self._started = False
@@ -424,18 +424,15 @@ class Thread(object):
     def start(self):
         def run():
             try:
-                self.run()
+                self.run(*self._args, **self._kwargs)
             finally:
                 self._finished.set()
-        self._glet = glet = greenlet(run)
-        scheduler.schedule(glet)
+        self._glet = scheduler.greenlet(run)
+        scheduler.schedule(self._glet)
         self._started = True
 
-    def run(self):
-        if self._args or self._kwargs:
-            self._target(*self._args, **self._kwargs)
-        else:
-            self._target()
+    def run(self, *args, **kwargs):
+        self._target(*args, **kwargs)
 
     def join(self, timeout=None):
         if not self._started:

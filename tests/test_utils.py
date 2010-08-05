@@ -587,6 +587,118 @@ class QueueTestCase(StateClearingTestCase):
         q.put(7)
         assert q.qsize() == 3
 
+
+class ThreadTestCase(StateClearingTestCase):
+	def test_order(self):
+		l = []
+
+		class T(greenhouse.utils.Thread):
+			def run(self):
+				l.append(1)
+
+		class T2(greenhouse.utils.Thread):
+			def run(self):
+				l.append(2)
+
+		t = T()
+		t.start()
+
+		t2 = T2()
+		t2.start()
+
+		greenhouse.pause()
+
+		self.assertEqual(l, [1, 2])
+
+	def test_args(self):
+		s = set()
+
+		class WithArgs(greenhouse.utils.Thread):
+			def run(self, num):
+				s.add(num)
+
+		threads = [WithArgs(args=(x,)) for x in xrange(5)]
+		[t.start() for t in threads]
+
+		greenhouse.pause()
+
+		self.assertEqual(s, set(xrange(5)))
+
+	def test_kwargs(self):
+		d = {}
+
+		class WithKwargs(greenhouse.utils.Thread):
+			def run(self, **kwargs):
+				d.update(kwargs)
+
+		threads = [WithKwargs(kwargs={chr(x): x}) for x in xrange(97, 123)]
+		[t.start() for t in threads]
+
+		greenhouse.pause()
+
+		self.assertEqual(
+				d,
+				dict((chr(x), x) for x in xrange(97, 123)))
+
+	def test_args_and_kwargs(self):
+		s = set()
+
+		class WithArgs(greenhouse.utils.Thread):
+			def run(self, num):
+				s.add(num)
+
+		a1 = WithArgs(args=(1,))
+		a2 = WithArgs(args=(2,))
+		a3 = WithArgs(args=(3,))
+
+		a1.start()
+		a2.start()
+		a3.start()
+
+		class WithKwargs(greenhouse.utils.Thread):
+			def run(self, **kwargs):
+				s.update(kwargs.keys())
+
+		k1 = WithKwargs(kwargs={'foo': 1})
+		k2 = WithKwargs(kwargs={'bar': 1})
+
+		k1.start()
+		k2.start()
+
+		self.assertEqual(s, set())
+
+		greenhouse.pause()
+
+		self.assertEqual(s, set([1, 2, 3, 'foo', 'bar']))
+
+	def test_join(self):
+		ev = greenhouse.utils.Event()
+
+		class T(greenhouse.utils.Thread):
+			def run(self):
+				ev.wait()
+
+		threads = [T() for i in xrange(5)]
+		[t.start() for t in threads]
+
+		l = []
+
+		@greenhouse.schedule
+		def joiner():
+			threads[2].join()
+			l.append(None)
+
+		greenhouse.pause_for(TESTING_TIMEOUT)
+
+		self.assertEqual(len(l), 0)
+
+		ev.set()
+		greenhouse.pause()
+		greenhouse.pause()
+
+		self.assertEqual(len(l), 1)
+
+
 class ChannelTestCase(StateClearingTestCase):
     def test_basic_communication(self):
         collector = []

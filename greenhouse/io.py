@@ -113,7 +113,7 @@ class _InnerSocket(object):
                 mask |= poller.ERRMASK
         try:
             poller.register(self, mask)
-        except (IOError, OSError), error:
+        except EnvironmentError, error:
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
@@ -122,7 +122,7 @@ class _InnerSocket(object):
 
         try:
             poller.unregister(self)
-        except (IOError, OSError), error:
+        except EnvironmentError, error:
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
             raise
@@ -453,21 +453,20 @@ class File(FileBase):
 
         # try to drive the asyncronous waiting off of the polling interface,
         # but epoll doesn't seem to support filesystem descriptors, so fall
-        # back to a waiting with a simple yield
+        # back to waiting with a simple yield
         self._set_up_waiting()
 
     def _set_up_waiting(self):
         try:
             state.poller.register(self)
             state.poller.unregister(self)
-
-            # if we got here, poller.register worked, so set up event-based IO
+        except EnvironmentError:
+            self._waiter = "_wait_yield"
+        else:
             self._waiter = "_wait_event"
             self._readable = greenhouse.Event()
             self._writable = greenhouse.Event()
             state.descriptormap[self._fileno].append(weakref.ref(self))
-        except IOError:
-            self._waiter = "_wait_yield"
 
     def _wait_event(self, reading):
         "wait on our events"

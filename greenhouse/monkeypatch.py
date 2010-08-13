@@ -43,12 +43,22 @@ def builtins(enable=True):
 
 
 _socket = socket_module.socket
+_socketpair = socket_module.socketpair
+_default_sockpair_family = socket_module.AF_INET
+if hasattr(socket_module, "AF_UNIX"):
+    _default_sockpair_family = socket_module.AF_UNIX
+
+
+def _green_socketpair(family=_default_sockpair_family, type_=None, proto=None):
+    return [io.Socket(fromsock=s) for s in _socketpair(family, type_, proto)]
 
 def socket(enable=True):
     if enable:
         socket_module.socket = Socket
+        socket_module.socketpair = _green_socketpair
     else:
         socket_module.socket = _socket
+        socket_module.socketpair = _socketpair
 
 
 _allocate_lock = thread_module.allocate_lock

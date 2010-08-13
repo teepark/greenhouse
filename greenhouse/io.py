@@ -293,6 +293,11 @@ class _InnerSocket(object):
         self._timeout = float(timeout)
 
 
+def fromfd(fd, family, type_, *args):
+	raw_sock = socket.fromfd(fd, family, type_, *args)
+	return Socket(fromsock=raw_sock)
+
+
 class FileBase(object):
     CHUNKSIZE = 8192
     NEWLINE = "\n"

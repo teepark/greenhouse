@@ -294,8 +294,8 @@ class _InnerSocket(object):
 
 
 def fromfd(fd, family, type_, *args):
-	raw_sock = socket.fromfd(fd, family, type_, *args)
-	return Socket(fromsock=raw_sock)
+    raw_sock = socket.fromfd(fd, family, type_, *args)
+    return Socket(fromsock=raw_sock)
 
 
 class FileBase(object):
@@ -412,27 +412,27 @@ class FileBase(object):
 
 
 class SocketFile(FileBase):
-	def __init__(self, sock, mode='b', bufsize=-1):
-		super(SocketFile, self).__init__()
-		self._sock = sock
-		self.mode = mode
-		if bufsize > 0:
-			self.CHUNKSIZE = bufsize
+    def __init__(self, sock, mode='b', bufsize=-1):
+        super(SocketFile, self).__init__()
+        self._sock = sock
+        self.mode = mode
+        if bufsize > 0:
+            self.CHUNKSIZE = bufsize
 
-	def close(self):
-		self._sock.close()
+    def close(self):
+        self._sock.close()
 
-	def fileno(self):
-		return self._sock.fileno()
+    def fileno(self):
+        return self._sock.fileno()
 
-	def flush(self):
-		pass
+    def flush(self):
+        pass
 
-	def _read_chunk(self, size):
-		return self._sock.recv(size)
+    def _read_chunk(self, size):
+        return self._sock.recv(size)
 
-	def _write_chunk(self, data):
-		return self._sock.send(data)
+    def _write_chunk(self, data):
+        return self._sock.send(data)
 
 
 class File(FileBase):

@@ -21,8 +21,6 @@ class StateClearingTestCase(unittest.TestCase):
     def setUp(self):
         GTL.acquire()
 
-        greenhouse.unmonkeypatch()
-
         state = greenhouse.scheduler.state
         state.awoken_from_events.clear()
         state.timed_paused[:] = []

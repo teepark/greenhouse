@@ -16,26 +16,6 @@ import greenhouse.poller
 from test_base import TESTING_TIMEOUT, StateClearingTestCase, port
 
 
-class MonkeyPatchingTestCase(StateClearingTestCase):
-    def test_monkeypatch(self):
-        greenhouse.monkeypatch()
-
-        assert open is greenhouse.File
-        assert file is greenhouse.File
-        assert socket.socket is greenhouse.Socket
-
-    def test_unmonkeypatch(self):
-        _sock = socket.socket
-        _open = open
-        _file = file
-
-        greenhouse.monkeypatch()
-        greenhouse.unmonkeypatch()
-
-        assert socket.socket is _sock
-        assert open is _open
-        assert file is _file
-
 class SocketPollerMixin(object):
     def test_sockets_basic(self):
         with self.socketpair() as (client, handler):

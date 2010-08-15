@@ -16,28 +16,14 @@ from greenhouse import compat
 from greenhouse.scheduler import state
 
 
-__all__ = ["Socket", "File", "monkeypatch", "unmonkeypatch", "pipe"]
+__all__ = ["Socket", "File", "pipe"]
 
 
 _socket = socket.socket
-_open = __builtins__['open']
-_file = __builtins__['file']
 
 SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 
 _more_sock_methods = ("accept", "makefile")
-
-def monkeypatch():
-    """replace functions in the standard library socket module
-    with their non-blocking greenhouse equivalents"""
-    socket.socket = Socket
-    __builtins__['open'] = __builtins__['file'] = File
-
-def unmonkeypatch():
-    "undo a call to monkeypatch()"
-    socket.socket = _socket
-    __builtins__['open'] = _open
-    __builtins__['file'] = _file
 
 
 class Socket(object):

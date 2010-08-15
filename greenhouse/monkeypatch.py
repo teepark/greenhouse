@@ -1,8 +1,19 @@
 import socket as socket_module
+import thread as thread_module
 import threading as threading_module
 import Queue as queue_module
 
 from greenhouse import compat, io, scheduler, utils
+
+
+__all__ = [
+		"enable",
+		"disable",
+		"builtins",
+		"socket",
+		"thread",
+		"threading",
+		"queue"]
 
 
 def enable(builtins=1, socket=1, thread=1, threading=1, queue=1):

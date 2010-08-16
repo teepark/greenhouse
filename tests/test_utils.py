@@ -160,7 +160,6 @@ class LockTestCase(StateClearingTestCase):
         def f():
             lock.acquire()
             greenhouse.pause()
-            print 'releasing'
             lock.release()
 
         @greenhouse.schedule

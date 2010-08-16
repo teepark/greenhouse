@@ -49,6 +49,11 @@ class Socket(object):
             _more_sock_methods)
 
 
+def socket_fromfd(fd, family, type_, *args):
+    raw_sock = socket.fromfd(fd, family, type_, *args)
+    return Socket(fromsock=raw_sock)
+
+
 class _InnerSocket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
@@ -276,12 +281,9 @@ class _InnerSocket(object):
         return self._sock.shutdown(flag)
 
     def settimeout(self, timeout):
-        self._timeout = float(timeout)
-
-
-def fromfd(fd, family, type_, *args):
-    raw_sock = socket.fromfd(fd, family, type_, *args)
-    return Socket(fromsock=raw_sock)
+        if timeout is not None:
+            timeout = float(timeout)
+        self._timeout = timeout
 
 
 class FileBase(object):

@@ -7,13 +7,13 @@ from greenhouse import compat, io, scheduler, utils
 
 
 __all__ = [
-		"enable",
-		"disable",
-		"builtins",
-		"socket",
-		"thread",
-		"threading",
-		"queue"]
+        "enable",
+        "disable",
+        "builtins",
+        "socket",
+        "thread",
+        "threading",
+        "queue"]
 
 
 def enable(builtins=1, socket=1, thread=1, threading=1, queue=1):
@@ -65,7 +65,7 @@ def _green_socketpair(family=_default_sockpair_family, type_=None, proto=None):
 
 def socket(enable=True):
     if enable:
-        socket_module.socket = Socket
+        socket_module.socket = io.Socket
         socket_module.socketpair = _green_socketpair
         socket_module.fromfd = io.socket_fromfd
     else:

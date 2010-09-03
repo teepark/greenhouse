@@ -137,7 +137,7 @@
         and otherwise-blocking methods are overridden to block only a greenlet.
         To get a socket that doesn't even block the greenlet: make sure
         greenhouse is not monkeypatched in (see
-        :func:`monkeypatch`/:func:`unmonkeypatch`), create a standard-library
+        :func:`greenhouse.emulation.socket`), create a standard-library
         socket, and set it to non-blocking mode.
 
     .. method:: setsockopt(level, option, value)
@@ -223,19 +223,6 @@
 
         Writes the strings in *sequence* to the file. ``writelines()`` does not
         add line separators to the *sequence* items.
-
-.. function:: monkeypatch()
-
-    Replaces the built-ins ``open()`` and ``file()`` with :class:`File`, and
-    the ``socket.socket`` class with :class:`Socket` in-place, so that the
-    change can affect third-party libraries as well (and the emulation should
-    be close enough that pure-python libraries work unmodified).
-
-.. function:: unmonkeypatch()
-
-    Undoes the change applied by :meth:`monkeypatch`, replacing built-ins
-    ``file``, ``open``, and ``socket.socket`` with their original
-    implementations.
 
 .. function:: pipe()
 

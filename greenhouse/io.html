@@ -253,7 +253,7 @@ underlying standard library socket is already set to non-blocking mode
 and otherwise-blocking methods are overridden to block only a greenlet.
 To get a socket that doesn&#8217;t even block the greenlet: make sure
 greenhouse is not monkeypatched in (see
-<a class="reference internal" href="#greenhouse.io.monkeypatch" title="greenhouse.io.monkeypatch"><tt class="xref py py-func docutils literal"><span class="pre">monkeypatch()</span></tt></a>/<a class="reference internal" href="#greenhouse.io.unmonkeypatch" title="greenhouse.io.unmonkeypatch"><tt class="xref py py-func docutils literal"><span class="pre">unmonkeypatch()</span></tt></a>), create a standard-library
+<a class="reference internal" href="emulation.html#greenhouse.emulation.socket" title="greenhouse.emulation.socket"><tt class="xref py py-func docutils literal"><span class="pre">greenhouse.emulation.socket()</span></tt></a>), create a standard-library
 socket, and set it to non-blocking mode.</p>
 </dd></dl>
 
@@ -369,23 +369,6 @@ to the beginning of the file.</p>
 add line separators to the <em>sequence</em> items.</p>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.io.monkeypatch">
-<tt class="descclassname">greenhouse.io.</tt><tt class="descname">monkeypatch</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.monkeypatch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Replaces the built-ins <tt class="docutils literal"><span class="pre">open()</span></tt> and <tt class="docutils literal"><span class="pre">file()</span></tt> with <a class="reference internal" href="#greenhouse.io.File" title="greenhouse.io.File"><tt class="xref py py-class docutils literal"><span class="pre">File</span></tt></a>, and
-the <tt class="docutils literal"><span class="pre">socket.socket</span></tt> class with <a class="reference internal" href="#greenhouse.io.Socket" title="greenhouse.io.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a> in-place, so that the
-change can affect third-party libraries as well (and the emulation should
-be close enough that pure-python libraries work unmodified).</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.io.unmonkeypatch">
-<tt class="descclassname">greenhouse.io.</tt><tt class="descname">unmonkeypatch</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.unmonkeypatch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Undoes the change applied by <a class="reference internal" href="#greenhouse.io.monkeypatch" title="greenhouse.io.monkeypatch"><tt class="xref py py-meth docutils literal"><span class="pre">monkeypatch()</span></tt></a>, replacing built-ins
-<tt class="docutils literal"><span class="pre">file</span></tt>, <tt class="docutils literal"><span class="pre">open</span></tt>, and <tt class="docutils literal"><span class="pre">socket.socket</span></tt> with their original
-implementations.</p>
 </dd></dl>
 
 <dl class="function">

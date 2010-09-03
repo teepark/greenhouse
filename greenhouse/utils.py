@@ -11,7 +11,7 @@ from greenhouse import scheduler
 
 
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
-           "BoundedSemaphore", "Timer", "Local", "Queue"]
+           "BoundedSemaphore", "Timer", "Local", "Thread", "Queue"]
 
 def _debugger(cls):
     import types

@@ -423,9 +423,9 @@ class Thread(object):
         return "<%s (%s, %s)>" % (type(self).__name__, self.name, status)
 
     def start(self):
-		"insert the thread into the greenhouse scheduler"
-		if self._started:
-			raise RuntimeError("thread already started")
+        "insert the thread into the greenhouse scheduler"
+        if self._started:
+            raise RuntimeError("thread already started")
         def run():
             try:
                 self.run(*self._args, **self._kwargs)
@@ -436,9 +436,11 @@ class Thread(object):
         self._started = True
 
     def run(self, *args, **kwargs):
+        "override this method to define the thread's behavior"
         self._target(*args, **kwargs)
 
     def join(self, timeout=None):
+        "block until this thread terminates"
         if not self._started:
             raise RuntimeError("cannot join thread before it is started")
         if greenlet.getcurrent() is self._glet:
@@ -447,28 +449,35 @@ class Thread(object):
 
     @property
     def ident(self):
+        "unique identifier for this thread"
         return id(self._glet) if self._glet is not None else None
 
     def is_alive(self):
-        return self._started and self._finished.is_set()
+        "returns True from right before run() starts to right after it finishes"
+        return self._started and not self._finished.is_set()
     isAlive = is_alive
 
     def is_daemon(self):
+        "will return False, daemon mode is not supported"
         return False
     isDaemon = is_daemon
 
     def set_daemon(self, daemonic):
+        "daemonic mode is not supported for greenhouse threads"
         if daemonic:
             raise RuntimeError("green threads don't support daemonic operation")
     setDaemon = set_daemon
 
-    daemon = property(is_daemon, set_daemon)
+    daemon = property(is_daemon, set_daemon,
+            doc="whether the thread is set as a daemon thread (unsupported)")
 
     def get_name(self):
+        "returns the thread name"
         return self.name
     getName = get_name
 
     def set_name(self, name):
+        "set the thread name"
         self.name = name
     setName = set_name
 

@@ -107,6 +107,10 @@ _timer = threading_module.Timer
 _thread = threading_module.Thread
 _local = threading_module.local
 _enumerate = threading_module.enumerate
+_active_count = threading_module.active_count
+_activeCount = threading_module.activeCount
+_current_thread = threading_module.current_thread
+_currentThread = threading_module.currentThread
 
 def threading(enable=True):
     if enable:
@@ -120,6 +124,10 @@ def threading(enable=True):
         threading_module.Thread = utils.Thread
         threading_module.local = utils.Local
         threading_module.enumerate = utils.Thread._enumerate
+        threading_module.active_count = lambda: len(utils.Thread._enumerate())
+        threading_module.activeCount = lambda: len(utils.Thread._enumerate())
+        threading_module.current_thread = utils.Thread._current
+        threading_module.currentThread = utils.Thread._current
     else:
         threading_module.Event = _event
         threading_module.Lock = _lock
@@ -131,6 +139,10 @@ def threading(enable=True):
         threading_module.Thread = _thread
         threading_module.local = _local
         threading_module.enumerate = _enumerate
+        threading_module.active_count = _active_count
+        threading_moduloe.activeCount = _activeCount
+        threading_module.current_thread = _current_thread
+        threading_module.currentThread = _currentThread
 
 
 _queue = queue_module.Queue

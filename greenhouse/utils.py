@@ -424,11 +424,11 @@ class Thread(object):
 
     def _activate(self):
         self._started = True
-        type(self)._active.add(self)
+        type(self)._active[self._glet] = self
 
     def _deactivate(self):
         self._finished.set()
-        type(self)._active.discard(self)
+        type(self)._active.pop(self._glet)
 
     def start(self):
         "insert the thread into the greenhouse scheduler"
@@ -496,11 +496,15 @@ class Thread(object):
         cls._counter += 1
         return "Thread-%d" % cls._counter
 
-    _active = set()
+    _active = {}
 
     @classmethod
     def _enumerate(cls):
-        return list(cls._active)
+        return cls._active.values()
+
+    @classmethod
+    def _current(cls):
+        return cls._active[greenlet.getcurrent()]
 
 
 class Queue(object):

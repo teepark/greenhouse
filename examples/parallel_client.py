@@ -4,13 +4,13 @@ each of them uses a different greenhouse api to retrieve a list of urls in
 parallel and return a dictionary mapping urls to response bodies
 '''
 
-import urllib2
-
 import greenhouse
 
 # urllib2 obviously doesn't explicitly use greenhouse sockets, but we can
 # override socket.socket so it uses them anyway
-greenhouse.io.monkeypatch()
+greenhouse.emulation.socket()
+
+import urllib2
 
 
 #

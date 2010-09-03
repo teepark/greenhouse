@@ -59,18 +59,12 @@ def _hit_poller(timeout, interruption=None):
                 state.descriptormap[fd].pop(index)
             else:
                 socks.append(sock)
-        if eventmap & state.poller.INMASK:
+        if eventmap & (state.poller.INMASK | state.poller.ERRMASK):
             for sock in socks:
                 sock._readable.set()
                 sock._readable.clear()
-        if eventmap & state.poller.OUTMASK:
+        if eventmap & (state.poller.OUTMASK | state.poller.ERRMASK):
             for sock in socks:
-                sock._writable.set()
-                sock._writable.clear()
-        if eventmap & state.poller.ERRMASK:
-            for sock in socks:
-                sock._readable.set()
-                sock._readable.clear()
                 sock._writable.set()
                 sock._writable.clear()
     _check_events()

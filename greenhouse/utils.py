@@ -391,8 +391,9 @@ class Local(object):
 
 
 class Thread(object):
-    """
+    """class representing a coroutine-powered pseudo-thread
 
+    mirrors the standard library threading.Thread API
     """
     def __init__(
             self,

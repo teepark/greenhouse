@@ -422,6 +422,14 @@ class Thread(object):
             status = "stopped"
         return "<%s (%s, %s)>" % (type(self).__name__, self.name, status)
 
+    def _activate(self):
+        self._started = True
+        type(self)._active.add(self)
+
+    def _deactivate(self):
+        self._finished.set()
+        type(self)._active.discard(self)
+
     def start(self):
         "insert the thread into the greenhouse scheduler"
         if self._started:
@@ -430,10 +438,10 @@ class Thread(object):
             try:
                 self.run(*self._args, **self._kwargs)
             finally:
-                self._finished.set()
+                self._deactivate()
         self._glet = scheduler.greenlet(run)
         scheduler.schedule(self._glet)
-        self._started = True
+        self._activate()
 
     def run(self, *args, **kwargs):
         "override this method to define the thread's behavior"
@@ -482,10 +490,17 @@ class Thread(object):
     setName = set_name
 
     _counter = 0
+
     @classmethod
     def _newname(cls):
         cls._counter += 1
         return "Thread-%d" % cls._counter
+
+    _active = set()
+
+    @classmethod
+    def _enumerate(cls):
+        return list(cls._active)
 
 
 class Queue(object):

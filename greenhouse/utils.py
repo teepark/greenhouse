@@ -423,6 +423,9 @@ class Thread(object):
         return "<%s (%s, %s)>" % (type(self).__name__, self.name, status)
 
     def start(self):
+		"insert the thread into the greenhouse scheduler"
+		if self._started:
+			raise RuntimeError("thread already started")
         def run():
             try:
                 self.run(*self._args, **self._kwargs)

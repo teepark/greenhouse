@@ -498,13 +498,15 @@ class Thread(object):
 
     _active = {}
 
-    @classmethod
-    def _enumerate(cls):
-        return cls._active.values()
 
-    @classmethod
-    def _current(cls):
-        return cls._active[greenlet.getcurrent()]
+def _enumerate_threads():
+    return Thread._active.values()
+
+def _active_thread_count():
+    return len(Thread._active)
+
+def _current_thread():
+    return Thread._active.get(greenlet.getcurrent())
 
 
 class Queue(object):

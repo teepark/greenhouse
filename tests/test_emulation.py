@@ -4,7 +4,7 @@ import thread
 import threading
 import unittest
 
-from greenhouse import io, monkeypatch, utils
+from greenhouse import io, emulation, utils
 
 from test_base import StateClearingTestCase
 
@@ -37,25 +37,25 @@ class BuiltinsTest(MonkeyPatchBase, StateClearingTestCase):
     ]
 
     def enable_patch(self):
-        monkeypatch.builtins()
+        emulation.builtins()
 
     def disable_patch(self):
-        monkeypatch.builtins(False)
+        emulation.builtins(False)
 
 
 class SocketTest(MonkeyPatchBase, StateClearingTestCase):
     PATCHES = [
         ('socket', socket.socket, io.Socket, lambda: socket.socket),
-        ('socketpair', socket.socketpair, monkeypatch._green_socketpair,
+        ('socketpair', socket.socketpair, emulation._green_socketpair,
             lambda: socket.socketpair),
         ('fromfd', socket.fromfd, io.socket_fromfd, lambda: socket.fromfd),
     ]
 
     def enable_patch(self):
-        monkeypatch.socket()
+        emulation.socket()
 
     def disable_patch(self):
-        monkeypatch.socket(False)
+        emulation.socket(False)
 
 
 class ThreadTest(MonkeyPatchBase, StateClearingTestCase):
@@ -63,17 +63,17 @@ class ThreadTest(MonkeyPatchBase, StateClearingTestCase):
         ('allocate', thread.allocate, utils.Lock, lambda: thread.allocate),
         ('allocate_lock', thread.allocate_lock, utils.Lock,
             lambda: thread.allocate_lock),
-        ('start_new', thread.start_new, monkeypatch._green_start,
+        ('start_new', thread.start_new, emulation._green_start,
             lambda: thread.start_new),
-        ('start_new_thread', thread.start_new_thread, monkeypatch._green_start,
+        ('start_new_thread', thread.start_new_thread, emulation._green_start,
             lambda: thread.start_new_thread),
     ]
 
     def enable_patch(self):
-        monkeypatch.thread()
+        emulation.thread()
 
     def disable_patch(self):
-        monkeypatch.thread(False)
+        emulation.thread(False)
 
 
 class ThreadingTest(MonkeyPatchBase, StateClearingTestCase):
@@ -90,13 +90,17 @@ class ThreadingTest(MonkeyPatchBase, StateClearingTestCase):
         ('Timer', threading.Timer, utils.Timer, lambda: threading.Timer),
         ('Thread', threading.Thread, utils.Thread, lambda: threading.Thread),
         ('local', threading.local, utils.Local, lambda: threading.local),
+        ('current_thread', threading.current_thread, utils._current_thread,
+            lambda: threading.current_thread),
+        ('currentThread', threading.currentThread, utils._current_thread,
+            lambda: threading.currentThread),
     ]
 
     def enable_patch(self):
-        monkeypatch.threading()
+        emulation.threading()
 
     def disable_patch(self):
-        monkeypatch.threading(False)
+        emulation.threading(False)
 
 
 class QueueTest(MonkeyPatchBase, StateClearingTestCase):
@@ -105,10 +109,10 @@ class QueueTest(MonkeyPatchBase, StateClearingTestCase):
     ]
 
     def enable_patch(self):
-        monkeypatch.queue()
+        emulation.queue()
 
     def disable_patch(self):
-        monkeypatch.queue(False)
+        emulation.queue(False)
 
 
 if __name__ == '__main__':

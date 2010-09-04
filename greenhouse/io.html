@@ -248,13 +248,10 @@ been sent or an error occurs.</p>
 <dl class="method">
 <dt id="greenhouse.io.Socket.setblocking">
 <tt class="descname">setblocking</tt><big>(</big><em>flag</em><big>)</big><a class="headerlink" href="#greenhouse.io.Socket.setblocking" title="Permalink to this definition">¶</a></dt>
-<dd><p>This method has been overridden to do nothing. The reason is that the
-underlying standard library socket is already set to non-blocking mode
-and otherwise-blocking methods are overridden to block only a greenlet.
-To get a socket that doesn&#8217;t even block the greenlet: make sure
-greenhouse is not monkeypatched in (see
-<a class="reference internal" href="emulation.html#greenhouse.emulation.socket" title="greenhouse.emulation.socket"><tt class="xref py py-func docutils literal"><span class="pre">greenhouse.emulation.socket()</span></tt></a>), create a standard-library
-socket, and set it to non-blocking mode.</p>
+<dd><p><a class="reference internal" href="#greenhouse.io.Socket" title="greenhouse.io.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a> instances already <tt class="docutils literal"><span class="pre">setblocking(False)</span></tt> on the
+underlying standard library socket, so this call will <em>not</em> be passed
+down, but if blocking is disabled at this level then the socket won&#8217;t
+block the current coroutine either.</p>
 </dd></dl>
 
 <dl class="method">

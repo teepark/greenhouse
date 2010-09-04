@@ -45,6 +45,8 @@ def socket_fromfd(fd, family, type_, *args):
     return Socket(fromsock=raw_sock)
 
 
+_UNSET = object()
+
 class _InnerSocket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
@@ -68,7 +70,7 @@ class _InnerSocket(object):
         self._writable = greenhouse.Event()
 
         # some more housekeeping
-        self._timeout = None
+        self._timeout = _UNSET
         self._closed = False
 
         # allow for lookup by fileno
@@ -116,7 +118,7 @@ class _InnerSocket(object):
                     client, addr = self._sock.accept()
                 except socket.error, err:
                     if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
-                        if self._readable.wait(self._timeout):
+                        if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
                     else:
@@ -136,7 +138,7 @@ class _InnerSocket(object):
                 err = self.connect_ex(address)
                 if err in (errno.EINPROGRESS, errno.EALREADY,
                         errno.EWOULDBLOCK):
-                    if self._writable.wait(self._timeout):
+                    if self._writable.wait(self.gettimeout()):
                         raise socket.timeout("timed out")
                     continue
                 if err not in (0, errno.EISCONN):
@@ -162,6 +164,8 @@ class _InnerSocket(object):
         return self._sock.getsockopt(*args)
 
     def gettimeout(self):
+        if self._timeout is _UNSET:
+            return socket.getdefaulttimeout()
         return self._timeout
 
     def listen(self, backlog):
@@ -179,7 +183,7 @@ class _InnerSocket(object):
                     return self._sock.recv(nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        if self._readable.wait(self._timeout):
+                        if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
@@ -196,7 +200,7 @@ class _InnerSocket(object):
                     return self._sock.recv_into(buffer, nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        if self._readable.wait(self._timeout):
+                        if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
@@ -213,7 +217,7 @@ class _InnerSocket(object):
                     return self._sock.recvfrom(nbytes, flags)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        if self._readable.wait(self._timeout):
+                        if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
@@ -230,7 +234,7 @@ class _InnerSocket(object):
                     return self._sock.recvfrom_into(buffer, nbytes, flags=0)
                 except socket.error, e:
                     if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
-                        if self._readable.wait(self._timeout):
+                        if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
                     if e[0] in SOCKET_CLOSED:
@@ -250,7 +254,7 @@ class _InnerSocket(object):
         with self._registered('we'):
             sent = self.send(data, flags)
             while sent < len(data):
-                if self._writable.wait(self._timeout):
+                if self._writable.wait(self.gettimeout()):
                     raise socket.timeout("timed out")
                 sent += self.send(data[sent:], flags)
 
@@ -275,8 +279,6 @@ class _InnerSocket(object):
         if timeout is not None:
             timeout = float(timeout)
         self._timeout = timeout
-
-
 
 
 class SocketFile(FileBase):

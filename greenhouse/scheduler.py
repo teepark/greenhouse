@@ -216,11 +216,6 @@ def _interruption_check():
 @compat.greenlet
 def mainloop():
     while 1:
-        if not state:
-            # python's shutdown sequence gets out of wack when we have
-            # greenlets in play. in certain circumstances, modules become
-            # None before this code runs.
-            break
         try:
             if not state.to_run:
                 _hit_poller(FAST_POLL_TIMEOUT)

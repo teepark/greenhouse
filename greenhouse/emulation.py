@@ -67,7 +67,7 @@ def socket(enable=True):
     if enable:
         socket_module.socket = io.Socket
         socket_module.socketpair = _green_socketpair
-        socket_module.fromfd = io.socket_fromfd
+        socket_module.fromfd = io.sockets.socket_fromfd
     else:
         socket_module.socket = _socket
         socket_module.socketpair = _socketpair

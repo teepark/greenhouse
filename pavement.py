@@ -6,7 +6,7 @@ from paver.setuputils import setup
 setup(
     name="greenhouse",
     description="An I/O parallelism library making use of coroutines",
-    packages=["greenhouse"],
+    packages=["greenhouse", "greenhouse.io"],
     version="0.1",
     author="Travis Parker",
     author_email="travis.parker@gmail.com",

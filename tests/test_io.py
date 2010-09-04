@@ -214,6 +214,38 @@ class SocketPollerMixin(object):
             assert client.getsockname() == handler.getpeername()
             assert client.getpeername() == handler.getsockname()
 
+    def test_non_blocking_recv(self):
+        with self.socketpair() as (client, handler):
+            client.setblocking(0)
+            self.assertRaises(socket.error, client.recv, 1024)
+
+    def test_non_blocking_recvfrom(self):
+        with self.socketpair() as (client, handler):
+            client.setblocking(0)
+            self.assertRaises(socket.error, client.recvfrom, 5)
+
+    def test_non_blocking_recv_into(self):
+        with self.socketpair() as (client, handler):
+            collector = array.array('c', '\0' * 5)
+            client.setblocking(0)
+            self.assertRaises(socket.error, client.recv_into, collector, 5)
+
+    def test_non_blocking_recvfrom_into(self):
+        with self.socketpair() as (client, handler):
+            client.setblocking(0)
+            collector = array.array('c', '\0' * 5)
+            self.assertRaises(socket.error, client.recvfrom_into, collector, 5)
+
+    def test_non_blocking_accept(self):
+        server = greenhouse.Socket()
+        server.setblocking(0)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("", port()))
+        server.listen(5)
+        self.assertRaises(socket.error, server.accept)
+        server.close()
+
+
 if greenhouse.poller.Epoll._POLLER:
     class EpollSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         def setUp(self):

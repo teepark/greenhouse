@@ -132,13 +132,10 @@
 
     .. method:: setblocking(flag)
 
-        This method has been overridden to do nothing. The reason is that the
-        underlying standard library socket is already set to non-blocking mode
-        and otherwise-blocking methods are overridden to block only a greenlet.
-        To get a socket that doesn't even block the greenlet: make sure
-        greenhouse is not monkeypatched in (see
-        :func:`greenhouse.emulation.socket`), create a standard-library
-        socket, and set it to non-blocking mode.
+        :class:`Socket` instances already ``setblocking(False)`` on the
+        underlying standard library socket, so this call will *not* be passed
+        down, but if blocking is disabled at this level then the socket won't
+        block the current coroutine either.
 
     .. method:: setsockopt(level, option, value)
 

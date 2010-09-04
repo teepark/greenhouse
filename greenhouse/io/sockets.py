@@ -64,6 +64,7 @@ class _InnerSocket(object):
 
         # make the underlying socket non-blocking
         self._sock.setblocking(False)
+        self._blocking = True
 
         # create events
         self._readable = greenhouse.Event()
@@ -117,7 +118,8 @@ class _InnerSocket(object):
                 try:
                     client, addr = self._sock.accept()
                 except socket.error, err:
-                    if err[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
+                    if self._blocking and err[0] in (
+                            errno.EAGAIN, errno.EWOULDBLOCK):
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -136,8 +138,8 @@ class _InnerSocket(object):
         with self._registered('we'):
             while True:
                 err = self.connect_ex(address)
-                if err in (errno.EINPROGRESS, errno.EALREADY,
-                        errno.EWOULDBLOCK):
+                if self._blocking and err in (
+                        errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
                     if self._writable.wait(self.gettimeout()):
                         raise socket.timeout("timed out")
                     continue
@@ -182,7 +184,8 @@ class _InnerSocket(object):
                 try:
                     return self._sock.recv(nbytes, flags)
                 except socket.error, e:
-                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    if self._blocking and e[0] in (
+                            errno.EWOULDBLOCK, errno.EAGAIN):
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -199,7 +202,8 @@ class _InnerSocket(object):
                 try:
                     return self._sock.recv_into(buffer, nbytes, flags)
                 except socket.error, e:
-                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    if self._blocking and e[0] in (
+                            errno.EWOULDBLOCK, errno.EAGAIN):
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -216,7 +220,8 @@ class _InnerSocket(object):
                 try:
                     return self._sock.recvfrom(nbytes, flags)
                 except socket.error, e:
-                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    if self._blocking and e[0] in (
+                            errno.EWOULDBLOCK, errno.EAGAIN):
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -233,7 +238,8 @@ class _InnerSocket(object):
                 try:
                     return self._sock.recvfrom_into(buffer, nbytes, flags=0)
                 except socket.error, e:
-                    if e[0] in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    if self._blocking and e[0] in (
+                            errno.EWOULDBLOCK, errno.EAGAIN):
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -254,7 +260,7 @@ class _InnerSocket(object):
         with self._registered('we'):
             sent = self.send(data, flags)
             while sent < len(data):
-                if self._writable.wait(self.gettimeout()):
+                if self._blocking and self._writable.wait(self.gettimeout()):
                     raise socket.timeout("timed out")
                 sent += self.send(data[sent:], flags)
 
@@ -267,7 +273,7 @@ class _InnerSocket(object):
             raise
 
     def setblocking(self, flag):
-        pass
+        self._blocking = bool(flag)
 
     def setsockopt(self, level, option, value):
         return self._sock.setsockopt(level, option, value)

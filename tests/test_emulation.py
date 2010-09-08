@@ -49,7 +49,7 @@ class SocketTest(MonkeyPatchBase, StateClearingTestCase):
         ('socketpair', socket.socketpair, emulation._green_socketpair,
             lambda: socket.socketpair),
         ('fromfd', socket.fromfd, io.sockets.socket_fromfd,
-			lambda: socket.fromfd),
+            lambda: socket.fromfd),
     ]
 
     def enable_patch(self):

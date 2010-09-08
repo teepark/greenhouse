@@ -11,6 +11,8 @@ from greenhouse.scheduler import state
 
 
 _socket = socket.socket
+_socketpair = socket.socketpair
+_fromfd = socket.fromfd
 
 SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 

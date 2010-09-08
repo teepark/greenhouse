@@ -44,36 +44,31 @@ def disable(use_builtins=1, use_socket=1, use_thread=1,
         queue(enable=False)
 
 
-_open = __builtins__['open']
-_file = __builtins__['file']
-
 def builtins(enable=True):
     if enable:
         __builtins__['open'] = __builtins__['file'] = io.File
     else:
-        __builtins__['open'] = _open
-        __builtins__['file'] = _file
+        __builtins__['open'] = io.files._open
+        __builtins__['file'] = io.files._file
 
 
-_socket = socket_module.socket
-_socketpair = socket_module.socketpair
-_fromfd = socket_module.fromfd
 _default_sockpair_family = socket_module.AF_INET
 if hasattr(socket_module, "AF_UNIX"):
     _default_sockpair_family = socket_module.AF_UNIX
 
-def _green_socketpair(family=_default_sockpair_family, type_=None, proto=None):
-    return [io.Socket(fromsock=s) for s in _socketpair(family, type_, proto)]
+def _green_socketpair(*args, **kwargs):
+    a, b = io.sockets._socketpair(*args, **kwargs)
+    return io.Socket(fromsock=a), io.Socket(fromsock=b)
 
 def socket(enable=True):
     if enable:
-        socket_module.socket = io.Socket
+        socket_module.socket = io.sockets.Socket
         socket_module.socketpair = _green_socketpair
         socket_module.fromfd = io.sockets.socket_fromfd
     else:
-        socket_module.socket = _socket
-        socket_module.socketpair = _socketpair
-        socket_module.fromfd = _fromfd
+        socket_module.socket = io.sockets._socket
+        socket_module.socketpair = io.sockets._socketpair
+        socket_module.fromfd = io.sockets._fromfd
 
 
 _allocate_lock = thread_module.allocate_lock

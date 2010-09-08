@@ -216,6 +216,8 @@ def _interruption_check():
 @compat.greenlet
 def mainloop():
     while 1:
+        if not sys:
+            break
         try:
             if not state.to_run:
                 _hit_poller(FAST_POLL_TIMEOUT)

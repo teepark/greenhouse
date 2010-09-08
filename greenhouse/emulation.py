@@ -16,29 +16,31 @@ __all__ = [
         "queue"]
 
 
-def enable(builtins=1, socket=1, thread=1, threading=1, queue=1):
-    if builtins:
+def enable(use_builtins=1, use_socket=1, use_thread=1,
+        use_threading=1, use_queue=1):
+    if use_builtins:
         builtins()
-    if socket:
+    if use_socket:
         socket()
-    if thread:
+    if use_thread:
         thread()
-    if threading:
+    if use_threading:
         threading()
-    if queue:
+    if use_queue:
         queue()
 
 
-def disable(builtins=1, socket=1, thread=1, threading=1, queue=1):
-    if builtins:
+def disable(use_builtins=1, use_socket=1, use_thread=1,
+        use_threading=1, use_queue=1):
+    if use_builtins:
         builtins(enable=False)
-    if socket:
+    if use_socket:
         socket(enable=False)
-    if thread:
+    if use_thread:
         thread(enable=False)
-    if threading:
+    if use_threading:
         threading(enable=False)
-    if queue:
+    if use_queue:
         queue(enable=False)
 
 

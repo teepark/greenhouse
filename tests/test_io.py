@@ -269,9 +269,6 @@ class FilePollerMixin(object):
         if os.path.exists(self.fname):
             os.unlink(self.fname)
 
-    def touch(self, path):
-        greenhouse.compat.mkfile(path)
-
     def test_basic_io(self):
         fp = greenhouse.File(self.fname, 'w')
         fp.write("this is testing text")
@@ -287,7 +284,7 @@ class FilePollerMixin(object):
         self.assertRaises(IOError, greenhouse.File, self.fname, 'r')
 
     def test_fromfd(self):
-        self.touch(self.fname)
+        open(self.fname, 'w').close()
 
         with open(self.fname, 'w') as stdfp:
             stdfp.write("sajgoiafjsoma;l al al;")
@@ -297,7 +294,7 @@ class FilePollerMixin(object):
             assert gfp.read() == "sajgoiafjsoma;l al al;"
 
     def test_readline(self):
-        self.touch(self.fname)
+        open(self.fname, 'w').close()
 
         with open(self.fname, 'w') as stdfp:
             stdfp.write("""this

@@ -17,6 +17,9 @@ from greenhouse.scheduler import state
 
 __all__ = ["File"]
 
+_open = open
+_file = file
+
 
 class FileBase(object):
     CHUNKSIZE = 8192
@@ -142,7 +145,7 @@ class File(FileBase):
 
         # if write or append mode and the file doesn't exist, create it
         if flags & (os.O_WRONLY | os.O_RDWR) and not os.path.exists(name):
-            compat.mkfile(name)
+            _open(name, 'w').close()
 
         # open the file, get a descriptor
         try:

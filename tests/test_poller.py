@@ -14,6 +14,7 @@ class PollSelectorTestCase(StateClearingTestCase):
         StateClearingTestCase.setUp(self)
         self._epoll = getattr(select, "epoll", None)
         self._poll = getattr(select, "poll", None)
+        self._kqueue = getattr(select, "kqueue", None)
 
     def tearDown(self):
         super(PollSelectorTestCase, self).tearDown()
@@ -21,12 +22,18 @@ class PollSelectorTestCase(StateClearingTestCase):
             select.epoll = self._epoll
         if self._poll:
             select.poll = self._poll
+        if self._kqueue:
+            select.kqueue = self._kqueue
 
     def test_best(self):
         if hasattr(select, "epoll"):
             assert isinstance(greenhouse.poller.best(),
                     greenhouse.poller.Epoll)
             del select.epoll
+
+        if hasattr(select, "kqueue"):
+            assert isinstance(greenhouse.poller.best(), greenhouse.poller.KQueue)
+            del select.kqueue
 
         if hasattr(select, "poll"):
             assert isinstance(greenhouse.poller.best(), greenhouse.poller.Poll)
@@ -86,6 +93,10 @@ if greenhouse.poller.Epoll._POLLER:
 if greenhouse.poller.Poll._POLLER:
     class PollerTestCase(PollerMixin, StateClearingTestCase):
         POLLER = greenhouse.poller.Poll
+
+if greenhouse.poller.KQueue._POLLER:
+    class KQueueTestCase(PollerMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.KQueue
 
 class SelectTestCase(PollerMixin, StateClearingTestCase):
     POLLER = greenhouse.poller.Select

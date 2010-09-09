@@ -1,4 +1,5 @@
 import collections
+import errno
 import select
 
 from greenhouse.scheduler import state
@@ -19,6 +20,12 @@ class Poll(object):
         self._poller = self._POLLER()
         self._registry = collections.defaultdict(list)
 
+    def _register(self, fd, mask):
+        return self._poller.register(fd, mask)
+
+    def _unregister(self, fd):
+        self._poller.unregister(fd)
+
     def register(self, fd, eventmask=None):
         # integer file descriptor
         fd = isinstance(fd, int) and fd or fd.fileno()
@@ -36,10 +43,10 @@ class Poll(object):
 
         # unregister the old mask
         if registered:
-            self._poller.unregister(fd)
+            self._unregister(fd)
 
         # register the new mask
-        rc = self._poller.register(fd, newmask)
+        rc = self._register(fd, newmask)
 
         # append to a list of eventmasks so we can backtrack
         self._registry[fd].append(newmask)
@@ -55,19 +62,20 @@ class Poll(object):
             return
 
         # unregister the current registration
-        self._poller.unregister(fd)
+        self._unregister(fd)
         self._registry[fd].pop()
 
         # re-do the previous registration, if any
         newmask = self._registry[fd]
         newmask = newmask and newmask[-1]
         if newmask:
-            self._poller.register(fd, newmask)
+            self._register(fd, newmask)
         else:
             self._registry.pop(fd)
 
     def poll(self, timeout):
         return self._poller.poll(timeout)
+
 
 class Epoll(Poll):
     "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
@@ -76,6 +84,47 @@ class Epoll(Poll):
     ERRMASK = getattr(select, 'EPOLLERR', 0) | getattr(select, "EPOLLHUP", 0)
 
     _POLLER = getattr(select, "epoll", None)
+
+
+class KQueue(Poll):
+    "a greenhouse poller using the 2.6+ stdlib's kqueue support"
+    INMASK = 1
+    OUTMASK = 2
+    ERRMASK = 0
+
+    _POLLER = getattr(select, "kqueue", None)
+
+    _mask_map = {
+        getattr(select, "KQ_FILTER_READ", 0): INMASK,
+        getattr(select, "KQ_FILTER_WRITE", 0): OUTMASK,
+    }
+
+    def _register(self, fd, mask):
+        evs = []
+        if mask & self.INMASK:
+            evs.append(select.kevent(
+                fd, select.KQ_FILTER_READ, select.KQ_EV_ADD))
+        if mask & self.OUTMASK:
+            evs.append(select.kevent(
+                fd, select.KQ_FILTER_WRITE, select.KQ_EV_ADD))
+        self._poller.control(evs, 0)
+
+    def _unregister(self, fd):
+        try:
+            self._poller.control([
+                    select.kevent(
+                        fd, select.KQ_FILTER_READ, select.KQ_EV_DELETE),
+                    select.kevent(
+                        fd, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)],
+                0)
+        except EnvironmentError, err:
+            if err.args[0] != errno.ENOENT:
+                raise
+
+    def poll(self, timeout):
+        evs = self._poller.control(None, 2 * len(self._registry), timeout)
+        return [(ev.ident, self._mask_map[ev.filter]) for ev in evs]
+
 
 class Select(object):
     "a greenhouse poller using the select system call"
@@ -143,12 +192,16 @@ class Select(object):
             events[fd] |= self.ERRMASK
         return events.items()
 
+
 def best():
     if hasattr(select, 'epoll'):
         return Epoll()
+    if hasattr(select, 'kqueue'):
+        return KQueue()
     elif hasattr(select, 'poll'):
         return Poll()
     return Select()
+
 
 def set(poller=None):
     state.poller = poller or best()

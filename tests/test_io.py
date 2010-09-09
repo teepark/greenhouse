@@ -258,6 +258,12 @@ if greenhouse.poller.Poll._POLLER:
             StateClearingTestCase.setUp(self)
             greenhouse.poller.set(greenhouse.poller.Poll())
 
+if greenhouse.poller.KQueue._POLLER:
+    class KQueueSocketTestCase(SocketPollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            greenhouse.poller.set(greenhouse.poller.KQueue())
+
 class SelectSocketTestCase(SocketPollerMixin, StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
@@ -431,6 +437,13 @@ if greenhouse.poller.Poll._POLLER:
             self.fname = tempfile.mktemp()
             greenhouse.poller.set(greenhouse.poller.Poll())
 
+if greenhouse.poller.KQueue._POLLER:
+    class FileWithKQueueTestCase(FilePollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            self.fname = tempfile.mktemp()
+            greenhouse.poller.set(greenhouse.poller.KQueue())
+
 class FileWithSelectTestCase(FilePollerMixin, StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
@@ -478,6 +491,12 @@ if greenhouse.poller.Poll._POLLER:
         def setUp(self):
             StateClearingTestCase.setUp(self)
             greenhouse.poller.set(greenhouse.poller.Poll())
+
+if greenhouse.poller.KQueue._POLLER:
+    class PipeWithKQueueTestCase(PipePollerMixin, StateClearingTestCase):
+        def setUp(self):
+            StateClearingTestCase.setUp(self)
+            greenhouse.poller.set(greenhouse.poller.KQueue())
 
 class PipeWithSelectTestCase(PipePollerMixin, StateClearingTestCase):
     def setUp(self):

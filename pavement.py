@@ -38,7 +38,8 @@ def sdist():
 
 @task
 def clean():
-    for p in map(path, ('greenhouse.egg-info', 'dist', 'build', 'MANIFEST.in')):
+    for p in map(path, (
+		'greenhouse.egg-info', 'dist', 'build', 'MANIFEST.in', 'docs/build')):
         if p.exists():
             if p.isdir():
                 p.rmtree()

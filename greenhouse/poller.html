@@ -153,12 +153,21 @@ is available and supported by the standard library, so check the <tt class="docu
 module for an <tt class="docutils literal"><span class="pre">epoll</span></tt> attribute before using.</p>
 </dd></dl>
 
+<dl class="class">
+<dt id="greenhouse.poller.KQueue">
+<em class="property">class </em><tt class="descclassname">greenhouse.poller.</tt><tt class="descname">KQueue</tt><a class="headerlink" href="#greenhouse.poller.KQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>A poller class that supports the same poller interface, but does it with
+BSD&#8217;s <tt class="docutils literal"><span class="pre">kqueue(2)</span></tt>. This class assumes that <tt class="docutils literal"><span class="pre">kqueue</span></tt> is available in the
+standard library <tt class="docutils literal"><span class="pre">select</span></tt> module, so check for <tt class="docutils literal"><span class="pre">select.kqueue</span></tt> before
+using.</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="greenhouse.poller.best">
 <tt class="descclassname">greenhouse.poller.</tt><tt class="descname">best</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.poller.best" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an instance of a poller class (<a class="reference internal" href="#greenhouse.poller.Epoll" title="greenhouse.poller.Epoll"><tt class="xref py py-class docutils literal"><span class="pre">Epoll</span></tt></a>, <a class="reference internal" href="#greenhouse.poller.Poll" title="greenhouse.poller.Poll"><tt class="xref py py-class docutils literal"><span class="pre">Poll</span></tt></a>, or
-<a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a> in order of preference), using the best poller class
-available based on the system and the python version.</p>
+<dd><p>Returns an instance of a poller class (<a class="reference internal" href="#greenhouse.poller.Epoll" title="greenhouse.poller.Epoll"><tt class="xref py py-class docutils literal"><span class="pre">Epoll</span></tt></a>, <a class="reference internal" href="#greenhouse.poller.KQueue" title="greenhouse.poller.KQueue"><tt class="xref py py-class docutils literal"><span class="pre">KQueue</span></tt></a>,
+<a class="reference internal" href="#greenhouse.poller.Poll" title="greenhouse.poller.Poll"><tt class="xref py py-class docutils literal"><span class="pre">Poll</span></tt></a>, or <a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a> in order of preference), using the best
+poller class available based on the system and the python version.</p>
 </dd></dl>
 
 <dl class="function">

@@ -60,11 +60,18 @@ here on the :class:`Select` class.
     is available and supported by the standard library, so check the ``select``
     module for an ``epoll`` attribute before using.
 
+.. class:: KQueue
+
+    A poller class that supports the same poller interface, but does it with
+    BSD's ``kqueue(2)``. This class assumes that ``kqueue`` is available in the
+    standard library ``select`` module, so check for ``select.kqueue`` before
+    using.
+
 .. function:: best
 
-    Returns an instance of a poller class (:class:`Epoll`, :class:`Poll`, or
-    :class:`Select` in order of preference), using the best poller class
-    available based on the system and the python version.
+    Returns an instance of a poller class (:class:`Epoll`, :class:`KQueue`,
+    :class:`Poll`, or :class:`Select` in order of preference), using the best
+    poller class available based on the system and the python version.
 
 .. function:: set(poller=None)
 

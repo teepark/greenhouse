@@ -15,8 +15,13 @@ def _green_start(function, args, kwargs=None):
 
 
 _patchers = {
+    '__builtin__': {
+        'file': io.File,
+        'open': io.File,
+    },
+
     'socket': {
-        'socket': io.sockets.Socket,
+        'socket': io.Socket,
         'socketpair': _green_socketpair,
         'fromfd': io.sockets.socket_fromfd,
     },
@@ -50,15 +55,13 @@ _patchers = {
     },
 }
 
-_standard = {'builtins': {'file': file, 'open': open}}
+_standard = {}
 for mod_name, patchers in _patchers.items():
     _standard[mod_name] = {}
     module = __import__(mod_name)
     for attr_name, patcher in patchers.items():
         _standard[mod_name][attr_name] = getattr(module, attr_name)
 del mod_name, patchers, module, attr_name, patcher
-
-_patchers['builtins'] = {'file': io.File, 'open': io.File}
 
 
 def patch(*module_names):
@@ -70,13 +73,9 @@ def patch(*module_names):
             raise ValueError("'%s' is not greenhouse-patchable" % module_name)
 
     for module_name in module_names:
-        if module_name == "builtins":
-            for attr, patch in _patchers['builtins'].items():
-                __builtins__[attr] = patch
-        else:
-            module = __import__(module_name)
-            for attr, patch in _patchers[module_name].items():
-                setattr(module, attr, patch)
+        module = __import__(module_name)
+        for attr, patch in _patchers[module_name].items():
+            setattr(module, attr, patch)
 
 
 def unpatch(*module_names):
@@ -88,10 +87,6 @@ def unpatch(*module_names):
             raise ValueError("'%s' is not greenhouse-patchable" % module_name)
 
     for module_name in module_names:
-        if module_name == "builtins":
-            for attr, value in _standard['builtins'].items():
-                __builtins__[attr] = value
-        else:
-            module = __import__(module_name)
-            for attr, value in _standard[module_name].items():
-                setattr(module, attr, value)
+        module = __import__(module_name)
+        for attr, value in _standard[module_name].items():
+            setattr(module, attr, value)

@@ -32,7 +32,7 @@ class MonkeyPatchBase(object):
 
 
 class BuiltinsTest(MonkeyPatchBase, StateClearingTestCase):
-    PATCH_NAME = "builtins"
+    PATCH_NAME = "__builtin__"
 
     PATCHES = [
         ('file', file, io.File, lambda: file),

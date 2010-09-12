@@ -21,7 +21,7 @@ without it having to have been explicitly written that way.
     strings in ``module_names``. With no arguments, applies patching to
     everything it can.
 
-    Valid arguments are ``"builtins"``, ``"socket"``, ``"thread"``,
+    Valid arguments are ``"__builtin__"``, ``"socket"``, ``"thread"``,
     ``"threading"``, ``"Queue"``.
 
     Raises a ``ValueError`` if anything else is provided.

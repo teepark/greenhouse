@@ -10,20 +10,21 @@ from test_base import StateClearingTestCase
 
 
 class MonkeyPatchBase(object):
+    PATCH_NAME = ""
+
     def tearDown(self):
         super(MonkeyPatchBase, self).tearDown()
-        self.disable_patch()
+        emulation.unpatch()
 
     def test_enable(self):
-        self.enable_patch()
+        emulation.patch(self.PATCH_NAME)
 
         for name, standard, patched, getter in self.PATCHES:
             val = getter()
             assert val is patched, (name, val)
 
     def test_disable(self):
-        self.enable_patch()
-        self.disable_patch()
+        emulation.unpatch(self.PATCH_NAME)
 
         for name, standard, patched, getter in self.PATCHES:
             val = getter()
@@ -31,19 +32,17 @@ class MonkeyPatchBase(object):
 
 
 class BuiltinsTest(MonkeyPatchBase, StateClearingTestCase):
+    PATCH_NAME = "builtins"
+
     PATCHES = [
         ('file', file, io.File, lambda: file),
         ('open', open, io.File, lambda: open),
     ]
 
-    def enable_patch(self):
-        emulation.builtins()
-
-    def disable_patch(self):
-        emulation.builtins(False)
-
 
 class SocketTest(MonkeyPatchBase, StateClearingTestCase):
+    PATCH_NAME = "socket"
+
     PATCHES = [
         ('socket', socket.socket, io.Socket, lambda: socket.socket),
         ('socketpair', socket.socketpair, emulation._green_socketpair,
@@ -52,14 +51,10 @@ class SocketTest(MonkeyPatchBase, StateClearingTestCase):
             lambda: socket.fromfd),
     ]
 
-    def enable_patch(self):
-        emulation.socket()
-
-    def disable_patch(self):
-        emulation.socket(False)
-
 
 class ThreadTest(MonkeyPatchBase, StateClearingTestCase):
+    PATCH_NAME = "thread"
+
     PATCHES = [
         ('allocate', thread.allocate, utils.Lock, lambda: thread.allocate),
         ('allocate_lock', thread.allocate_lock, utils.Lock,
@@ -70,14 +65,10 @@ class ThreadTest(MonkeyPatchBase, StateClearingTestCase):
             lambda: thread.start_new_thread),
     ]
 
-    def enable_patch(self):
-        emulation.thread()
-
-    def disable_patch(self):
-        emulation.thread(False)
-
 
 class ThreadingTest(MonkeyPatchBase, StateClearingTestCase):
+    PATCH_NAME = "threading"
+
     PATCHES = [
         ('Event', threading.Event, utils.Event, lambda: threading.Event),
         ('Lock', threading.Lock, utils.Lock, lambda: threading.Lock),
@@ -97,23 +88,13 @@ class ThreadingTest(MonkeyPatchBase, StateClearingTestCase):
             lambda: threading.currentThread),
     ]
 
-    def enable_patch(self):
-        emulation.threading()
-
-    def disable_patch(self):
-        emulation.threading(False)
-
 
 class QueueTest(MonkeyPatchBase, StateClearingTestCase):
+    PATCH_NAME = "Queue"
+
     PATCHES = [
         ('Queue', Queue.Queue, utils.Queue, lambda: Queue.Queue),
     ]
-
-    def enable_patch(self):
-        emulation.queue()
-
-    def disable_patch(self):
-        emulation.queue(False)
 
 
 if __name__ == '__main__':

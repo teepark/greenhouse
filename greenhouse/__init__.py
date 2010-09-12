@@ -3,8 +3,8 @@ from greenhouse.scheduler import *
 from greenhouse.utils import *
 from greenhouse.pool import *
 from greenhouse.io import *
+from greenhouse.emulation import *
 import greenhouse.poller
-import greenhouse.emulation
 
 
 # prime the pump. if there is a traceback before the mainloop greenlet

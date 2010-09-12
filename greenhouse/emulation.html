@@ -76,68 +76,29 @@
 <span id="greenhouse-emulation-faking-out-third-parties"></span><h1><a class="reference internal" href="#module-greenhouse.emulation" title="greenhouse.emulation"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.emulation</span></tt></a> &#8211; Faking Out Third Parties<a class="headerlink" href="#module-greenhouse.emulation" title="Permalink to this headline">¶</a></h1>
 <p>Many of the APIs in greenhouse (particularly in the <a class="reference internal" href="utils.html#module-greenhouse.utils" title="greenhouse.utils"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.utils</span></tt></a>
 module) have been explicitly made to match the signatures and behavior of IO
-and threading related APIs from the standard library. This module provides
-enables monkeypatching the standard libary modules to swap in the greenhouse
-versions, the idea being that you can cause a third-party library to use
-coroutines without it having to have been explicitly written that way.</p>
+and threading related APIs from the standard library. This module enables
+monkeypatching the standard libary modules to swap in the greenhouse versions,
+the idea being that you can cause a third-party library to use coroutines
+without it having to have been explicitly written that way.</p>
 <dl class="function">
-<dt id="greenhouse.emulation.enable">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">enable</tt><big>(</big><em>builtins=1</em>, <em>socket=1</em>, <em>thread=1</em>, <em>threading=1</em>, <em>queue=1</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.enable" title="Permalink to this definition">¶</a></dt>
-<dd><p>Just a shortcut for enabling emulation in all the supported stdlib modules.
-It defaults to enabling everything available, but they can be turned off
-individually with the keyword arguments.</p>
+<dt id="greenhouse.emulation.patch">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">patch</tt><big>(</big><em>*module_names</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies patching to the named standard library modules by importing and
+replacing the relevant attributes on the modules whose names are the
+strings in <tt class="docutils literal"><span class="pre">module_names</span></tt>. With no arguments, applies patching to
+everything it can.</p>
+<p>Valid arguments are <tt class="docutils literal"><span class="pre">&quot;builtins&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;socket&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;thread&quot;</span></tt>,
+<tt class="docutils literal"><span class="pre">&quot;threading&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;Queue&quot;</span></tt>.</p>
+<p>Raises a <tt class="docutils literal"><span class="pre">ValueError</span></tt> if anything else is provided.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="greenhouse.emulation.disable">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">disable</tt><big>(</big><em>builtins=1</em>, <em>socket=1</em>, <em>thread=1</em>, <em>threading=1</em>, <em>queue=1</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.disable" title="Permalink to this definition">¶</a></dt>
-<dd><p>A shortcut for disabling emulation across the board. Defaults to affecting
-everything, but individual modules can be left alone with the keyword
-arguments.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.emulation.builtins">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">builtins</tt><big>(</big><em>enable=True</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.builtins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override blocking APIs in the builtins with their greenhouse
-coroutine-blocking equivalents (currently <tt class="docutils literal"><span class="pre">open</span></tt> and <tt class="docutils literal"><span class="pre">file</span></tt>).</p>
-<p>With <tt class="docutils literal"><span class="pre">enable=False</span></tt>, sets things back to the originals.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.emulation.socket">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">socket</tt><big>(</big><em>enable=True</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.socket" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override blocking APIs in the standard library <tt class="docutils literal"><span class="pre">socket</span></tt> module. So far
-this affects <tt class="docutils literal"><span class="pre">socket</span></tt>, <tt class="docutils literal"><span class="pre">socketpair</span></tt>, and <tt class="docutils literal"><span class="pre">fromfd</span></tt>.</p>
-<p>With <tt class="docutils literal"><span class="pre">enable=False</span></tt>, restores the socket module to its original state.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.emulation.thread">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">thread</tt><big>(</big><em>enable=True</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.thread" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override thread and blocking APIs in the stdlib <tt class="docutils literal"><span class="pre">thread</span></tt> module. This
-affects <tt class="docutils literal"><span class="pre">allocate</span></tt>/<tt class="docutils literal"><span class="pre">allocate_lock</span></tt> and
-<tt class="docutils literal"><span class="pre">start_new</span></tt>/<tt class="docutils literal"><span class="pre">start_new_thread</span></tt>.</p>
-<p>With <tt class="docutils literal"><span class="pre">enable=False</span></tt>, restores them to the originals.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.emulation.threading">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">threading</tt><big>(</big><em>enable=True</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.threading" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override thread and blocking APIs in the stdlib <tt class="docutils literal"><span class="pre">threading</span></tt> module. This
-affects <tt class="docutils literal"><span class="pre">active_count</span></tt>/<tt class="docutils literal"><span class="pre">activeCount</span></tt>,
-<tt class="docutils literal"><span class="pre">current_thread</span></tt>/<tt class="docutils literal"><span class="pre">currentThread</span></tt>, <tt class="docutils literal"><span class="pre">Event</span></tt>, <tt class="docutils literal"><span class="pre">Lock</span></tt>, <tt class="docutils literal"><span class="pre">RLock</span></tt>,
-<tt class="docutils literal"><span class="pre">Condition</span></tt>, <tt class="docutils literal"><span class="pre">Semaphore</span></tt>, <tt class="docutils literal"><span class="pre">BoundedSemaphore</span></tt>, <tt class="docutils literal"><span class="pre">Timer</span></tt>, <tt class="docutils literal"><span class="pre">Thread</span></tt>,
-<tt class="docutils literal"><span class="pre">local</span></tt>, and <tt class="docutils literal"><span class="pre">enumerate</span></tt>.</p>
-<p>With <tt class="docutils literal"><span class="pre">enable=False</span></tt>, restores the originals.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="greenhouse.emulation.queue">
-<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">queue</tt><big>(</big><em>enable=True</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override <tt class="docutils literal"><span class="pre">Queue.Queue</span></tt> with the greenhouse coroutine-blocking equivalent
-<a class="reference internal" href="utils.html#greenhouse.utils.Queue" title="greenhouse.utils.Queue"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.utils.Queue</span></tt></a>.</p>
-<p>With <tt class="docutils literal"><span class="pre">enable=False</span></tt>, reverts back to the original.</p>
+<dt id="greenhouse.emulation.unpatch">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">unpatch</tt><big>(</big><em>*module_names</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.unpatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#greenhouse.emulation.patch" title="greenhouse.emulation.patch"><tt class="xref py py-func docutils literal"><span class="pre">patch()</span></tt></a>, but does the reverse operation returning standard
+library modules to their original state.</p>
+<p>Also raises <tt class="docutils literal"><span class="pre">ValueError</span></tt> for unrecognized arguments, and unpatches
+everything with no arguments.</p>
 </dd></dl>
 
 </div>

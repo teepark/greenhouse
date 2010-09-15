@@ -1,7 +1,10 @@
+import sys
+import types
+
 from greenhouse import io, scheduler, utils
 
 
-__all__ = ["patch", "unpatch"]
+__all__ = ["patch", "unpatch", "patched"]
 
 
 def _green_socketpair(*args, **kwargs):
@@ -90,3 +93,44 @@ def unpatch(*module_names):
         module = __import__(module_name)
         for attr, value in _standard[module_name].items():
             setattr(module, attr, value)
+
+
+def _patched_copy(mod_name, patch):
+    old_mod = __import__(mod_name, {}, {}, mod_name.rsplit(".")[0])
+    new_mod = types.ModuleType(old_mod.__name__)
+    new_mod.__dict__.update(old_mod.__dict__)
+    new_mod.__dict__.update(patch)
+    return new_mod
+
+
+def patched(module_name):
+    if module_name in _patchers:
+        return _patched_copy(module_name)
+
+    # grab the unpatched version of the module for posterity
+    old_module = sys.modules.pop(module_name)
+
+    # apply all the standard library patches we have
+    saved = []
+    for name, patch in _patchers.iteritems():
+        new_mod = _patched_copy(name, patch)
+        saved.append((name, sys.modules.pop(name)))
+        sys.modules[name] = new_mod
+
+    # import the requested module with patches in place
+    result = __import__(module_name, {}, {}, module_name.rsplit(".")[0])
+
+    # put the original modules back as they were
+    for name, old_mod in saved:
+        if old_mod is None:
+            sys.modules.pop(name)
+        else:
+            sys.modules[name] = old_mod
+
+    # and put the old version of this module back
+    if old_module is None:
+        sys.modules.pop(module_name)
+    else:
+        sys.modules[module_name] = old_module
+
+    return result

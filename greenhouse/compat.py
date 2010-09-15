@@ -15,9 +15,6 @@ __all__ = ["main_greenlet", "GreenletExit"]
 
 # it's conceivable that we might not be in the main greenlet at import time,
 # so chase the parent tree until we get to it
-def _find_main():
-    glet = greenlet.getcurrent()
-    while glet.parent:
-        glet = glet.parent
-    return glet
-main_greenlet = _find_main()
+main_greenlet = getcurrent()
+while main_greenlet.parent:
+    main_greenlet = main_greenlet.parent

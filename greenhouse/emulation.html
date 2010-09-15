@@ -101,6 +101,16 @@ library modules to their original state.</p>
 everything with no arguments.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="greenhouse.emulation.patched">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">patched</tt><big>(</big><em>module_name</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.patched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies patching to the standard library just to import the named module,
+then puts everything else back as it was &#8211; this way the only module
+affected will be the specifically named one.</p>
+<p>Patches applied globally by <a class="reference internal" href="#greenhouse.emulation.patch" title="greenhouse.emulation.patch"><tt class="xref py py-func docutils literal"><span class="pre">patch()</span></tt></a> will not affect or be affected by
+using this.</p>
+</dd></dl>
+
 </div>
 
 

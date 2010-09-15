@@ -33,3 +33,12 @@ without it having to have been explicitly written that way.
     
     Also raises ``ValueError`` for unrecognized arguments, and unpatches
     everything with no arguments.
+
+.. function:: patched(module_name)
+
+    Applies patching to the standard library just to import the named module,
+    then puts everything else back as it was -- this way the only module
+    affected will be the specifically named one.
+
+    Patches applied globally by :func:`patch` will not affect or be affected by
+    using this.

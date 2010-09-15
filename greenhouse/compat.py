@@ -21,11 +21,3 @@ def _find_main():
         glet = glet.parent
     return glet
 main_greenlet = _find_main()
-
-# for whatever reason, os.mknod isn't working on FreeBSD 8 (at least)
-if sys.platform.lower().startswith("freebsd"):
-    def mkfile(path):
-        os.system("touch " + path)
-else:
-    def mkfile(path):
-        os.mknod(path, 0644)

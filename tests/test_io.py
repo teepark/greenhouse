@@ -17,6 +17,10 @@ from test_base import TESTING_TIMEOUT, StateClearingTestCase, port
 
 
 class SocketPollerMixin(object):
+    def tearDown(self):
+        super(SocketPollerMixin, self).tearDown()
+        socket.setdefaulttimeout(None)
+
     def test_sockets_basic(self):
         with self.socketpair() as (client, handler):
             client.send("howdy")
@@ -244,6 +248,18 @@ class SocketPollerMixin(object):
         server.listen(5)
         self.assertRaises(socket.error, server.accept)
         server.close()
+
+    def test_socket_module_default(self):
+        socket.setdefaulttimeout(TESTING_TIMEOUT)
+        with self.socketpair() as (server, client):
+            socket.setdefaulttimeout(TESTING_TIMEOUT * 2)
+            start = time.time()
+            try:
+                client.recv(16)
+            except socket.timeout:
+                assert TESTING_TIMEOUT < time.time() - start < TESTING_TIMEOUT * 2
+            else:
+                assert 0
 
 
 if greenhouse.poller.Epoll._POLLER:

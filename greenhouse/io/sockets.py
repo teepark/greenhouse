@@ -47,8 +47,6 @@ def socket_fromfd(fd, family, type_, *args):
     return Socket(fromsock=raw_sock)
 
 
-_UNSET = object()
-
 class _InnerSocket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
@@ -64,6 +62,10 @@ class _InnerSocket(object):
         self.proto = self._sock.proto
         self._fileno = self._sock.fileno()
 
+        # some more housekeeping
+        self._timeout = sock.gettimeout()
+        self._closed = False
+
         # make the underlying socket non-blocking
         self._sock.setblocking(False)
         self._blocking = True
@@ -71,10 +73,6 @@ class _InnerSocket(object):
         # create events
         self._readable = greenhouse.Event()
         self._writable = greenhouse.Event()
-
-        # some more housekeeping
-        self._timeout = _UNSET
-        self._closed = False
 
         # allow for lookup by fileno
         state.descriptormap[self._fileno].append(weakref.ref(self))
@@ -168,8 +166,6 @@ class _InnerSocket(object):
         return self._sock.getsockopt(*args)
 
     def gettimeout(self):
-        if self._timeout is _UNSET:
-            return socket.getdefaulttimeout()
         return self._timeout
 
     def listen(self, backlog):

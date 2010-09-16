@@ -339,6 +339,28 @@ add line separators to the <em>sequence</em> items.</p>
 
 </dd></dl>
 
+<dl class="attribute">
+<dt id="greenhouse.io.stdin">
+<tt class="descclassname">greenhouse.io.</tt><tt class="descname">stdin</tt><a class="headerlink" href="#greenhouse.io.stdin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#greenhouse.io.File" title="greenhouse.io.File"><tt class="xref py py-class docutils literal"><span class="pre">File</span></tt></a> opened in read mode around <tt class="docutils literal"><span class="pre">sys.stdin</span></tt>&#8216;s file descriptor,
+so it can be used to read input from standard in and cooperate with
+greenlets.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.io.stdout">
+<tt class="descclassname">greenhouse.io.</tt><tt class="descname">stdout</tt><a class="headerlink" href="#greenhouse.io.stdout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#greenhouse.io.File" title="greenhouse.io.File"><tt class="xref py py-class docutils literal"><span class="pre">File</span></tt></a> opened in write mode with the <tt class="docutils literal"><span class="pre">sys.stdout</span></tt> file
+descriptor for use in cooperative stdout IO.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.io.stderr">
+<tt class="descclassname">greenhouse.io.</tt><tt class="descname">stderr</tt><a class="headerlink" href="#greenhouse.io.stderr" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#greenhouse.io.File" title="greenhouse.io.File"><tt class="xref py py-class docutils literal"><span class="pre">File</span></tt></a> opened in write mode with the same file descriptor as
+<tt class="docutils literal"><span class="pre">sys.stderr</span></tt>, for use in cooperative stderr IO.</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="greenhouse.io.pipe">
 <tt class="descclassname">greenhouse.io.</tt><tt class="descname">pipe</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.pipe" title="Permalink to this definition">¶</a></dt>

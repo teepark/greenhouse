@@ -221,6 +221,22 @@
         Writes the strings in *sequence* to the file. ``writelines()`` does not
         add line separators to the *sequence* items.
 
+.. attribute:: stdin
+
+    A :class:`File` opened in read mode around ``sys.stdin``'s file descriptor,
+    so it can be used to read input from standard in and cooperate with
+    greenlets.
+
+.. attribute:: stdout
+
+    A :class:`File` opened in write mode with the ``sys.stdout`` file
+    descriptor for use in cooperative stdout IO.
+
+.. attribute:: stderr
+
+    A :class:`File` opened in write mode with the same file descriptor as
+    ``sys.stderr``, for use in cooperative stderr IO.
+
 .. function:: pipe()
 
     Creates an inter-process communication pipe, returning it as a pair of

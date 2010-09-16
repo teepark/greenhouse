@@ -1,5 +1,6 @@
 import Queue
 import socket
+import sys
 import thread
 import threading
 import unittest
@@ -95,6 +96,16 @@ class PatchQueueTest(MonkeyPatchBase, StateClearingTestCase):
     PATCHES = [
         ('Queue', Queue.Queue, utils.Queue, lambda: Queue.Queue),
     ]
+
+
+class PatchSysTest(MonkeyPatchBase, StateClearingTestCase):
+	PATCH_NAME = "sys"
+
+	PATCHES = [
+		('stdin', sys.stdin, io.files.stdin, lambda: sys.stdin),
+		('stdout', sys.stdout, io.files.stdout, lambda: sys.stdout),
+		('stderr', sys.stderr, io.files.stderr, lambda: sys.stderr),
+	]
 
 
 class PatchedModules(StateClearingTestCase):

@@ -264,3 +264,8 @@ class File(FileBase):
     def tell(self):
         with os.fdopen(os.dup(self._fileno)) as fp:
             return fp.tell()
+
+
+stdin = File.fromfd(0)
+stdout = File.fromfd(1)
+stderr = File.fromfd(2)

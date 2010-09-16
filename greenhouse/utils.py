@@ -1,13 +1,10 @@
 import bisect
 import collections
 import functools
-import sys
 import time
 import weakref
 
-from greenhouse.scheduler import state
-from greenhouse.compat import greenlet
-from greenhouse import scheduler
+from greenhouse import compat, scheduler
 
 
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
@@ -73,7 +70,7 @@ class Event(object):
         has been called
         """
         self._is_set = True
-        state.awoken_from_events.update(self._waiters)
+        scheduler.state.awoken_from_events.update(self._waiters)
         self._waiters = []
         self._reset_timers()
 
@@ -96,7 +93,7 @@ class Event(object):
         if self._is_set:
             return
 
-        current = greenlet.getcurrent() # the waiting greenlet
+        current = compat.getcurrent() # the waiting greenlet
         awoken = [False]
 
         if timeout is not None:
@@ -109,7 +106,7 @@ class Event(object):
             timer_key = self._add_timer(timer)
 
         self._waiters.append(current)
-        state.mainloop.switch()
+        scheduler.state.mainloop.switch()
 
         return awoken[0]
 
@@ -125,7 +122,7 @@ class Lock(object):
         self._waiters = collections.deque()
 
     def _is_owned(self):
-        return self._owner is greenlet.getcurrent()
+        return self._owner is compat.getcurrent()
 
     def locked(self):
         "returns true if the lock is already 'locked' or 'owned'"
@@ -133,7 +130,7 @@ class Lock(object):
 
     def acquire(self, blocking=True):
         "lock the lock, or block until it is available"
-        current = greenlet.getcurrent()
+        current = compat.getcurrent()
         if not blocking:
             locked_already = self._locked
             if not locked_already:
@@ -142,7 +139,7 @@ class Lock(object):
             return not locked_already
         if self._locked:
             self._waiters.append(current)
-            state.mainloop.switch()
+            scheduler.state.mainloop.switch()
         else:
             self._locked = True
             self._owner = current
@@ -156,7 +153,7 @@ class Lock(object):
             waiter = self._waiters.popleft()
             self._locked = True
             self._owner = waiter
-            state.awoken_from_events.add(waiter)
+            scheduler.state.awoken_from_events.add(waiter)
         else:
             self._locked = False
             self._owner = None
@@ -180,15 +177,15 @@ class RLock(Lock):
         """if the lock is owned by a different greenlet, block until it is
         fully released. then increment the acquired count by one
         """
-        current = greenlet.getcurrent()
+        current = compat.getcurrent()
         if self._owner is current:
             self._count += 1
             return True
         if self._locked and not blocking:
             return False
         if self._locked:
-            self._waiters.append(greenlet.getcurrent())
-            state.mainloop.switch()
+            self._waiters.append(compat.getcurrent())
+            scheduler.state.mainloop.switch()
         else:
             self._locked = True
             self._owner = current
@@ -199,7 +196,7 @@ class RLock(Lock):
         """decrement the owned count by one. if it reaches zero, fully release
         the lock, waking up a waiting greenlet
         """
-        if not self._locked or self._owner is not greenlet.getcurrent():
+        if not self._locked or self._owner is not compat.getcurrent():
             raise RuntimeError("cannot release un-acquired lock")
         self._count -= 1
         if self._count == 0:
@@ -208,7 +205,7 @@ class RLock(Lock):
                 waiter = self._waiters.popleft()
                 self._locked = True
                 self._owner = waiter
-                state.awoken_from_events.add(waiter)
+                scheduler.state.awoken_from_events.add(waiter)
             else:
                 self._locked = False
                 self._owner = None
@@ -245,7 +242,7 @@ class Condition(object):
             raise RuntimeError("cannot wait on un-acquired lock")
         self._lock.release()
 
-        current = greenlet.getcurrent()
+        current = compat.getcurrent()
         self._waiters.append(current)
 
         if timeout is not None:
@@ -254,7 +251,7 @@ class Condition(object):
                 self._waiters.remove(current)
                 current.switch()
 
-        state.mainloop.switch()
+        scheduler.state.mainloop.switch()
         self._lock.acquire()
 
         if timeout is not None:
@@ -268,7 +265,7 @@ class Condition(object):
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         for i in xrange(min(num, len(self._waiters))):
-            state.awoken_from_events.add(self._waiters.popleft())
+            scheduler.state.awoken_from_events.add(self._waiters.popleft())
 
     def notify_all(self):
         """wake up all the greenlets waiting on the condition
@@ -277,7 +274,7 @@ class Condition(object):
         """
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        state.awoken_from_events.update(self._waiters)
+        scheduler.state.awoken_from_events.update(self._waiters)
         self._waiters.clear()
     notifyAll = notify_all
 
@@ -298,14 +295,14 @@ class Semaphore(object):
             return True
         elif not blocking:
             return False
-        self._waiters.append(greenlet.getcurrent())
-        state.mainloop.switch()
+        self._waiters.append(compat.getcurrent())
+        scheduler.state.mainloop.switch()
         return True
 
     def release(self):
         "release or increment the semaphore"
         if self._waiters:
-            state.awoken_from_events.add(self._waiters.popleft())
+            scheduler.state.awoken_from_events.add(self._waiters.popleft())
         else:
             self._value += 1
 
@@ -342,7 +339,7 @@ class Timer(object):
         else:
             self.run = func
 
-        self._glet = glet = greenlet(self.run, state.mainloop)
+        self._glet = glet = scheduler.greenlet(self.run)
 
         self.waketime = waketime = time.time() + secs
         self.cancelled = False
@@ -350,7 +347,7 @@ class Timer(object):
 
     def cancel(self):
         "if called before the greenlet runs, stop it from ever starting"
-        tp = state.timed_paused
+        tp = scheduler.state.timed_paused
         if self.cancelled or not tp:
             return False
         self.cancelled = True
@@ -359,7 +356,7 @@ class Timer(object):
             tp[index:index + 1] = []
         else:
             try:
-                state.to_run.remove(self._glet)
+                scheduler.state.to_run.remove(self._glet)
             except ValueError:
                 return False
         return True
@@ -381,13 +378,13 @@ class Local(object):
         object.__setattr__(self, "data", weakref.WeakKeyDictionary())
 
     def __getattr__(self, name):
-        local = self.data.setdefault(greenlet.getcurrent(), {})
+        local = self.data.setdefault(compat.getcurrent(), {})
         if name not in local:
             raise AttributeError, "Local object has no attribute %s" % name
         return local[name]
 
     def __setattr__(self, name, value):
-        self.data.setdefault(greenlet.getcurrent(), {})[name] = value
+        self.data.setdefault(compat.getcurrent(), {})[name] = value
 
 
 class Thread(object):
@@ -451,7 +448,7 @@ class Thread(object):
         "block until this thread terminates"
         if not self._started:
             raise RuntimeError("cannot join thread before it is started")
-        if greenlet.getcurrent() is self._glet:
+        if compat.getcurrent() is self._glet:
             raise RuntimeError("cannot join current thread")
         self._finished.wait(timeout)
 
@@ -506,7 +503,7 @@ def _active_thread_count():
     return len(Thread._active)
 
 def _current_thread():
-    return Thread._active.get(greenlet.getcurrent())
+    return Thread._active.get(compat.getcurrent())
 
 
 class Queue(object):
@@ -553,7 +550,7 @@ class Queue(object):
             if not blocking:
                 raise self.Empty()
 
-            glet = greenlet.getcurrent()
+            glet = compat.getcurrent()
             self._waiters.append(glet)
 
             if timeout:
@@ -562,7 +559,7 @@ class Queue(object):
                     self._waiters.remove(glet)
                     glet.throw(self.Empty)
 
-            state.mainloop.switch()
+            scheduler.state.mainloop.switch()
 
             if timeout:
                 timer.cancel()
@@ -591,7 +588,7 @@ class Queue(object):
             if not blocking:
                 raise self.Full()
 
-            glet = greenlet.getcurrent()
+            glet = compat.getcurrent()
             self._waiters.append(glet)
 
             if timeout:
@@ -600,7 +597,7 @@ class Queue(object):
                     sef._waiters.remove(glet)
                     glet.throw(self.Full)
 
-            state.mainloop.switch()
+            scheduler.state.mainloop.switch()
 
             if timeout:
                 timer.cancel()
@@ -689,14 +686,14 @@ class Channel(object):
             item = self._dataqueue.popleft()
             sender = self._waiters.popleft()
             if self.preference is 1:
-                scheduler.schedule(greenlet.getcurrent())
+                scheduler.schedule(compat.getcurrent())
                 sender.switch()
             else:
                 scheduler.schedule(sender)
             return item
         else:
-            self._waiters.append(greenlet.getcurrent())
-            state.mainloop.switch()
+            self._waiters.append(compat.getcurrent())
+            scheduler.state.mainloop.switch()
             return self._dataqueue.pop()
 
     next = receive
@@ -705,11 +702,11 @@ class Channel(object):
         if self._waiters and not self._dataqueue:
             self._dataqueue.append(item)
             if self.preference is -1:
-                scheduler.schedule(greenlet.getcurrent())
+                scheduler.schedule(compat.getcurrent())
                 self._waiters.popleft().switch()
             else:
                 scheduler.schedule(self._waiters.popleft())
         else:
             self._dataqueue.append(item)
-            self._waiters.append(greenlet.getcurrent())
-            state.mainloop.switch()
+            self._waiters.append(compat.getcurrent())
+            scheduler.state.mainloop.switch()

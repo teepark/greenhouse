@@ -2,7 +2,7 @@ import collections
 import errno
 import select
 
-from greenhouse.scheduler import state
+from greenhouse import scheduler
 
 
 __all__ = ["Epoll", "Poll", "Select", "best", "set"]
@@ -204,5 +204,5 @@ def best():
 
 
 def set(poller=None):
-    state.poller = poller or best()
+    scheduler.state.poller = poller or best()
 set()

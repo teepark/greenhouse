@@ -2,8 +2,8 @@ from __future__ import with_statement
 
 import sys
 
-from greenhouse.scheduler import schedule
-from greenhouse.utils import Queue
+from greenhouse import scheduler
+from greenhouse import utils
 
 
 __all__ = ["OneWayPool", "Pool", "OrderedPool", "map"]
@@ -15,11 +15,11 @@ class OneWayPool(object):
     def __init__(self, func, size=10):
         self.func = func
         self.size = size
-        self.inq = Queue()
+        self.inq = utils.Queue()
 
     def start(self):
         for i in xrange(self.size):
-            schedule(self._runner)
+            scheduler.schedule(self._runner)
 
     def close(self):
         for i in xrange(self.size):
@@ -62,7 +62,7 @@ class OneWayPool(object):
 class Pool(OneWayPool):
     def __init__(self, *args, **kwargs):
         super(Pool, self).__init__(*args, **kwargs)
-        self.outq = Queue()
+        self.outq = utils.Queue()
 
     def _handle_one(self, input):
         self.outq.put(self.run_func(*input))

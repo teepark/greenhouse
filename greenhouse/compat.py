@@ -1,5 +1,3 @@
-import os
-import sys
 try:
     from greenlet import greenlet, GreenletExit
 except ImportError, error:

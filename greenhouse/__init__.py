@@ -2,9 +2,10 @@ from greenhouse.compat import *
 from greenhouse.scheduler import *
 from greenhouse.utils import *
 from greenhouse.pool import *
+# scheduler.state.poller needs to be in place before the io import
+import greenhouse.poller
 from greenhouse.io import *
 from greenhouse.emulation import *
-import greenhouse.poller
 
 
 # prime the pump. if there is a traceback before the mainloop greenlet

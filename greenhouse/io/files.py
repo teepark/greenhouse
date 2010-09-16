@@ -10,9 +10,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-import greenhouse
-from greenhouse import compat
-from greenhouse.scheduler import state
+from greenhouse import scheduler, utils
 
 
 __all__ = ["File"]
@@ -162,36 +160,39 @@ class File(FileBase):
 
     def _set_up_waiting(self):
         try:
-            state.poller.register(self)
-            state.poller.unregister(self)
+            scheduler.state.poller.register(self)
+            scheduler.state.poller.unregister(self)
         except EnvironmentError:
             self._waiter = "_wait_yield"
         else:
             self._waiter = "_wait_event"
-            self._readable = greenhouse.Event()
-            self._writable = greenhouse.Event()
-            state.descriptormap[self._fileno].append(weakref.ref(self))
+            self._readable = utils.Event()
+            self._writable = utils.Event()
+            scheduler.state.descriptormap[self._fileno].append(
+                    weakref.ref(self))
 
     def _wait_event(self, reading):
         "wait on our events"
         if reading:
-            state.poller.register(self, state.poller.INMASK)
+            scheduler.state.poller.register(
+                    self, scheduler.state.poller.INMASK)
             try:
                 if self._readable.wait():
                     raise socket.timeout("timed out")
             finally:
-                state.poller.unregister(self)
+                scheduler.state.poller.unregister(self)
         else:
-            state.poller.register(self, state.poller.OUTMASK)
+            scheduler.state.poller.register(
+                    self, scheduler.state.poller.OUTMASK)
             try:
                 if self._writable.wait():
                     raise socket.timeout("timed out")
             finally:
-                state.poller.unregister(self)
+                scheduler.state.poller.unregister(self)
 
     def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"
-        greenhouse.pause()
+        scheduler.pause()
 
     def _wait(self, reading):
         getattr(self, self._waiter)(reading)
@@ -235,7 +236,7 @@ class File(FileBase):
 
     def __del__(self):
         try:
-            state.poller.unregister(self)
+            scheduler.state.poller.unregister(self)
         except:
             pass
 

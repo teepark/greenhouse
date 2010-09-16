@@ -39,7 +39,7 @@ def sdist():
 @task
 def clean():
     for p in map(path, (
-		'greenhouse.egg-info', 'dist', 'build', 'MANIFEST.in', 'docs/build')):
+        'greenhouse.egg-info', 'dist', 'build', 'MANIFEST.in', 'docs/build')):
         if p.exists():
             if p.isdir():
                 p.rmtree()
@@ -52,3 +52,7 @@ def clean():
 @task
 def docs():
     sh("cd docs; make html")
+
+@task
+def test():
+    sh("nosetests --processes=8")

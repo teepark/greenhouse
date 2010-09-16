@@ -56,6 +56,12 @@ _patchers = {
     'Queue': {
         'Queue': utils.Queue,
     },
+
+    'sys': {
+        'stdin': io.files.stdin,
+        'stdout': io.files.stdout,
+        'stderr': io.files.stderr,
+    },
 }
 
 _standard = {}

@@ -99,13 +99,13 @@ class PatchQueueTest(MonkeyPatchBase, StateClearingTestCase):
 
 
 class PatchSysTest(MonkeyPatchBase, StateClearingTestCase):
-	PATCH_NAME = "sys"
+    PATCH_NAME = "sys"
 
-	PATCHES = [
-		('stdin', sys.stdin, io.files.stdin, lambda: sys.stdin),
-		('stdout', sys.stdout, io.files.stdout, lambda: sys.stdout),
-		('stderr', sys.stderr, io.files.stderr, lambda: sys.stderr),
-	]
+    PATCHES = [
+        ('stdin', sys.stdin, io.files.stdin, lambda: sys.stdin),
+        ('stdout', sys.stdout, io.files.stdout, lambda: sys.stdout),
+        ('stderr', sys.stderr, io.files.stderr, lambda: sys.stderr),
+    ]
 
 
 class PatchedModules(StateClearingTestCase):

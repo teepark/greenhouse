@@ -4,6 +4,7 @@ import errno
 import fcntl
 import os
 import socket
+import sys
 import weakref
 try:
     from cStringIO import StringIO
@@ -13,7 +14,7 @@ except ImportError:
 from greenhouse import scheduler, utils
 
 
-__all__ = ["File"]
+__all__ = ["File", "stdin", "stdout", "stderr"]
 
 _open = open
 _file = file
@@ -266,6 +267,6 @@ class File(FileBase):
             return fp.tell()
 
 
-stdin = File.fromfd(0)
-stdout = File.fromfd(1)
-stderr = File.fromfd(2)
+stdin = File.fromfd(getattr(sys.stdin, "fileno", lambda: 0)())
+stdout = File.fromfd(getattr(sys.stdout, "fileno", lambda: 1)())
+stderr = File.fromfd(getattr(sys.stderr, "fileno", lambda: 2)())

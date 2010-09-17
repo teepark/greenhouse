@@ -7,10 +7,8 @@ parallel and return a dictionary mapping urls to response bodies
 import greenhouse
 
 # urllib2 obviously doesn't explicitly use greenhouse sockets, but we can
-# override socket.socket so it uses them anyway
-greenhouse.emulation.socket()
-
-import urllib2
+# import it with the socket module patched so it uses them anyway
+urllib2 = greenhouse.patched("urllib2")
 
 
 #
@@ -19,7 +17,7 @@ import urllib2
 
 def _get_one(url, results, count, done_event):
     results[url] = urllib2.urlopen(url).read()
-    if (len(results)) == count:
+    if len(results) == count:
         done_event.set() # wake up the original greenlet
 
 def get_urls(urls):
@@ -28,7 +26,7 @@ def get_urls(urls):
     alldone = greenhouse.Event()
 
     # each url gets its own greenlet to fetch it
-    for index, url in enumerate(urls):
+    for url in urls:
         greenhouse.schedule(_get_one, args=(url, results, count, alldone))
 
     alldone.wait()
@@ -40,8 +38,8 @@ def get_urls(urls):
 # sending back the results.
 #
 # this is a little awkward for this specific use case, but is more like how you
-# might do it if you don't have a bounded set of inputs but will want to
-# constantly send off jobs to be run.
+# might do it if you didn't have a bounded set of inputs and want to
+# continually send off jobs to be run.
 #
 
 def _queue_runner(in_q, out_q, stop):

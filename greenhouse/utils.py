@@ -627,9 +627,17 @@ class Queue(object):
         if not self._open_tasks:
             self._jobs_done.set()
 
-    def join(self):
-        "block until every put() call has had a corresponding task_done() call"
-        self._jobs_done.wait()
+    def join(self, timeout=None):
+        """wait for task completions
+
+        blocks until either task_done has been called for every put() call,
+        or timeout seconds, whichever comes first. returns True if a timeout
+        occurred, False otherwise.
+
+        the Queue is still usable after a join() call, a return from join()
+        simply indicates that the Queue has nothing *currently* pending.
+        """
+        return self._jobs_done.wait(timeout)
 
 
 class Channel(object):

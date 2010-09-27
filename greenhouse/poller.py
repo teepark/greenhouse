@@ -9,7 +9,7 @@ __all__ = ["Epoll", "Poll", "Select", "best", "set"]
 
 
 class Poll(object):
-    "a greenhouse poller using the poll system call''"
+    "a greenhouse poller using the poll system call"
     INMASK = getattr(select, 'POLLIN', 0)
     OUTMASK = getattr(select, 'POLLOUT', 0)
     ERRMASK = getattr(select, 'POLLERR', 0) | getattr(select, "POLLHUP", 0)

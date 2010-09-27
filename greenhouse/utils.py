@@ -293,7 +293,7 @@ class Semaphore(object):
         if self._value:
             self._value -= 1
             return True
-        elif not blocking:
+        if not blocking:
             return False
         self._waiters.append(compat.getcurrent())
         scheduler.state.mainloop.switch()

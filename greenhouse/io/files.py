@@ -238,6 +238,7 @@ class File(FileBase):
     def __del__(self):
         try:
             scheduler.state.poller.unregister(self)
+            scheduler.state.descriptormap.pop(self._fileno, None)
         except:
             pass
 

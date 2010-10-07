@@ -171,7 +171,8 @@ class ScheduleTestCase(StateClearingTestCase):
         import gc
         gc.collect()
 
-        assert all(x() is None for x in dmap[fno]), [x() for x in dmap(fno)]
+        assert all(x() is None for x in dmap[fno]), \
+                [x() for x in dmap[fno] if x()]
 
         client = greenhouse.Socket()
         server = greenhouse.Socket()
@@ -183,6 +184,8 @@ class ScheduleTestCase(StateClearingTestCase):
 
         handler.send("howdy")
         client.recv(5)
+
+        greenhouse.pause()
 
         assert all(x() for x in dmap[fno]), [x() for x in dmap[fno]]
 

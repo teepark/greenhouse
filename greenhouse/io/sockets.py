@@ -97,7 +97,7 @@ class _InnerSocket(object):
             if 'e' in events:
                 mask |= poller.ERRMASK
         try:
-            poller.register(self, mask)
+            counter = poller.register(self, mask)
         except EnvironmentError, error:
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
@@ -106,7 +106,7 @@ class _InnerSocket(object):
         yield
 
         try:
-            poller.unregister(self)
+            poller.unregister(self, counter)
         except EnvironmentError, error:
             if error.args and error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)

@@ -95,24 +95,6 @@ class SocketPollerMixin(object):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR)
 
-    def test_shutdown_writing(self):
-        with self.socketpair() as (client, handler):
-            client.shutdown(socket.SHUT_WR)
-
-            handler.send("hello")
-            assert client.recv(5) == "hello"
-
-            self.assertRaises(socket.error, client.send, "hello")
-
-    def test_shutdown_rdwr(self):
-        with self.socketpair() as (client, handler):
-            client.shutdown(socket.SHUT_RDWR)
-
-            handler.send("hello")
-            assert client.recv(5) == ""
-
-            self.assertRaises(socket.error, client.send, "hello")
-
     def test_sock_dups(self):
         with self.socketpair() as (client, handler):
             client = client.dup()

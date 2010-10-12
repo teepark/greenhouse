@@ -69,7 +69,7 @@ for mod_name, patchers in _patchers.items():
     _standard[mod_name] = {}
     module = __import__(mod_name)
     for attr_name, patcher in patchers.items():
-        _standard[mod_name][attr_name] = getattr(module, attr_name)
+        _standard[mod_name][attr_name] = getattr(module, attr_name, None)
 del mod_name, patchers, module, attr_name, patcher
 
 

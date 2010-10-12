@@ -11,7 +11,11 @@ from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
 port = lambda: 8000 + os.getpid() # because i'm running multiprocess nose
 
-class ScheduleTestCase(StateClearingTestCase):
+class ScheduleMixin(object):
+    def setUp(self):
+        super(ScheduleMixin, self).setUp()
+        greenhouse.poller.set(self.POLLER())
+
     def test_schedule(self):
         l = []
 
@@ -230,6 +234,26 @@ class ScheduleTestCase(StateClearingTestCase):
         greenhouse.pause()
 
         self.assertEqual(l, [1, 2])
+
+
+class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):
+    POLLER = greenhouse.poller.Select
+
+
+if greenhouse.poller.Poll._POLLER:
+    class ScheduleTestsWithPoll(ScheduleMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Poll
+
+
+if greenhouse.poller.Epoll._POLLER:
+    class ScheduleTestsWithEpoll(ScheduleMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Epoll
+
+
+if greenhouse.poller.KQueue._POLLER:
+    class ScheduleTestsWithKQueue(ScheduleMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.KQueue
+
 
 class PausingTestCase(StateClearingTestCase):
     def test_pause(self):

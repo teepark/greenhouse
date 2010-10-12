@@ -83,11 +83,13 @@ class PatchThreadingTest(MonkeyPatchBase, StateClearingTestCase):
         ('Timer', threading.Timer, utils.Timer, lambda: threading.Timer),
         ('Thread', threading.Thread, utils.Thread, lambda: threading.Thread),
         ('local', threading.local, utils.Local, lambda: threading.local),
-        ('current_thread', threading.current_thread, utils._current_thread,
-            lambda: threading.current_thread),
         ('currentThread', threading.currentThread, utils._current_thread,
             lambda: threading.currentThread),
     ]
+
+    if hasattr(threading, "current_thread"):
+        PATCHES.append(('current_thread', threading.current_thread, utils._current_thread,
+            lambda: threading.current_thread))
 
 
 class PatchQueueTest(MonkeyPatchBase, StateClearingTestCase):

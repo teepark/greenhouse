@@ -2,6 +2,7 @@ import collections
 import errno
 import operator
 import select
+import sys
 
 from greenhouse import scheduler
 

@@ -125,7 +125,12 @@ class KQueue(Poll):
                 fd, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE))
 
         if events:
-            self._poller.control(events, 0)
+            if sys.platform == 'darwin':
+                # busted OS X kqueue only accepts 1 kevent at a time
+                for event in events:
+                    self._poller.control([event], 0)
+            else:
+                self._poller.control(events, 0)
 
 
 class Select(object):

@@ -161,8 +161,8 @@ class File(FileBase):
 
     def _set_up_waiting(self):
         try:
-            scheduler.state.poller.register(self)
-            scheduler.state.poller.unregister(self)
+            counter = scheduler.state.poller.register(self)
+            scheduler.state.poller.unregister(self, counter)
         except EnvironmentError:
             self._waiter = "_wait_yield"
         else:
@@ -175,21 +175,21 @@ class File(FileBase):
     def _wait_event(self, reading):
         "wait on our events"
         if reading:
-            scheduler.state.poller.register(
+            counter = scheduler.state.poller.register(
                     self, scheduler.state.poller.INMASK)
             try:
                 if self._readable.wait():
                     raise socket.timeout("timed out")
             finally:
-                scheduler.state.poller.unregister(self)
+                scheduler.state.poller.unregister(self, counter)
         else:
-            scheduler.state.poller.register(
+            counter = scheduler.state.poller.register(
                     self, scheduler.state.poller.OUTMASK)
             try:
                 if self._writable.wait():
                     raise socket.timeout("timed out")
             finally:
-                scheduler.state.poller.unregister(self)
+                scheduler.state.poller.unregister(self, counter)
 
     def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"

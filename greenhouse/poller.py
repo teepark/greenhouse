@@ -1,6 +1,8 @@
 import collections
 import errno
+import operator
 import select
+import sys
 
 from greenhouse import scheduler
 
@@ -18,63 +20,60 @@ class Poll(object):
 
     def __init__(self):
         self._poller = self._POLLER()
-        self._registry = collections.defaultdict(list)
-
-    def _register(self, fd, mask):
-        return self._poller.register(fd, mask)
-
-    def _unregister(self, fd):
-        self._poller.unregister(fd)
+        self._registry = collections.defaultdict(dict)
+        self._counter = 0
 
     def register(self, fd, eventmask=None):
         # integer file descriptor
-        fd = isinstance(fd, int) and fd or fd.fileno()
+        fd = fd if isinstance(fd, int) else fd.fileno()
 
         # mask nothing by default
         if eventmask is None:
             eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
 
-        # get the mask of the current registration, if any
-        registered = self._registry.get(fd)
-        registered = registered and registered[-1] or 0
+        # get the current registrations dictionary
+        registrations = self._registry[fd]
+        registered = reduce(
+                operator.or_, registrations.itervalues(), 0)
 
-        # make sure eventmask includes all previous masks
-        newmask = eventmask | registered
+        # update registrations in the OS poller
+        self._update_registration(fd, registered, registered | eventmask)
 
-        # unregister the old mask
-        if registered:
-            self._unregister(fd)
+        # store the registration
+        self._counter += 1
+        registrations[self._counter] = eventmask
 
-        # register the new mask
-        rc = self._register(fd, newmask)
+        return self._counter
 
-        # append to a list of eventmasks so we can backtrack
-        self._registry[fd].append(newmask)
-
-        return rc
-
-    def unregister(self, fd):
+    def unregister(self, fd, counter):
         # integer file descriptor
-        fd = isinstance(fd, int) and fd or fd.fileno()
+        fd = fd if isinstance(fd, int) else fd.fileno()
+
+        registrations = self._registry[fd]
 
         # allow for extra noop calls
-        if not self._registry.get(fd):
+        if counter not in registrations:
+            self._registry.pop(fd)
             return
 
-        # unregister the current registration
-        self._unregister(fd)
-        self._registry[fd].pop()
+        mask = registrations.pop(counter)
+        the_rest = reduce(operator.or_, registrations.itervalues(), 0)
 
-        # re-do the previous registration, if any
-        newmask = self._registry[fd]
-        newmask = newmask and newmask[-1]
-        if newmask:
-            self._register(fd, newmask)
-        else:
+        # update the OS poller's registration
+        self._update_registration(fd, the_rest | mask, the_rest)
+
+        if not registrations:
             self._registry.pop(fd)
 
     def poll(self, timeout):
         return self._poller.poll(timeout)
+
+    def _update_registration(self, fd, from_mask, to_mask):
+        if from_mask != to_mask:
+            if from_mask:
+                self._poller.unregister(fd)
+            if to_mask:
+                self._poller.register(fd, to_mask)
 
 
 class Epoll(Poll):
@@ -99,31 +98,40 @@ class KQueue(Poll):
         getattr(select, "KQ_FILTER_WRITE", 0): OUTMASK,
     }
 
-    def _register(self, fd, mask):
-        evs = []
-        if mask & self.INMASK:
-            evs.append(select.kevent(
-                fd, select.KQ_FILTER_READ, select.KQ_EV_ADD))
-        if mask & self.OUTMASK:
-            evs.append(select.kevent(
-                fd, select.KQ_FILTER_WRITE, select.KQ_EV_ADD))
-        self._poller.control(evs, 0)
-
-    def _unregister(self, fd):
-        try:
-            self._poller.control([
-                    select.kevent(
-                        fd, select.KQ_FILTER_READ, select.KQ_EV_DELETE),
-                    select.kevent(
-                        fd, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)],
-                0)
-        except EnvironmentError, err:
-            if err.args[0] != errno.ENOENT:
-                raise
-
     def poll(self, timeout):
         evs = self._poller.control(None, 2 * len(self._registry), timeout)
         return [(ev.ident, self._mask_map[ev.filter]) for ev in evs]
+
+    def _update_registration(self, fd, from_mask, to_mask):
+        if from_mask == to_mask:
+            return
+
+        xor = from_mask ^ to_mask
+        to_add = to_mask  & xor
+        to_drop = from_mask & xor
+        assert not to_add & to_drop # simple sanity
+
+        events = []
+        if to_add & self.INMASK:
+            events.append(select.kevent(
+                fd, select.KQ_FILTER_READ, select.KQ_EV_ADD))
+        elif to_drop & self.INMASK:
+            events.append(select.kevent(
+                fd, select.KQ_FILTER_READ, select.KQ_EV_DELETE))
+        if to_add & self.OUTMASK:
+            events.append(select.kevent(
+                fd, select.KQ_FILTER_WRITE, select.KQ_EV_ADD))
+        elif to_drop & self.OUTMASK:
+            events.append(select.kevent(
+                fd, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE))
+
+        if events:
+            if sys.platform == 'darwin':
+                # busted OS X kqueue only accepts 1 kevent at a time
+                for event in events:
+                    self._poller.control([event], 0)
+            else:
+                self._poller.control(events, 0)
 
 
 class Select(object):
@@ -133,45 +141,40 @@ class Select(object):
     ERRMASK = 4
 
     def __init__(self):
-        self._registry = collections.defaultdict(list)
+        self._registry = collections.defaultdict(dict)
         self._currentmasks = {}
+        self._counter = 0
 
     def register(self, fd, eventmask=None):
         # integer file descriptor
-        fd = isinstance(fd, int) and fd or fd.fileno()
+        fd = fd if isinstance(fd, int) else fd.fileno()
 
         # mask nothing by default
         if eventmask is None:
             eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
 
-        # get the mask of the current registration, if any
-        registered = self._registry.get(fd)
-        registered = registered and registered[-1] or 0
+        # store the registration
+        self._counter += 1
+        self._registry[fd][self._counter] = eventmask
 
-        # make sure eventmask includes all previous masks
-        newmask = eventmask | registered
+        # update the full mask
+        self._currentmasks[fd] = self._currentmasks.get(fd, 0) | eventmask
 
-        # apply the new mask
-        self._currentmasks[fd] = newmask
+        return self._counter
 
-        # append to the list of masks so we can backtrack
-        self._registry[fd].append(newmask)
-
-        return not registered
-
-    def unregister(self, fd):
+    def unregister(self, fd, counter):
         # integer file descriptor
-        fd = isinstance(fd, int) and fd or fd.fileno()
+        fd = fd if isinstance(fd, int) else fd.fileno()
 
-        # get rid of the last registered mask
-        self._registry[fd].pop()
+        # just drop it from the registrations dict
+        self._registry.get(fd, {}).pop(counter, None)
 
-        # re-do the previous registration, if any
-        if self._registry[fd]:
-            self._currentmasks[fd] = self._registry[fd][-1]
-        else:
+        # rewrite the full mask
+        self._currentmasks[fd] = reduce(
+                operator.or_, self._registry[fd].itervalues(), 0)
+
+        if not self._registry[fd]:
             self._registry.pop(fd)
-            self._currentmasks.pop(fd)
 
     def poll(self, timeout):
         rlist, wlist, xlist = [], [], []

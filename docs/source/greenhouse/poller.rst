@@ -25,16 +25,21 @@ here on the :class:`Select` class.
 
     .. method:: register(fd, mask=None)
 
-        Pushes *mask* onto the registration stack for descriptor *fd*.
+        Ensures that *mask* is applied to the registration for file descriptor
+        *fd*.
 
         *mask* should be some bitwise OR combination of the :attr:`INMASK`,
         :attr:`OUTMASK`, and :attr:`ERRMASK` class attributes. It signifies
         what kinds of events (readable, writable, error occurred respectively)
         the poller will track for the given descriptor.
 
-    .. method:: unregister(fd)
+        Returns an integer counter that can be passed to :meth:`unregister` to
+        undo this registration without disturbing any others for the same *fd*.
 
-        Pops off the top of the registration stack for descriptor *fd*.
+    .. method:: unregister(fd, counter)
+
+        Undoes the registration on *fd* corresponding to *counter* (based on
+        the return value of the :meth:`register` call).
 
     .. method:: poll(timeout)
 

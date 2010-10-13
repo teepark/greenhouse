@@ -79,17 +79,21 @@ here on the <a class="reference internal" href="#greenhouse.poller.Select" title
 <dl class="method">
 <dt id="greenhouse.poller.Select.register">
 <tt class="descname">register</tt><big>(</big><em>fd</em>, <em>mask=None</em><big>)</big><a class="headerlink" href="#greenhouse.poller.Select.register" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pushes <em>mask</em> onto the registration stack for descriptor <em>fd</em>.</p>
+<dd><p>Ensures that <em>mask</em> is applied to the registration for file descriptor
+<em>fd</em>.</p>
 <p><em>mask</em> should be some bitwise OR combination of the <a class="reference internal" href="#greenhouse.poller.Select.INMASK" title="greenhouse.poller.Select.INMASK"><tt class="xref py py-attr docutils literal"><span class="pre">INMASK</span></tt></a>,
 <a class="reference internal" href="#greenhouse.poller.Select.OUTMASK" title="greenhouse.poller.Select.OUTMASK"><tt class="xref py py-attr docutils literal"><span class="pre">OUTMASK</span></tt></a>, and <a class="reference internal" href="#greenhouse.poller.Select.ERRMASK" title="greenhouse.poller.Select.ERRMASK"><tt class="xref py py-attr docutils literal"><span class="pre">ERRMASK</span></tt></a> class attributes. It signifies
 what kinds of events (readable, writable, error occurred respectively)
 the poller will track for the given descriptor.</p>
+<p>Returns an integer counter that can be passed to <a class="reference internal" href="#greenhouse.poller.Select.unregister" title="greenhouse.poller.Select.unregister"><tt class="xref py py-meth docutils literal"><span class="pre">unregister()</span></tt></a> to
+undo this registration without disturbing any others for the same <em>fd</em>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="greenhouse.poller.Select.unregister">
-<tt class="descname">unregister</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#greenhouse.poller.Select.unregister" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pops off the top of the registration stack for descriptor <em>fd</em>.</p>
+<tt class="descname">unregister</tt><big>(</big><em>fd</em>, <em>counter</em><big>)</big><a class="headerlink" href="#greenhouse.poller.Select.unregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Undoes the registration on <em>fd</em> corresponding to <em>counter</em> (based on
+the return value of the <a class="reference internal" href="#greenhouse.poller.Select.register" title="greenhouse.poller.Select.register"><tt class="xref py py-meth docutils literal"><span class="pre">register()</span></tt></a> call).</p>
 </dd></dl>
 
 <dl class="method">

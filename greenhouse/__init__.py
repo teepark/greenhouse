@@ -6,6 +6,7 @@ from greenhouse.pool import *
 import greenhouse.poller
 from greenhouse.io import *
 from greenhouse.emulation import *
+from greenhouse.backdoor import *
 
 
 # prime the pump. if there is a traceback before the mainloop greenlet

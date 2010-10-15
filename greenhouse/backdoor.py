@@ -21,11 +21,11 @@ PS1 = getattr(sys, "ps1", ">>> ")
 PS2 = getattr(sys, "ps2", "... ")
 
 
-def run_backdoor(address, locals_=None):
+def run_backdoor(address, namespace=None):
     '''start a server in the current coroutine that accepts connections on
     the specified address and starts backdoor interpreters on them
 
-    locals_ is optionally a dictionary that will serve as the execution context
+    namespace is optionally a dictionary that will serve as the execution context
     for the connected interpreters. an empty dictionary would not put anything
     into the namespace, but would cause all connected backdoors to share a
     single namespace while the default of None causes them to be separate.
@@ -37,20 +37,20 @@ def run_backdoor(address, locals_=None):
 
     while 1:
         clientsock, address = serversock.accept()
-        scheduler.schedule(backdoor_handler, args=(clientsock, locals_))
+        scheduler.schedule(backdoor_handler, args=(clientsock, namespace))
 
 
-def backdoor_handler(clientsock, locals_=None):
+def backdoor_handler(clientsock, namespace=None):
     '''start a backdoor interpreter on an existing connection
 
     this function effectively takes over the coroutine it is started in,
     blocking for input over the socket and acting on it until the connection
     is closed
 
-    locals_ is optionally a dictionary that will serve as the execution context
+    namespace is optionally a dictionary that will serve as the execution context
     for the interpreter-over-socket
     '''
-    console = code.InteractiveConsole(locals_ or {})
+    console = code.InteractiveConsole(namespace or {})
     clientfile = clientsock.makefile('r')
     multiline_statement = []
     stdout, stderr = StringIO(), StringIO()

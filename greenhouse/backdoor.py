@@ -50,7 +50,7 @@ def backdoor_handler(clientsock, namespace=None):
     namespace is optionally a dictionary that will serve as the execution context
     for the interpreter-over-socket
     '''
-    console = code.InteractiveConsole(namespace or {})
+    console = code.InteractiveConsole({} if namespace is None else namespace)
     clientfile = clientsock.makefile('r')
     multiline_statement = []
     stdout, stderr = StringIO(), StringIO()
@@ -60,22 +60,24 @@ def backdoor_handler(clientsock, namespace=None):
     for input_line in clientsock.makefile('r'):
         input_line = input_line.rstrip()
         source = '\n'.join(multiline_statement) + input_line
+        response = ''
 
         with _wrap_stdio(stdout, stderr):
             result = console.runsource(source)
 
-        clientsock.sendall(stdout.getvalue())
+        response += stdout.getvalue()
         err = stderr.getvalue()
         if err:
-            clientsock.sendall(err)
+            response += err
 
-        if result and not err:
+        if err or not result:
+            multiline_statement = []
+            response += PS1
+        else:
             multiline_statement.append(input_line)
-            clientsock.sendall(PS2)
-            continue
+            response += PS2
 
-        multiline_statement = []
-        clientsock.sendall(PS1)
+        clientsock.sendall(response)
 
 
 @contextlib.contextmanager

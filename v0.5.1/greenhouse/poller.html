@@ -1,0 +1,215 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.poller – A Common Interface for epoll/poll/select &mdash; greenhouse v0.1 documentation</title>
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse v0.1 documentation" href="../index.html" />
+    <link rel="next" title="greenhouse.compat – Greenlet and Compatibility Hacks" href="compat.html" />
+    <link rel="prev" title="greenhouse.pool – Managed Greenlet Pools" href="pool.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="compat.html" title="greenhouse.compat – Greenlet and Compatibility Hacks"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pool.html" title="greenhouse.pool – Managed Greenlet Pools"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.poller">
+<span id="greenhouse-poller-a-common-interface-for-epoll-poll-select"></span><h1><a class="reference internal" href="#module-greenhouse.poller" title="greenhouse.poller"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.poller</span></tt></a> &#8211; A Common Interface for epoll/poll/select<a class="headerlink" href="#module-greenhouse.poller" title="Permalink to this headline">¶</a></h1>
+<p>The poller module is mainly internal to greenhouse, but the building blocks it
+provides are also generally useful.</p>
+<p>The classes in this module all support a common interface, which is described
+here on the <a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a> class.</p>
+<dl class="class">
+<dt id="greenhouse.poller.Select">
+<em class="property">class </em><tt class="descclassname">greenhouse.poller.</tt><tt class="descname">Select</tt><a class="headerlink" href="#greenhouse.poller.Select" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a poller object that uses the <tt class="docutils literal"><span class="pre">select(2)</span></tt> system call.</p>
+<p>The constructor takes no arguments.</p>
+<dl class="attribute">
+<dt id="greenhouse.poller.Select.INMASK">
+<tt class="descname">INMASK</tt><a class="headerlink" href="#greenhouse.poller.Select.INMASK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.poller.Select.OUTMASK">
+<tt class="descname">OUTMASK</tt><a class="headerlink" href="#greenhouse.poller.Select.OUTMASK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.poller.Select.ERRMASK">
+<tt class="descname">ERRMASK</tt><a class="headerlink" href="#greenhouse.poller.Select.ERRMASK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.poller.Select.register">
+<tt class="descname">register</tt><big>(</big><em>fd</em>, <em>mask=None</em><big>)</big><a class="headerlink" href="#greenhouse.poller.Select.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensures that <em>mask</em> is applied to the registration for file descriptor
+<em>fd</em>.</p>
+<p><em>mask</em> should be some bitwise OR combination of the <a class="reference internal" href="#greenhouse.poller.Select.INMASK" title="greenhouse.poller.Select.INMASK"><tt class="xref py py-attr docutils literal"><span class="pre">INMASK</span></tt></a>,
+<a class="reference internal" href="#greenhouse.poller.Select.OUTMASK" title="greenhouse.poller.Select.OUTMASK"><tt class="xref py py-attr docutils literal"><span class="pre">OUTMASK</span></tt></a>, and <a class="reference internal" href="#greenhouse.poller.Select.ERRMASK" title="greenhouse.poller.Select.ERRMASK"><tt class="xref py py-attr docutils literal"><span class="pre">ERRMASK</span></tt></a> class attributes. It signifies
+what kinds of events (readable, writable, error occurred respectively)
+the poller will track for the given descriptor.</p>
+<p>Returns an integer counter that can be passed to <a class="reference internal" href="#greenhouse.poller.Select.unregister" title="greenhouse.poller.Select.unregister"><tt class="xref py py-meth docutils literal"><span class="pre">unregister()</span></tt></a> to
+undo this registration without disturbing any others for the same <em>fd</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.poller.Select.unregister">
+<tt class="descname">unregister</tt><big>(</big><em>fd</em>, <em>counter</em><big>)</big><a class="headerlink" href="#greenhouse.poller.Select.unregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Undoes the registration on <em>fd</em> corresponding to <em>counter</em> (based on
+the return value of the <a class="reference internal" href="#greenhouse.poller.Select.register" title="greenhouse.poller.Select.register"><tt class="xref py py-meth docutils literal"><span class="pre">register()</span></tt></a> call).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.poller.Select.poll">
+<tt class="descname">poll</tt><big>(</big><em>timeout</em><big>)</big><a class="headerlink" href="#greenhouse.poller.Select.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the poller until <em>timeout</em> seconds or some result is ready.
+Returns a list of <tt class="docutils literal"><span class="pre">(fd,</span> <span class="pre">mask)</span></tt> pair where <em>fd</em> is a file descriptor
+with some sort of network readiness state, and <em>mask</em> is a bitwise OR
+combination of <a class="reference internal" href="#greenhouse.poller.Select.INMASK" title="greenhouse.poller.Select.INMASK"><tt class="xref py py-attr docutils literal"><span class="pre">INMASK</span></tt></a>, <a class="reference internal" href="#greenhouse.poller.Select.OUTMASK" title="greenhouse.poller.Select.OUTMASK"><tt class="xref py py-attr docutils literal"><span class="pre">OUTMASK</span></tt></a>, and <a class="reference internal" href="#greenhouse.poller.Select.ERRMASK" title="greenhouse.poller.Select.ERRMASK"><tt class="xref py py-attr docutils literal"><span class="pre">ERRMASK</span></tt></a>
+indicating the kind of network state.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.poller.Poll">
+<em class="property">class </em><tt class="descclassname">greenhouse.poller.</tt><tt class="descname">Poll</tt><a class="headerlink" href="#greenhouse.poller.Poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>A poller class that supports exactly the interface of <a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a>, but
+uses the <tt class="docutils literal"><span class="pre">poll(2)</span></tt> system call instead of <tt class="docutils literal"><span class="pre">select(2)</span></tt>. Because <tt class="docutils literal"><span class="pre">poll</span></tt>
+is not available on all systems or may simply not be supported by the
+python standard library on your system, check the <tt class="docutils literal"><span class="pre">select</span></tt> module for a
+<tt class="docutils literal"><span class="pre">poll</span></tt> attribute before using this class and fall back to
+<a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.poller.Epoll">
+<em class="property">class </em><tt class="descclassname">greenhouse.poller.</tt><tt class="descname">Epoll</tt><a class="headerlink" href="#greenhouse.poller.Epoll" title="Permalink to this definition">¶</a></dt>
+<dd><p>A poller class that supports the <a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a> and <a class="reference internal" href="#greenhouse.poller.Poll" title="greenhouse.poller.Poll"><tt class="xref py py-class docutils literal"><span class="pre">Poll</span></tt></a>
+interface, but does it with <tt class="docutils literal"><span class="pre">epoll(7)</span></tt>. This class assumes that <tt class="docutils literal"><span class="pre">epoll</span></tt>
+is available and supported by the standard library, so check the <tt class="docutils literal"><span class="pre">select</span></tt>
+module for an <tt class="docutils literal"><span class="pre">epoll</span></tt> attribute before using.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.poller.KQueue">
+<em class="property">class </em><tt class="descclassname">greenhouse.poller.</tt><tt class="descname">KQueue</tt><a class="headerlink" href="#greenhouse.poller.KQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>A poller class that supports the same poller interface, but does it with
+BSD&#8217;s <tt class="docutils literal"><span class="pre">kqueue(2)</span></tt>. This class assumes that <tt class="docutils literal"><span class="pre">kqueue</span></tt> is available in the
+standard library <tt class="docutils literal"><span class="pre">select</span></tt> module, so check for <tt class="docutils literal"><span class="pre">select.kqueue</span></tt> before
+using.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.poller.best">
+<tt class="descclassname">greenhouse.poller.</tt><tt class="descname">best</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.poller.best" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an instance of a poller class (<a class="reference internal" href="#greenhouse.poller.Epoll" title="greenhouse.poller.Epoll"><tt class="xref py py-class docutils literal"><span class="pre">Epoll</span></tt></a>, <a class="reference internal" href="#greenhouse.poller.KQueue" title="greenhouse.poller.KQueue"><tt class="xref py py-class docutils literal"><span class="pre">KQueue</span></tt></a>,
+<a class="reference internal" href="#greenhouse.poller.Poll" title="greenhouse.poller.Poll"><tt class="xref py py-class docutils literal"><span class="pre">Poll</span></tt></a>, or <a class="reference internal" href="#greenhouse.poller.Select" title="greenhouse.poller.Select"><tt class="xref py py-class docutils literal"><span class="pre">Select</span></tt></a> in order of preference), using the best
+poller class available based on the system and the python version.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.poller.set">
+<tt class="descclassname">greenhouse.poller.</tt><tt class="descname">set</tt><big>(</big><em>poller=None</em><big>)</big><a class="headerlink" href="#greenhouse.poller.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the poller instance to be used by greenhouse&#8217;s scheduler. The default
+is to create a new instance of the best kind it can, as determined by
+<a class="reference internal" href="#greenhouse.poller.best" title="greenhouse.poller.best"><tt class="xref py py-func docutils literal"><span class="pre">best()</span></tt></a>.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pool.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenhouse.pool</span></tt> &#8211; Managed Greenlet Pools</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="compat.html"
+                        title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">greenhouse.compat</span></tt> &#8211; Greenlet and Compatibility Hacks</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/poller.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="compat.html" title="greenhouse.compat – Greenlet and Compatibility Hacks"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pool.html" title="greenhouse.pool – Managed Greenlet Pools"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Travis J Parker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

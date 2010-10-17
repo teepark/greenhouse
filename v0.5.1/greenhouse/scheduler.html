@@ -1,0 +1,184 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.scheduler – Interacting With The Greenhouse Scheduler &mdash; greenhouse v0.1 documentation</title>
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse v0.1 documentation" href="../index.html" />
+    <link rel="next" title="greenhouse.io – Cooperative I/O Drop-Ins" href="io.html" />
+    <link rel="prev" title="Welcome to the Greenhouse Documentation!" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to the Greenhouse Documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.scheduler">
+<span id="greenhouse-scheduler-interacting-with-the-greenhouse-scheduler"></span><h1><a class="reference internal" href="#module-greenhouse.scheduler" title="greenhouse.scheduler"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.scheduler</span></tt></a> &#8211; Interacting With The Greenhouse Scheduler<a class="headerlink" href="#module-greenhouse.scheduler" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="greenhouse.scheduler.pause">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pauses execution of the current greenlet to let others run. This greenlet
+will be picked up in the next iteration of the main scheduler loop.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.pause_until">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause_until</tt><big>(</big><em>unixtime</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause_until" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pauses the current greenlet and does not allow it to be put back into the
+runnable queue until <em>unixtime</em> (a unix timestamp int or float).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.pause_for">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause_for</tt><big>(</big><em>seconds</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause_for" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pauses the current greenlet and does not allow it to be put back into the
+runnable queue until <em>seconds</em> seconds (int or float) have gone by.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.schedule">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule</tt><big>(</big><em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new greenlet around <em>target</em> (if it is a function) or uses the
+one provided (if <em>target</em> is a greenlet), and schedules it such that it
+will get picked up in the next iteration of the main scheduler loop.</p>
+<p>If it is a function, arguments and keyword arguments can be pre-loaded with
+<em>args</em> and <em>kwargs</em> respectively.</p>
+<p><a class="reference internal" href="#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule()</span></tt></a> is also usable as a decorator in two ways: pre-loading
+arguments (and therefore calling it inside the decorator syntax as in
+<tt class="docutils literal"><span class="pre">&#64;schedule(args=(...))</span></tt>), or using it as a simple decorator
+(<tt class="docutils literal"><span class="pre">&#64;schedule</span></tt>).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.schedule_at">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_at</tt><big>(</big><em>unixtime</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule()</span></tt></a>, but will not put the scheduled greenlet into the
+runnable queue until <em>unixtime</em>.</p>
+<p>Because the <em>unixtime</em> argument is required, if it is used as a decorator
+then it must be invoked inside the &#64;-decorator syntax.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.schedule_in">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_in</tt><big>(</big><em>*seconds*</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_in" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#greenhouse.scheduler.schedule_at" title="greenhouse.scheduler.schedule_at"><tt class="xref py py-func docutils literal"><span class="pre">schedule_at()</span></tt></a>, but the scheduled greenlet will be run <em>seconds</em>
+(int or float) seconds after the <a class="reference internal" href="#greenhouse.scheduler.schedule_in" title="greenhouse.scheduler.schedule_in"><tt class="xref py py-func docutils literal"><span class="pre">schedule_in()</span></tt></a> call rather than at a
+particular unix timestamp.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.schedule_recurring">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_recurring</tt><big>(</big><em>*seconds*</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_recurring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Schedules a function (<em>target</em> may not be a greenlet here) to be run at
+an interval of <em>seconds</em>, with <em>args</em> and <em>kwargs</em> pre-loaded.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.add_exception_handler">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">add_exception_handler</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.add_exception_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>handler</em> should be a function accepting 3 arguments <em>type</em>, <em>exception</em>,
+<em>traceback</em> - the triple returned by <tt class="docutils literal"><span class="pre">sys.exc_info()</span></tt>. Whenever there is
+an unhandled traceback in a scheduled greenlet, all exception handlers will
+be called with the relevant type/exception/traceback.</p>
+<p>A good one to add is in the standard library:
+<tt class="docutils literal"><span class="pre">traceback.print_exception</span></tt>.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to the Greenhouse Documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="io.html"
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/scheduler.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to the Greenhouse Documentation!"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Travis J Parker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

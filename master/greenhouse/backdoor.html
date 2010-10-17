@@ -1,0 +1,159 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.backdoor – Interpreter On A Socket &mdash; greenhouse v0.1 documentation</title>
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse v0.1 documentation" href="../index.html" />
+    <link rel="prev" title="greenhouse.emulation – Faking Out Third Parties" href="emulation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="emulation.html" title="greenhouse.emulation – Faking Out Third Parties"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.backdoor">
+<span id="greenhouse-backdoor-interpreter-on-a-socket"></span><h1><a class="reference internal" href="#module-greenhouse.backdoor" title="greenhouse.backdoor"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.backdoor</span></tt></a> &#8211; Interpreter On A Socket<a class="headerlink" href="#module-greenhouse.backdoor" title="Permalink to this headline">¶</a></h1>
+<p>These functions enable running an additional server in greenhouse server
+processes, which accepts connections and runs interactive python interpreters
+over them, enabling entirely flexible and ad-hoc server administration at
+runtime.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p><strong>backdoors are a gaping security hole</strong></p>
+<p class="last">Make absolutely certain that you use <tt class="docutils literal"><span class="pre">&quot;127.0.0.1&quot;</span></tt> as the host on which
+to listen for connections, so that it will only accept connection requests
+coming from localhost. If you <em>must</em> connect to it from another machine, be
+absolutely certain that you are behind a firewall that blocks the backdoor
+port.</p>
+</div>
+<dl class="function">
+<dt id="greenhouse.backdoor.run_backdoor">
+<tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">run_backdoor</tt><big>(</big><em>address</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.run_backdoor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a server on the specified address that creates interactive
+interpreters on any connections made.</p>
+<p>This function blocks; it waits for connections in the current coroutine, so
+it can be a good idea to <a class="reference internal" href="scheduler.html#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule</span></tt></a> it</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>address</strong> (<em>(string, int) tuple</em>) &#8211; the host and port on which to listen for connections</li>
+<li><strong>namespace</strong> (<em>dict</em>) &#8211; overrides the local namespace for connected interpreters. currently,
+passing a dictionary at all will cause all connected interpreters to
+share a local namespace. This means that passing an empty dict has
+different semantics than the default <tt class="xref docutils literal"><span class="pre">None</span></tt>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.backdoor.backdoor_handler">
+<tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">backdoor_handler</tt><big>(</big><em>sock</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.backdoor_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts an interactive interpreter on a connected socket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sock</strong> (<a class="reference internal" href="io.html#greenhouse.io.Socket" title="greenhouse.io.Socket"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.io.Socket</span></tt></a>) &#8211; the socket on which to serve the interpreter</li>
+<li><strong>namespace</strong> (<em>dict</em>) &#8211; the local namespace dictionary for the interpreter</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="emulation.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenhouse.emulation</span></tt> &#8211; Faking Out Third Parties</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/backdoor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="emulation.html" title="greenhouse.emulation – Faking Out Third Parties"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Travis J Parker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

@@ -74,6 +74,7 @@ Modules
     greenhouse/poller
     greenhouse/compat
     greenhouse/emulation
+    greenhouse/backdoor
 
 Indices and tables
 ==================

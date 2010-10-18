@@ -1,0 +1,41 @@
+feature-freeze time
+-------------------
+
+this happens at the point close enough to the release that we will want to
+start thinking about post-release features. not all of the release's features
+necessarily need to be in, the main piont is that work in master *can* happen
+without having to be in the release.
+
+1. create a release-x.y.z branch off of master
+2. fixes to x.y.z's features go in master as always, and are cherry-picked into
+   release-.
+
+
+release time
+------------
+
+this obviously happens when all of the release's tickets are complete, and all
+tests pass on all supported platforms.
+
+1. update pavement.py's "VERSION"
+2. update greenhouse/__init__.py's "VERSION"
+3. update docs/source/conf.py's "release"
+4. if the major or minor version changed, update docs/source/conf.py's
+   "version"
+5. commit the changes to release-
+6. tag the vX.Y.Z release from the release branch and push to github
+
+7. build the docs in the release branch
+8. recursive-copy docs/build/html outside of the git repo
+9. checkout the gh-pages branch
+10. copy the built docs into a directory vX.Y.Z
+11. change the 'release' symlink to point to the new directory
+12. git add, commit, and push the new directory up to github's gh-pages
+
+13. run the sdist setuptools command and upload the new tarball to the PYPI
+
+14. if the major or minor version changed, create a maintenance-X.Y branch from
+    the release branch and push it to github
+15. otherwise, merge the release- branch into the proper maintenance- branch
+16. merge the release- branch into master
+17. close out all fixed tickets for the release

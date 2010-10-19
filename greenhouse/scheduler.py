@@ -53,12 +53,15 @@ def _hit_poller(timeout, interruption=None):
 
     for fd, eventmap in events:
         socks = []
-        for index, weak in enumerate(state.descriptormap[fd]):
+        objs = state.descriptormap.get(fd, [])
+        for index, weak in enumerate(objs):
+            removals = []
             sock = weak()
             if sock is None or sock._closed:
-                state.descriptormap[fd].pop(index)
+                removals.append(index)
             else:
                 socks.append(sock)
+            map(objs.pop, removals[::-1])
         if eventmap & (state.poller.INMASK | state.poller.ERRMASK):
             for sock in socks:
                 sock._readable.set()

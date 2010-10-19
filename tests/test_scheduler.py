@@ -170,32 +170,34 @@ class ScheduleMixin(object):
 
     def test_deleted_sock_gets_cleared(self):
         dmap = greenhouse.scheduler.state.descriptormap
-        fno = greenhouse.Socket().fileno()
-
-        import gc
-        gc.collect()
-
-        assert all(x() is None for x in dmap[fno]), \
-                [x() for x in dmap[fno] if x()]
 
         client = greenhouse.Socket()
         server = greenhouse.Socket()
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind(("", port()))
-        server.listen(5)
+        temp = greenhouse.Socket()
+        temps_fileno = temp.fileno()
+
+        one_good = [x() for x in dmap[temps_fileno]]
+        assert all(one_good), one_good
+
+        del temp
+        del one_good
+
+        @greenhouse.schedule
+        def f():
+            server.bind(("", port()))
+            server.listen(5)
+            conn = server.accept()[0]
+            assert conn.recv(8192) == "test_deleted_sock_gets_cleared"
+
+        greenhouse.pause_for(TESTING_TIMEOUT)
         client.connect(("", port()))
-        handler, addr = server.accept()
+        client.sendall("test_deleted_sock_gets_cleared")
 
-        handler.send("howdy")
-        client.recv(5)
+        greenhouse.pause_for(TESTING_TIMEOUT)
 
-        greenhouse.pause()
-
-        assert all(x() for x in dmap[fno]), [x() for x in dmap[fno]]
-
-        handler.close()
-        client.close()
-        server.close()
+        gone = [x for x in dmap[temps_fileno]]
+        assert all(x() is None for x in gone), gone
 
     def test_socketpolling(self):
         client = greenhouse.Socket()

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenhouse.utils – Greenlet-Aware Concurrency Primitives &mdash; greenhouse v0.1 documentation</title>
+    <title>greenhouse.utils – Greenlet-Aware Concurrency Primitives &mdash; greenhouse v0.5.1 documentation</title>
     <link rel="stylesheet" href="../static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1',
+        VERSION:     '0.5.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="greenhouse v0.1 documentation" href="../index.html" />
+    <link rel="top" title="greenhouse v0.5.1 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.pool – Managed Greenlet Pools" href="pool.html" />
     <link rel="prev" title="greenhouse.io – Cooperative I/O Drop-Ins" href="io.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse v0.5.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -420,6 +420,85 @@ the queue or raise a Query.Full exception</p>
 
 </dd></dl>
 
+<dl class="class">
+<dt id="greenhouse.utils.Channel">
+<em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Channel</tt><a class="headerlink" href="#greenhouse.utils.Channel" title="Permalink to this definition">¶</a></dt>
+<dd><p>a pipe for inter-coroutine messaging</p>
+<p>mirrors Stackless Python&#8217;s stackless.channel API</p>
+<dl class="attribute">
+<dt id="greenhouse.utils.Channel.balance">
+<tt class="descname">balance</tt><a class="headerlink" href="#greenhouse.utils.Channel.balance" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates the # of senders (positive) or waiters (negative) blocked</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Channel.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Channel.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>close the channel, ending new communications</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.utils.Channel.closed">
+<tt class="descname">closed</tt><a class="headerlink" href="#greenhouse.utils.Channel.closed" title="Permalink to this definition">¶</a></dt>
+<dd><p>the channel has been closed, and all data received (read-only)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.utils.Channel.closing">
+<tt class="descname">closing</tt><a class="headerlink" href="#greenhouse.utils.Channel.closing" title="Permalink to this definition">¶</a></dt>
+<dd><p>the channel has been closed (read-only)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Channel.next">
+<tt class="descname">next</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Channel.next" title="Permalink to this definition">¶</a></dt>
+<dd><p>receive data on the channel.</p>
+<p>if there is a waiting sender, then re-schedule it and return it&#8217;s sent
+item now, otherwise block until another coroutine sends something.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Channel.open">
+<tt class="descname">open</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Channel.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>allow communications again on a previously closed channel</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.utils.Channel.preference">
+<tt class="descname">preference</tt><a class="headerlink" href="#greenhouse.utils.Channel.preference" title="Permalink to this definition">¶</a></dt>
+<dd><p>prefer senders (positive) or receivers (negative, default)</p>
+<p>if receivers are preferred, then on a channel with blocked receivers,
+a send() call will jump straight to the awoken receiver bypassing the
+scheduler entirely.</p>
+<p>similarly if senders are preferred, then with blocked senders receive()
+calls bypass the scheduler and jump straight to the awoken sender.</p>
+<p>a 0 preference always re-schedules awoken coroutines on both sides.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.utils.Channel.queue">
+<tt class="descname">queue</tt><a class="headerlink" href="#greenhouse.utils.Channel.queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>the first coroutine waiting on the channel, or None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Channel.receive">
+<tt class="descname">receive</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Channel.receive" title="Permalink to this definition">¶</a></dt>
+<dd><p>receive data on the channel.</p>
+<p>if there is a waiting sender, then re-schedule it and return it&#8217;s sent
+item now, otherwise block until another coroutine sends something.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Channel.send">
+<tt class="descname">send</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Channel.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>send data over the channel.</p>
+<p>if there is a waiting receiver, re-schedule it and return immediately,
+otherwise block until there is a receiver to accept the item.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -471,7 +550,7 @@ the queue or raise a Query.Full exception</p>
         <li class="right" >
           <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
              >previous</a> |</li>
-        <li><a href="../index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse v0.5.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

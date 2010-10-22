@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Index &mdash; greenhouse v0.1 documentation</title>
+    <title>Index &mdash; greenhouse v0.5.1 documentation</title>
     <link rel="stylesheet" href="static/nature.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.1',
+        VERSION:     '0.5.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="greenhouse v0.1 documentation" href="index.html" /> 
+    <link rel="top" title="greenhouse v0.5.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">greenhouse v0.5.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -67,6 +67,7 @@
 <table width="100%" class="indextable genindextable"><tr>
   <td width="33%" valign="top"><dl>
     <dt><a href="greenhouse/backdoor.html#greenhouse.backdoor.backdoor_handler">backdoor_handler() (in module greenhouse.backdoor)</a></dt>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.balance">balance (greenhouse.utils.Channel attribute)</a></dt>
     <dt><a href="greenhouse/poller.html#greenhouse.poller.best">best() (in module greenhouse.poller)</a></dt>
 </dl></td>
   <td width="33%" valign="top"><dl>
@@ -79,14 +80,18 @@
 <table width="100%" class="indextable genindextable"><tr>
   <td width="33%" valign="top"><dl>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Timer.cancel">cancel() (greenhouse.utils.Timer method)</a></dt>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel">Channel (class in greenhouse.utils)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Event.clear">clear() (greenhouse.utils.Event method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.File.close">close() (greenhouse.io.File method)</a></dt>
     <dd><dl>
       <dt><a href="greenhouse/io.html#greenhouse.io.Socket.close">(greenhouse.io.Socket method)</a></dt>
       <dt><a href="greenhouse/pool.html#greenhouse.pool.OneWayPool.close">(greenhouse.pool.OneWayPool method)</a></dt>
+      <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.close">(greenhouse.utils.Channel method)</a></dt>
   </dl></dd>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.closed">closed (greenhouse.utils.Channel attribute)</a></dt>
 </dl></td>
   <td width="33%" valign="top"><dl>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.closing">closing (greenhouse.utils.Channel attribute)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Condition">Condition (class in greenhouse.utils)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.connect">connect() (greenhouse.io.Socket method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.connect_ex">connect_ex() (greenhouse.io.Socket method)</a></dt>
@@ -218,10 +223,11 @@
 <h2 id="N">N</h2>
 <table width="100%" class="indextable genindextable"><tr>
   <td width="33%" valign="top"><dl>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.next">next() (greenhouse.utils.Channel method)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Condition.notify">notify() (greenhouse.utils.Condition method)</a></dt>
-    <dt><a href="greenhouse/utils.html#greenhouse.utils.Condition.notify_all">notify_all() (greenhouse.utils.Condition method)</a></dt>
 </dl></td>
   <td width="33%" valign="top"><dl>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Condition.notify_all">notify_all() (greenhouse.utils.Condition method)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Condition.notifyAll">notifyAll() (greenhouse.utils.Condition method)</a></dt>
 </dl></td>
 </tr></table>
@@ -230,9 +236,10 @@
 <table width="100%" class="indextable genindextable"><tr>
   <td width="33%" valign="top"><dl>
     <dt><a href="greenhouse/pool.html#greenhouse.pool.OneWayPool">OneWayPool (class in greenhouse.pool)</a></dt>
-    <dt><a href="greenhouse/pool.html#greenhouse.pool.OrderedPool">OrderedPool (class in greenhouse.pool)</a></dt>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.open">open() (greenhouse.utils.Channel method)</a></dt>
 </dl></td>
   <td width="33%" valign="top"><dl>
+    <dt><a href="greenhouse/pool.html#greenhouse.pool.OrderedPool">OrderedPool (class in greenhouse.pool)</a></dt>
     <dt><a href="greenhouse/poller.html#greenhouse.poller.Select.OUTMASK">OUTMASK (greenhouse.poller.Select attribute)</a></dt>
 </dl></td>
 </tr></table>
@@ -251,6 +258,7 @@
     <dt><a href="greenhouse/poller.html#greenhouse.poller.Poll">Poll (class in greenhouse.poller)</a></dt>
     <dt><a href="greenhouse/poller.html#greenhouse.poller.Select.poll">poll() (greenhouse.poller.Select method)</a></dt>
     <dt><a href="greenhouse/pool.html#greenhouse.pool.Pool">Pool (class in greenhouse.pool)</a></dt>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.preference">preference (greenhouse.utils.Channel attribute)</a></dt>
     <dt><a href="greenhouse/pool.html#greenhouse.pool.OneWayPool.put">put() (greenhouse.pool.OneWayPool method)</a></dt>
     <dd><dl>
       <dt><a href="greenhouse/utils.html#greenhouse.utils.Queue.put">(greenhouse.utils.Queue method)</a></dt>
@@ -264,6 +272,7 @@
   <td width="33%" valign="top"><dl>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Queue.qsize">qsize() (greenhouse.utils.Queue method)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Queue">Queue (class in greenhouse.utils)</a></dt>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.queue">queue (greenhouse.utils.Channel attribute)</a></dt>
 </dl></td>
   <td width="33%" valign="top"><dl>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Queue.Empty">Queue.Empty</a></dt>
@@ -277,6 +286,7 @@
     <dt><a href="greenhouse/io.html#greenhouse.io.File.read">read() (greenhouse.io.File method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.File.readline">readline() (greenhouse.io.File method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.File.readlines">readlines() (greenhouse.io.File method)</a></dt>
+    <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.receive">receive() (greenhouse.utils.Channel method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.recv">recv() (greenhouse.io.Socket method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.recv_into">recv_into() (greenhouse.io.Socket method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.recvfrom">recvfrom() (greenhouse.io.Socket method)</a></dt>
@@ -307,6 +317,9 @@
     <dt><a href="greenhouse/poller.html#greenhouse.poller.Select">Select (class in greenhouse.poller)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Semaphore">Semaphore (class in greenhouse.utils)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.send">send() (greenhouse.io.Socket method)</a></dt>
+    <dd><dl>
+      <dt><a href="greenhouse/utils.html#greenhouse.utils.Channel.send">(greenhouse.utils.Channel method)</a></dt>
+  </dl></dd>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.sendall">sendall() (greenhouse.io.Socket method)</a></dt>
     <dt><a href="greenhouse/io.html#greenhouse.io.Socket.sendto">sendto() (greenhouse.io.Socket method)</a></dt>
     <dt><a href="greenhouse/utils.html#greenhouse.utils.Event.set">set() (greenhouse.utils.Event method)</a></dt>
@@ -407,7 +420,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">greenhouse v0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">greenhouse v0.5.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

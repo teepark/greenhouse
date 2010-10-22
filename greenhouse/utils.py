@@ -8,7 +8,7 @@ from greenhouse import compat, scheduler
 
 
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
-           "BoundedSemaphore", "Timer", "Local", "Thread", "Queue"]
+           "BoundedSemaphore", "Timer", "Local", "Thread", "Queue", "Channel"]
 
 def _debugger(cls):
     import types
@@ -641,6 +641,10 @@ class Queue(object):
 
 
 class Channel(object):
+    """a pipe for inter-coroutine messaging
+
+    mirrors Stackless Python's stackless.channel API
+    """
     def __init__(self):
         self._dataqueue = collections.deque()
         self._waiters = collections.deque()
@@ -653,21 +657,26 @@ class Channel(object):
 
     @property
     def balance(self):
+        "indicates the # of senders (positive) or waiters (negative) blocked"
         return self._dataqueue and len(self._dataqueue) or \
                 -len(self._waiters)
 
     def close(self):
+        "close the channel, ending new communications"
         self._closing = True
 
     @property
     def closed(self):
+        "the channel has been closed, and all data received (read-only)"
         return self._closing and not self._dataqueue
 
     @property
     def closing(self):
+        "the channel has been closed (read-only)"
         return self._closing
 
     def open(self):
+        "allow communications again on a previously closed channel"
         self._closing = False
 
     def _get_preference(self):
@@ -681,13 +690,30 @@ class Channel(object):
         else:
             self._preference = 0
 
-    preference = property(_get_preference, _set_preference)
+    preference = property(_get_preference, _set_preference, doc='''
+        prefer senders (positive) or receivers (negative, default)
+
+        if receivers are preferred, then on a channel with blocked receivers,
+        a send() call will jump straight to the awoken receiver bypassing the
+        scheduler entirely.
+
+        similarly if senders are preferred, then with blocked senders receive()
+        calls bypass the scheduler and jump straight to the awoken sender.
+
+        a 0 preference always re-schedules awoken coroutines on both sides.
+        '''.strip())
 
     @property
     def queue(self):
+        'the first coroutine waiting on the channel, or None'
         return self._waiters[0] if self._waiters else None
 
     def receive(self):
+        '''receive data on the channel.
+
+        if there is a waiting sender, then re-schedule it and return it's sent
+        item now, otherwise block until another coroutine sends something.
+        '''
         if self._closing and not self._dataqueue:
             raise StopIteration()
         if self._dataqueue:
@@ -707,6 +733,13 @@ class Channel(object):
     next = receive
 
     def send(self, item):
+        '''send data over the channel.
+
+        if there is a waiting receiver, re-schedule it and return immediately,
+        otherwise block until there is a receiver to accept the item.
+        '''
+        if self._closing:
+            raise RuntimeError("cannot send over a closing channel")
         if self._waiters and not self._dataqueue:
             self._dataqueue.append(item)
             if self.preference is -1:

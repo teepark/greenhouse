@@ -48,7 +48,11 @@
         function by one of its greenlets, and remove that result from the queue
         of retrievable results.
 
-        If there are no un-retrieved results, this call blocks until there are.
+        If there are no un-retrieved results, this call blocks until there are,
+        or the pool is closed.
+
+        If the pool has already been closed, or if it is closed while this
+        greenlet is blocked here, then a RuntimeError is raised.
 
 .. class:: OrderedPool
 

@@ -100,7 +100,10 @@ values of the functions are retrievable via the <a class="reference internal" hr
 <dd><p>Retrieve a result (return value) from a previous invocation of the pool
 function by one of its greenlets, and remove that result from the queue
 of retrievable results.</p>
-<p>If there are no un-retrieved results, this call blocks until there are.</p>
+<p>If there are no un-retrieved results, this call blocks until there are,
+or the pool is closed.</p>
+<p>If the pool has already been closed, or if it is closed while this
+greenlet is blocked here, then a RuntimeError is raised.</p>
 </dd></dl>
 
 </dd></dl>

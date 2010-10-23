@@ -20,6 +20,7 @@ class OneWayPool(object):
     def start(self):
         for i in xrange(self.size):
             scheduler.schedule(self._runner)
+        self.closed = False
 
     def close(self):
         self.closed = True

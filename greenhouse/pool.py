@@ -2,8 +2,7 @@ from __future__ import with_statement
 
 import sys
 
-from greenhouse import scheduler
-from greenhouse import utils
+from greenhouse import compat, scheduler, utils
 
 
 __all__ = ["OneWayPool", "Pool", "OrderedPool", "map"]
@@ -16,12 +15,14 @@ class OneWayPool(object):
         self.func = func
         self.size = size
         self.inq = utils.Queue()
+        self.closed = False
 
     def start(self):
         for i in xrange(self.size):
             scheduler.schedule(self._runner)
 
     def close(self):
+        self.closed = True
         for i in xrange(self.size):
             self.inq.put(_STOP)
 
@@ -68,11 +69,20 @@ class Pool(OneWayPool):
         self.outq.put(self.run_func(*input))
 
     def get(self):
+        if self.closed:
+            raise RuntimeError("the pool is closed")
+
         result, succeeded = self.outq.get()
         if not succeeded:
             klass, exc, tb = result
             raise klass, exc, tb
         return result
+
+    def close(self):
+        super(Pool, self).close()
+        for waiter in self.outq._waiters:
+            scheduler.schedule(compat.getcurrent())
+            waiter.throw(RuntimeError("the pool has been closed"))
 
 
 class OrderedPool(Pool):
@@ -91,6 +101,9 @@ class OrderedPool(Pool):
         self._putcount += 1
 
     def get(self):
+        if self.closed:
+            raise RuntimeError("the pool is closed")
+
         while self._getcount not in self._cache:
             counter, result = self.outq.get()
             self._cache[counter] = result

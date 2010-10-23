@@ -217,6 +217,35 @@ class PoolTestCase(OneWayPoolTestCase):
 
         pool.close()
 
+    def test_getters_raise_on_close(self):
+        l = []
+        raised = [False]
+
+        def runner(item):
+            return item ** 2
+
+        pool = self.POOL(runner, 5)
+        pool.start()
+
+        @greenhouse.schedule
+        def getter():
+            try:
+                while 1:
+                    l.append(pool.get())
+            except StandardError:
+                raised[0] = True
+
+        for i in xrange(10):
+            pool.put(i)
+        greenhouse.pause()
+
+        self.assertEqual(l, [x ** 2 for x in xrange(10)])
+
+        pool.close()
+        greenhouse.pause()
+
+        assert raised[0]
+
 
 class OrderedPoolTestCase(PoolTestCase):
     POOL = greenhouse.OrderedPool

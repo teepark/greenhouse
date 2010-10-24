@@ -54,14 +54,18 @@ def _hit_poller(timeout, interruption=None):
     for fd, eventmap in events:
         socks = []
         objs = state.descriptormap.get(fd, [])
+        removals = []
         for index, weak in enumerate(objs):
-            removals = []
             sock = weak()
             if sock is None or sock._closed:
                 removals.append(index)
             else:
                 socks.append(sock)
-            map(objs.pop, removals[::-1])
+
+        map(objs.pop, removals[::-1])
+        if not objs:
+            state.descriptormap.pop(fd)
+
         if eventmap & (state.poller.INMASK | state.poller.ERRMASK):
             for sock in socks:
                 sock._readable.set()
@@ -95,13 +99,13 @@ def greenlet(func, args=(), kwargs=None):
 
 def pause():
     'pause and reschedule the current greenlet and switch to the next'
-    schedule(compat.greenlet.getcurrent())
+    schedule(compat.getcurrent())
     mainloop.switch()
 
 def pause_until(unixtime):
     '''pause and reschedule the current greenlet until a set time,
     then switch to the next'''
-    schedule_at(unixtime, compat.greenlet.getcurrent())
+    schedule_at(unixtime, compat.getcurrent())
     mainloop.switch()
 
 def pause_for(secs):

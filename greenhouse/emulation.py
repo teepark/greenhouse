@@ -83,22 +83,22 @@ def _green_select(rlist, wlist, xlist, timeout=None):
     fds = {}
     for fd in rlist:
         fd = fd if isinstance(fd, int) else fd.fileno()
-        fds[fd] = INMASK
+        fds[fd] = 1
 
     for fd in wlist:
         fd = fd if isinstance(fd, int) else fd.fileno()
         if fd in fds:
-            fds[fd] |= OUTMASK
+            fds[fd] |= 2
         else:
-            fds[fd] = OUTMASK
+            fds[fd] = 2
 
-    events = _multi_wait(fds, timeout)
+    events = _multi_wait(fds, timeout=timeout, inmask=1, outmask=2)
 
     rlist_out, wlist_out = [], []
     for fd, event in events:
-        if event & INMASK:
+        if event & 1:
             rlist_out.append(fd)
-        if event & OUTMASK:
+        if event & 2:
             wlist_out.append(fd)
 
     return rlist_out, wlist_out, []
@@ -144,9 +144,6 @@ if hasattr(select, "kqueue"):
     _select_patchers['kevent'] = _green_kevent
 
 
-INMASK = 1
-OUTMASK = 2
-
 # wait for the first of multiple file descriptors with the greenhouse poller
 #
 # fd_map is a dictionary mapping integer file descriptors to masks, which
@@ -155,7 +152,7 @@ OUTMASK = 2
 # if timeout is None it can wait indefinitely, if a nonzero number then it
 # will not wait longer, if zero then the current coroutine will still be
 # paused, but will awake around again in the very next mainloop iteration.
-def _multi_wait(fd_map, timeout=None):
+def _multi_wait(fd_map, timeout=None, inmask=1, outmask=2):
     current = compat.getcurrent()
     poller = scheduler.state.poller
     dmap = scheduler.state.descriptormap
@@ -177,12 +174,12 @@ def _multi_wait(fd_map, timeout=None):
         fakesocks.append(fakesock)
         poller_events = 0
 
-        if events & INMASK:
-            fakesock._readable.set = functools.partial(activate, fd, INMASK)
+        if events & inmask:
+            fakesock._readable.set = functools.partial(activate, fd, inmask)
             poller_events |= poller.INMASK
 
-        if events & OUTMASK:
-            fakesock._writable.set = functools.partial(activate, fd, OUTMASK)
+        if events & outmask:
+            fakesock._writable.set = functools.partial(activate, fd, outmask)
             poller_events |= poller.OUTMASK
 
         dmap[fd].append(weakref.ref(fakesock))

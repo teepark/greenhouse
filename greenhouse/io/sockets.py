@@ -77,13 +77,6 @@ class _InnerSocket(object):
         # allow for lookup by fileno
         state.descriptormap[self._fileno].append(weakref.ref(self))
 
-    def __del__(self):
-        try:
-            state.poller.unregister(self)
-            state.descriptormap.pop(self._fileno, None)
-        except:
-            pass
-
     @contextlib.contextmanager
     def _registered(self, events=None):
         poller = state.poller

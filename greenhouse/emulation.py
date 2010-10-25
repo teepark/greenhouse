@@ -135,7 +135,46 @@ if hasattr(select, "poll"):
 
 
 class _green_epoll(object):
-    pass #TODO
+    def __init__(self, from_ep=None):
+        self._readable = utils.Event()
+        self._writable = utils.Event()
+        if from_ep:
+            self._epoll = from_ep
+        else:
+            self._epoll = select.epoll()
+        scheduler.state.descriptormap[self._epoll.fileno()].append(self)
+
+    def close(self):
+        self._epoll.close()
+
+    @property
+    def closed(self):
+        return self._epoll.closed
+
+    def fileno(self):
+        return self._epoll.fileno()
+
+    @classmethod
+    def fromfd(cls, fd):
+        return cls(from_ep=select.epoll.fromfd(fd))
+
+    def modify(self, fd, eventmask):
+        self._epoll.modify(fd, eventmask)
+
+    def poll(self, timeout=None, maxevents=-1):
+        poller = scheduler.state.poller
+        reg = poller.register(self._epoll.fileno(), poller.INMASK)
+        try:
+            self._readable.wait()
+            return self._epoll.poll(0, maxevents)
+        finally:
+            poller.unregister(reg)
+
+    def register(self, fd, eventmask):
+        self._epoll.register(fd, eventmask)
+
+    def unregister(self, fd):
+        self._epoll.unregister(fd)
 
 if hasattr(select, "epoll"):
     _select_patchers['epoll'] = _green_epoll

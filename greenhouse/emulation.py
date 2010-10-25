@@ -142,7 +142,8 @@ class _green_epoll(object):
             self._epoll = from_ep
         else:
             self._epoll = select.epoll()
-        scheduler.state.descriptormap[self._epoll.fileno()].append(self)
+        scheduler.state.descriptormap[self._epoll.fileno()].append(
+                weakref.ref(self))
 
     def close(self):
         self._epoll.close()
@@ -150,6 +151,7 @@ class _green_epoll(object):
     @property
     def closed(self):
         return self._epoll.closed
+    _closed = closed
 
     def fileno(self):
         return self._epoll.fileno()
@@ -165,7 +167,7 @@ class _green_epoll(object):
         poller = scheduler.state.poller
         reg = poller.register(self._epoll.fileno(), poller.INMASK)
         try:
-            self._readable.wait()
+            self._readable.wait(timeout=timeout)
             return self._epoll.poll(0, maxevents)
         finally:
             poller.unregister(self._epoll.fileno(), reg)

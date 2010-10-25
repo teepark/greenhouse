@@ -111,16 +111,24 @@ class _green_poll(object):
         self._registry = {}
 
     def modify(self, fd, eventmask):
-        pass
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        if fd not in self._registry:
+            raise IOError(2, "No such file or directory")
+        self._registry[fd] = eventmask
 
     def poll(self, timeout=None):
-        pass
+        if timeout is not None:
+            timeout = float(timeout) / 1000
+        return _multi_wait(self._registry, timeout=timeout,
+                inmask=select.POLLIN, outmask=select.POLLOUT)
 
     def register(self, fd, eventmask):
-        pass
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        self._registry[fd] = eventmask
 
     def unregister(self, fd):
-        pass
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        del self._registry[fd]
 
 if hasattr(select, "poll"):
     _select_patchers['poll'] = _green_poll

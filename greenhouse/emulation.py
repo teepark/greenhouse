@@ -168,7 +168,7 @@ class _green_epoll(object):
             self._readable.wait()
             return self._epoll.poll(0, maxevents)
         finally:
-            poller.unregister(reg)
+            poller.unregister(self._epoll.fileno(), reg)
 
     def register(self, fd, eventmask):
         self._epoll.register(fd, eventmask)

@@ -235,13 +235,6 @@ class File(FileBase):
 
         return fp
 
-    def __del__(self):
-        try:
-            scheduler.state.poller.unregister(self)
-            scheduler.state.descriptormap.pop(self._fileno, None)
-        except:
-            pass
-
     def close(self):
         self._closed = True
         os.close(self._fileno)

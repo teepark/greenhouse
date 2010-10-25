@@ -185,12 +185,8 @@ if hasattr(select, "epoll"):
 class _green_kqueue(object):
     pass #TODO
 
-class _green_kevent(object):
-    pass #TODO
-
 if hasattr(select, "kqueue"):
     _select_patchers['kqueue'] = _green_kqueue
-    _select_patchers['kevent'] = _green_kevent
 
 
 # wait for the first of multiple file descriptors with the greenhouse poller

@@ -1,13 +1,14 @@
 import Queue
+import select
 import socket
 import sys
 import thread
 import threading
 import unittest
 
-from greenhouse import io, emulation, utils
+from greenhouse import io, emulation, poller, scheduler, utils
 
-from test_base import StateClearingTestCase
+from test_base import StateClearingTestCase, TESTING_TIMEOUT
 
 
 class MonkeyPatchBase(object):
@@ -204,6 +205,129 @@ class PatchedModules(StateClearingTestCase):
         assert logging.threading.current_thread is threading.current_thread
         assert logging.threading.currentThread is threading.currentThread
 
+    def test_socketserver(self):
+        green = emulation.patched("SocketServer")
+        assert green.select.select is emulation._green_select
+        assert getattr(green.select, "poll", emulation._green_poll) is \
+                emulation._green_poll
+        assert getattr(green.select, "epoll", emulation._green_epoll) is \
+                emulation._green_epoll
+        assert getattr(green.select, "kqueue", emulation._green_kqueue) is \
+                emulation._green_kqueue
+
+
+class GreenSelectMixin(object):
+    def setUp(self):
+        super(GreenSelectMixin, self).setUp()
+        poller.set(self.POLLER())
+
+    def test_select(self):
+        with self.socketpair() as (client, server):
+            rlist, wlist, xlist = emulation._green_select(
+                    [client, server], [client, server], [], 0)
+            assert client.fileno() not in rlist
+            assert client.fileno() in wlist
+            assert server.fileno() not in rlist
+            assert server.fileno() in wlist
+
+            client.send("hello")
+
+            rlist, wlist, xlist = emulation._green_select(
+                    [client, server], [client, server], [], 0)
+            assert client.fileno() not in rlist
+            assert client.fileno() in wlist
+            assert server.fileno() in rlist
+            assert server.fileno() in wlist
+
+    if hasattr(select, "poll"):
+        def test_poll(self):
+            with self.socketpair() as (client, server):
+                p = emulation._green_poll()
+                p.register(client, select.POLLIN | select.POLLOUT)
+                p.register(server, select.POLLIN | select.POLLOUT)
+                events = dict(p.poll(0))
+                assert events[client.fileno()] & select.POLLOUT
+                assert not events[client.fileno()] & select.POLLIN
+                assert events[server.fileno()] & select.POLLOUT
+                assert not events[server.fileno()] & select.POLLIN
+
+                client.send("hello")
+
+                events = dict(p.poll(TESTING_TIMEOUT))
+                assert events[client.fileno()] & select.POLLOUT
+                assert not events[client.fileno()] & select.POLLIN
+                assert events[server.fileno()] & select.POLLOUT
+                assert events[server.fileno()] & select.POLLIN
+
+    if hasattr(select, "epoll"):
+        def test_epoll(self):
+            with self.socketpair() as (client, server):
+                ep = emulation._green_epoll()
+                ep.register(client, select.EPOLLIN | select.EPOLLOUT)
+                ep.register(server, select.EPOLLIN | select.EPOLLOUT)
+                events = dict(ep.poll(0))
+                assert events[client.fileno()] & select.EPOLLOUT
+                assert not events[client.fileno()] & select.EPOLLIN
+                assert events[server.fileno()] & select.EPOLLOUT
+                assert not events[server.fileno()] & select.EPOLLIN
+
+                client.send("hello")
+
+                events = dict(ep.poll(TESTING_TIMEOUT))
+                assert events[client.fileno()] & select.EPOLLOUT
+                assert not events[client.fileno()] & select.EPOLLIN
+                assert events[server.fileno()] & select.EPOLLOUT
+                assert events[server.fileno()] & select.EPOLLIN
+
+    if hasattr(select, "kqueue"):
+        def test_kqueue(self):
+            with self.socketpair() as (client, server):
+                kq = emulation._green_kqueue()
+                kq.control([
+                        select.kevent(client.fileno(), select.KQ_FILTER_READ,
+                            select.KQ_EV_ADD),
+                        select.kevent(client.fileno(), select.KQ_FILTER_WRITE,
+                            select.KQ_EV_ADD),
+                        select.kevent(server.fileno(), select.KQ_FILTER_READ,
+                            select.KQ_EV_ADD),
+                        select.kevent(server.fileno(), select.KQ_FILTER_WRITE,
+                            select.KQ_EV_ADD)], 0)
+
+                events = [(ke.ident, ke.filter)
+                        for ke in kq.control(None, 4, 0)]
+                assert (client.fileno(), select.KQ_FILTER_WRITE) in events
+                assert (client.fileno(), select.KQ_FILTER_READ) not in events
+                assert (server.fileno(), select.KQ_FILTER_WRITE) in events
+                assert (server.fileno(), select.KQ_FILTER_READ) not in events
+
+                client.send("hello")
+
+                events = [(ke.ident, ke.filter)
+                        for ke in kq.control(None, 4, 0)]
+                assert (client.fileno(), select.KQ_FILTER_WRITE) in events
+                assert (client.fileno(), select.KQ_FILTER_READ) not in events
+                assert (server.fileno(), select.KQ_FILTER_WRITE) in events
+                assert (server.fileno(), select.KQ_FILTER_READ) in events
+
+
+class GreenSelectWithSelectPollerTests(
+        GreenSelectMixin, StateClearingTestCase):
+    POLLER = poller.Select
+
+if hasattr(select, "poll"):
+    class GreenSelectWithPollPollerTests(
+            GreenSelectMixin, StateClearingTestCase):
+        POLLER = poller.Poll
+
+if hasattr(select, "epoll"):
+    class GreenSelectWithEpollPollerTests(
+            GreenSelectMixin, StateClearingTestCase):
+        POLLER = poller.Epoll
+
+if hasattr(select, "kqueue"):
+    class GreenSelectWithKQueuePollerTests(
+            GreenSelectMixin, StateClearingTestCase):
+        POLLER = poller.KQueue
 
 
 if __name__ == '__main__':

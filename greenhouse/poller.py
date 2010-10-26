@@ -84,8 +84,8 @@ class Epoll(Poll):
 
     _POLLER = getattr(select, "epoll", None)
 
-	def poll(self, timeout):
-		return self._poller.poll(timeout)
+    def poll(self, timeout):
+        return self._poller.poll(timeout)
 
 
 class KQueue(Poll):

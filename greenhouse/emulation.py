@@ -111,7 +111,7 @@ def _patched_copy(mod_name, patch):
 
 def patched(module_name):
     if module_name in _patchers:
-        return _patched_copy(module_name)
+        return _patched_copy(module_name, _patchers[module_name])
 
     # grab the unpatched version of the module for posterity
     old_module = sys.modules.pop(module_name, None)

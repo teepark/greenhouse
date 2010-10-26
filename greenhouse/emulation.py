@@ -1,76 +1,13 @@
+import functools
+import select
 import sys
 import types
+import weakref
 
-from greenhouse import io, scheduler, utils
+from greenhouse import compat, io, scheduler, utils
 
 
 __all__ = ["patch", "unpatch", "patched"]
-
-
-def _green_socketpair(*args, **kwargs):
-    a, b = io.sockets._socketpair(*args, **kwargs)
-    return io.Socket(fromsock=a), io.Socket(fromsock=b)
-
-def _green_start(function, args, kwargs=None):
-    glet = scheduler.greenlet(function, args, kwargs)
-    scheduler.schedule(glet)
-    return id(glet)
-
-
-_patchers = {
-    '__builtin__': {
-        'file': io.File,
-        'open': io.File,
-    },
-
-    'socket': {
-        'socket': io.Socket,
-        'socketpair': _green_socketpair,
-        'fromfd': io.sockets.socket_fromfd,
-    },
-
-    'thread': {
-        'allocate_lock': utils.Lock,
-        'allocate': utils.Lock,
-        'start_new_thread': _green_start,
-        'start_new': _green_start,
-    },
-
-    'threading': {
-        'Event': utils.Event,
-        'Lock': utils.Lock,
-        'RLock': utils.RLock,
-        'Condition': utils.Condition,
-        'Semaphore': utils.Semaphore,
-        'BoundedSemaphore': utils.BoundedSemaphore,
-        'Timer': utils.Timer,
-        'Thread': utils.Thread,
-        'local': utils.Local,
-        'enumerate': utils._enumerate_threads,
-        'active_count': utils._active_thread_count,
-        'activeCount': utils._active_thread_count,
-        'current_thread': utils._current_thread,
-        'currentThread': utils._current_thread,
-    },
-
-    'Queue': {
-        'Queue': utils.Queue,
-    },
-
-    'sys': {
-        'stdin': io.files.stdin,
-        'stdout': io.files.stdout,
-        'stderr': io.files.stderr,
-    },
-}
-
-_standard = {}
-for mod_name, patchers in _patchers.items():
-    _standard[mod_name] = {}
-    module = __import__(mod_name)
-    for attr_name, patcher in patchers.items():
-        _standard[mod_name][attr_name] = getattr(module, attr_name, None)
-del mod_name, patchers, module, attr_name, patcher
 
 
 def patch(*module_names):
@@ -140,3 +77,294 @@ def patched(module_name):
         sys.modules[module_name] = old_module
 
     return result
+
+
+def _green_select(rlist, wlist, xlist, timeout=None):
+    fds = {}
+    for fd in rlist:
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        fds[fd] = 1
+
+    for fd in wlist:
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        if fd in fds:
+            fds[fd] |= 2
+        else:
+            fds[fd] = 2
+
+    events = _multi_wait(fds, timeout=timeout, inmask=1, outmask=2)
+
+    rlist_out, wlist_out = [], []
+    for fd, event in events:
+        if event & 1:
+            rlist_out.append(fd)
+        if event & 2:
+            wlist_out.append(fd)
+
+    return rlist_out, wlist_out, []
+
+_select_patchers = {'select': _green_select}
+
+
+class _green_poll(object):
+    def __init__(self):
+        self._registry = {}
+
+    def modify(self, fd, eventmask):
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        if fd not in self._registry:
+            raise IOError(2, "No such file or directory")
+        self._registry[fd] = eventmask
+
+    def poll(self, timeout=None):
+        if timeout is not None:
+            timeout = float(timeout) / 1000
+        return _multi_wait(self._registry, timeout=timeout,
+                inmask=select.POLLIN, outmask=select.POLLOUT)
+
+    def register(self, fd, eventmask):
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        self._registry[fd] = eventmask
+
+    def unregister(self, fd):
+        fd = fd if isinstance(fd, int) else fd.fileno()
+        del self._registry[fd]
+
+if hasattr(select, "poll"):
+    _select_patchers['poll'] = _green_poll
+
+
+class _green_epoll(object):
+    def __init__(self, from_ep=None):
+        self._readable = utils.Event()
+        self._writable = utils.Event()
+        if from_ep:
+            self._epoll = from_ep
+        else:
+            self._epoll = select.epoll()
+        scheduler.state.descriptormap[self._epoll.fileno()].append(
+                weakref.ref(self))
+
+    def close(self):
+        self._epoll.close()
+
+    @property
+    def closed(self):
+        return self._epoll.closed
+    _closed = closed
+
+    def fileno(self):
+        return self._epoll.fileno()
+
+    @classmethod
+    def fromfd(cls, fd):
+        return cls(from_ep=select.epoll.fromfd(fd))
+
+    def modify(self, fd, eventmask):
+        self._epoll.modify(fd, eventmask)
+
+    def poll(self, timeout=None, maxevents=-1):
+        poller = scheduler.state.poller
+        reg = poller.register(self._epoll.fileno(), poller.INMASK)
+        try:
+            self._readable.wait(timeout=timeout)
+            return self._epoll.poll(0, maxevents)
+        finally:
+            poller.unregister(self._epoll.fileno(), reg)
+
+    def register(self, fd, eventmask):
+        self._epoll.register(fd, eventmask)
+
+    def unregister(self, fd):
+        self._epoll.unregister(fd)
+
+if hasattr(select, "epoll"):
+    _select_patchers['epoll'] = _green_epoll
+
+
+class _green_kqueue(object):
+    def __init__(self, from_kq=None):
+        self._readable = utils.Event()
+        self._writable = utils.Event()
+        if from_kq:
+            self._kqueue = from_kq
+        else:
+            self._kqueue = select.kqueue()
+        scheduler.state.descriptormap[self._kqueue.fileno()].append(
+                weakref.ref(self))
+
+    def close(self):
+        self._kqueue.close()
+
+    @property
+    def closed(self):
+        return self._kqueue.closed
+    _closed = closed
+
+    def control(self, events, max_events, timeout=None):
+        if not max_events:
+            return self._kqueue.control(events, max_events, 0)
+
+        poller = scheduler.state.poller
+        reg = poller.register(self._kqueue.fileno(), poller.INMASK)
+        try:
+            self._readable.wait(timeout=timeout)
+            return self._kqueue.control(events, max_events, 0)
+        finally:
+            poller.unregister(self._kqueue.fileno(), reg)
+
+    def fileno(self):
+        return self._kqueue.fileno()
+
+    @classmethod
+    def fromfd(cls, fd):
+        return cls(from_kq=select.kqueue.fromfd(fd))
+
+if hasattr(select, "kqueue"):
+    _select_patchers['kqueue'] = _green_kqueue
+
+
+# wait for the first of multiple file descriptors with the greenhouse poller
+#
+# fd_map is a dictionary mapping integer file descriptors to masks, which
+# include bitwise ORd 1 for read, 2 for write.
+#
+# if timeout is None it can wait indefinitely, if a nonzero number then it
+# will not wait longer, if zero then the current coroutine will still be
+# paused, but will awake around again in the very next mainloop iteration.
+def _multi_wait(fd_map, timeout=None, inmask=1, outmask=2):
+    current = compat.getcurrent()
+    poller = scheduler.state.poller
+    dmap = scheduler.state.descriptormap
+
+    timer = None
+
+    activated = {}
+    def activate(fd, event):
+        if not activated and (timeout or timeout is None):
+            scheduler.schedule(current)
+            if timer: timer.cancel()
+        activated.setdefault(fd, 0)
+        activated[fd] |= event
+
+    fakesocks = []
+    registrations = {}
+    for fd, events in fd_map.iteritems():
+        fakesock = _FakeSocket()
+        fakesocks.append(fakesock)
+        poller_events = 0
+
+        if events & inmask:
+            fakesock._readable.set = functools.partial(activate, fd, inmask)
+            poller_events |= poller.INMASK
+
+        if events & outmask:
+            fakesock._writable.set = functools.partial(activate, fd, outmask)
+            poller_events |= poller.OUTMASK
+
+        dmap[fd].append(weakref.ref(fakesock))
+
+        registrations[fd] = poller.register(fd, poller_events)
+
+    if timeout is not None and not timeout:
+        # timeout == 0, only pause for 1 loop iteration
+        scheduler.pause()
+    elif timeout:
+        # real timeout value, schedule a timer to bring us back in
+        @utils.Timer.wrap(timeout)
+        def timer():
+            if not activated:
+                scheduler.schedule(current)
+        scheduler.state.mainloop.switch()
+    else:
+        # timeout is None, it's up to _hit_poller->activate to bring us back
+        scheduler.state.mainloop.switch()
+
+    for fd, reg in registrations.iteritems():
+        poller.unregister(fd, reg)
+
+    return activated.items()
+
+
+class _FakeSocket(object):
+    _closed = False
+
+    def __init__(self):
+        self._readable = _FakeEvent()
+        self._writable = _FakeEvent()
+
+class _FakeEvent(object):
+    def set(self):
+        pass
+
+    def clear(self):
+        pass
+
+
+def _green_socketpair(*args, **kwargs):
+    a, b = io.sockets._socketpair(*args, **kwargs)
+    return io.Socket(fromsock=a), io.Socket(fromsock=b)
+
+
+def _green_start(function, args, kwargs=None):
+    glet = scheduler.greenlet(function, args, kwargs)
+    scheduler.schedule(glet)
+    return id(glet)
+
+
+_patchers = {
+    '__builtin__': {
+        'file': io.File,
+        'open': io.File,
+    },
+
+    'socket': {
+        'socket': io.Socket,
+        'socketpair': _green_socketpair,
+        'fromfd': io.sockets.socket_fromfd,
+    },
+
+    'thread': {
+        'allocate_lock': utils.Lock,
+        'allocate': utils.Lock,
+        'start_new_thread': _green_start,
+        'start_new': _green_start,
+    },
+
+    'threading': {
+        'Event': utils.Event,
+        'Lock': utils.Lock,
+        'RLock': utils.RLock,
+        'Condition': utils.Condition,
+        'Semaphore': utils.Semaphore,
+        'BoundedSemaphore': utils.BoundedSemaphore,
+        'Timer': utils.Timer,
+        'Thread': utils.Thread,
+        'local': utils.Local,
+        'enumerate': utils._enumerate_threads,
+        'active_count': utils._active_thread_count,
+        'activeCount': utils._active_thread_count,
+        'current_thread': utils._current_thread,
+        'currentThread': utils._current_thread,
+    },
+
+    'Queue': {
+        'Queue': utils.Queue,
+    },
+
+    'sys': {
+        'stdin': io.files.stdin,
+        'stdout': io.files.stdout,
+        'stderr': io.files.stderr,
+    },
+
+    'select': _select_patchers,
+}
+
+_standard = {}
+for mod_name, patchers in _patchers.items():
+    _standard[mod_name] = {}
+    module = __import__(mod_name)
+    for attr_name, patcher in patchers.items():
+        _standard[mod_name][attr_name] = getattr(module, attr_name, None)
+del mod_name, patchers, module, attr_name, patcher

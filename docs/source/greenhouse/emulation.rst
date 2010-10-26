@@ -22,7 +22,7 @@ without it having to have been explicitly written that way.
     everything it can.
 
     Valid arguments are ``"__builtin__"``, ``"socket"``, ``"thread"``,
-    ``"threading"``, ``"Queue"``, ``"sys"``.
+    ``"threading"``, ``"Queue"``, ``"sys"``, ``"select"``.
 
     Raises a ``ValueError`` if anything else is provided.
 

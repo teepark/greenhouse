@@ -3,13 +3,13 @@ from paver.path import path
 from paver.setuputils import setup
 
 
-VERSION = (0, 5, 1, "")
+VERSION = (0, 5, 2, "")
 
 setup(
     name="greenhouse",
     description="An I/O parallelism library making use of coroutines",
     packages=["greenhouse", "greenhouse.io"],
-    version=".".join(map(str, VERSION)),
+    version=".".join(filter(None, map(str, VERSION))),
     author="Travis Parker",
     author_email="travis.parker@gmail.com",
     url="http://github.com/teepark/greenhouse",

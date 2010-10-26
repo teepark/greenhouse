@@ -1,0 +1,187 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.pool – Managed Greenlet Pools &mdash; greenhouse v0.5.2 documentation</title>
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.5.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse v0.5.2 documentation" href="../index.html" />
+    <link rel="next" title="greenhouse.poller – A Common Interface for epoll/poll/select" href="poller.html" />
+    <link rel="prev" title="greenhouse.utils – Greenlet-Aware Concurrency Primitives" href="utils.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="poller.html" title="greenhouse.poller – A Common Interface for epoll/poll/select"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="utils.html" title="greenhouse.utils – Greenlet-Aware Concurrency Primitives"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.5.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.pool">
+<span id="greenhouse-pool-managed-greenlet-pools"></span><h1><a class="reference internal" href="#module-greenhouse.pool" title="greenhouse.pool"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.pool</span></tt></a> &#8211; Managed Greenlet Pools<a class="headerlink" href="#module-greenhouse.pool" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="greenhouse.pool.OneWayPool">
+<em class="property">class </em><tt class="descclassname">greenhouse.pool.</tt><tt class="descname">OneWayPool</tt><a class="headerlink" href="#greenhouse.pool.OneWayPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>OneWayPool is a pool object whose greenlets accept input, but produce no
+output. This is the most basic kind of pool.</p>
+<p>Instantiate it with a function and optional size integer (default 10). The
+function can take any combination of positional and/or keyword arguments.</p>
+<dl class="method">
+<dt id="greenhouse.pool.OneWayPool.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.pool.OneWayPool.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the greenlets used by the pool and schedules them (they will be
+blocked if the scheduler reaches them before any input is entered for
+the pool).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.pool.OneWayPool.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.pool.OneWayPool.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Destroys the greenlets associated with the pool object. This will be
+called by default when the pool object becomes eligible for garbage
+collection.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.pool.OneWayPool.put">
+<tt class="descname">put</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#greenhouse.pool.OneWayPool.put" title="Permalink to this definition">¶</a></dt>
+<dd><p>The arguments (and keyword arguments) should match what the pool&#8217;s
+function accepts. This will run the pool&#8217;s function in one of the
+pool&#8217;s greenlets.</p>
+</dd></dl>
+
+<p>OneWayPools also support the context manager protocol, simply calling
+<a class="reference internal" href="#greenhouse.pool.OneWayPool.start" title="greenhouse.pool.OneWayPool.start"><tt class="xref py py-meth docutils literal"><span class="pre">start()</span></tt></a> on enter and <a class="reference internal" href="#greenhouse.pool.OneWayPool.close" title="greenhouse.pool.OneWayPool.close"><tt class="xref py py-meth docutils literal"><span class="pre">close()</span></tt></a> on exit.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.pool.Pool">
+<em class="property">class </em><tt class="descclassname">greenhouse.pool.</tt><tt class="descname">Pool</tt><a class="headerlink" href="#greenhouse.pool.Pool" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a subclass of OneWayPool, and the documentation of OneWayPool fully
+applies here (nothing is overridden, including constructor signature).</p>
+<p>What is added is output from the functions run by the pool. The return
+values of the functions are retrievable via the <a class="reference internal" href="#greenhouse.pool.Pool.get" title="greenhouse.pool.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> method.</p>
+<dl class="method">
+<dt id="greenhouse.pool.Pool.get">
+<tt class="descname">get</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.pool.Pool.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a result (return value) from a previous invocation of the pool
+function by one of its greenlets, and remove that result from the queue
+of retrievable results.</p>
+<p>If there are no un-retrieved results, this call blocks until there are,
+or the pool is closed.</p>
+<p>If the pool has already been closed, or if it is closed while this
+greenlet is blocked here, then a RuntimeError is raised.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.pool.OrderedPool">
+<em class="property">class </em><tt class="descclassname">greenhouse.pool.</tt><tt class="descname">OrderedPool</tt><a class="headerlink" href="#greenhouse.pool.OrderedPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Because the various function invocations by the pool may complete in a
+different order than they were started, this subclass of <a class="reference internal" href="#greenhouse.pool.Pool" title="greenhouse.pool.Pool"><tt class="xref py py-class docutils literal"><span class="pre">Pool</span></tt></a>
+guarantees that the order results are pulled via <a class="reference internal" href="#greenhouse.pool.Pool.get" title="greenhouse.pool.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> is the
+same as the order in which they were <a class="reference internal" href="#greenhouse.pool.OneWayPool.put" title="greenhouse.pool.OneWayPool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.pool.map">
+<tt class="descclassname">greenhouse.pool.</tt><tt class="descname">map</tt><big>(</big><em>function</em>, <em>items</em>, <em>pool_size=10</em><big>)</big><a class="headerlink" href="#greenhouse.pool.map" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple wrapper around a short-use OrderedPool, this behaves like the
+built-in <tt class="docutils literal"><span class="pre">map</span></tt> function, but it will run the function invocations in
+greenlets.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="utils.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">greenhouse.utils</span></tt> &#8211; Greenlet-Aware Concurrency Primitives</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="poller.html"
+                        title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">greenhouse.poller</span></tt> &#8211; A Common Interface for epoll/poll/select</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/pool.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="poller.html" title="greenhouse.poller – A Common Interface for epoll/poll/select"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="utils.html" title="greenhouse.utils – Greenlet-Aware Concurrency Primitives"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse v0.5.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Travis J Parker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+    </div>
+  </body>
+</html>

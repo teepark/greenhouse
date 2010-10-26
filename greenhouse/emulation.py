@@ -114,7 +114,7 @@ def patched(module_name):
         return _patched_copy(module_name)
 
     # grab the unpatched version of the module for posterity
-    old_module = sys.modules.pop(module_name)
+    old_module = sys.modules.pop(module_name, None)
 
     # apply all the standard library patches we have
     saved = []

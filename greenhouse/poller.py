@@ -66,7 +66,7 @@ class Poll(object):
             self._registry.pop(fd)
 
     def poll(self, timeout):
-        return self._poller.poll(timeout)
+        return self._poller.poll(timeout * 1000)
 
     def _update_registration(self, fd, from_mask, to_mask):
         if from_mask != to_mask:
@@ -83,6 +83,9 @@ class Epoll(Poll):
     ERRMASK = getattr(select, 'EPOLLERR', 0) | getattr(select, "EPOLLHUP", 0)
 
     _POLLER = getattr(select, "epoll", None)
+
+	def poll(self, timeout):
+		return self._poller.poll(timeout)
 
 
 class KQueue(Poll):

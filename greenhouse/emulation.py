@@ -183,7 +183,42 @@ if hasattr(select, "epoll"):
 
 
 class _green_kqueue(object):
-    pass #TODO
+    def __init__(self, from_kq=None):
+        self._readable = utils.Event()
+        self._writable = utils.Event()
+        if from_kq:
+            self._kqueue = from_kq
+        else:
+            self._kqueue = select.kqueue()
+        scheduler.state.descriptormap[self._kqueue.fileno()].append(
+                weakref.ref(self))
+
+    def close(self):
+        self._kqueue.close()
+
+    @property
+    def closed(self):
+        return self._kqueue.closed
+    _closed = closed
+
+    def control(self, events, max_events, timeout=None):
+        if not max_events:
+            return self._kqueue.control(events, max_events, 0)
+
+        poller = scheduler.state.poller
+        reg = poller.register(self._kqueue.fileno(), poller.INMASK)
+        try:
+            self._readable.wait(timeout=timeout)
+            return self._kqueue.control(events, max_events, 0)
+        finally:
+            poller.unregister(self._kqueue.fileno(), reg)
+
+    def fileno(self):
+        return self._kqueue.fileno()
+
+    @classmethod
+    def fromfd(cls, fd):
+        return cls(from_kq=select.kqueue.fromfd(fd))
 
 if hasattr(select, "kqueue"):
     _select_patchers['kqueue'] = _green_kqueue

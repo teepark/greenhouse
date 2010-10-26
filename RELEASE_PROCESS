@@ -22,20 +22,21 @@ tests pass on all supported platforms.
 3. update docs/source/conf.py's "release"
 4. if the major or minor version changed, update docs/source/conf.py's
    "version"
-5. commit the changes to release-
-6. tag the vX.Y.Z release from the release branch and push to github
+5. run paver minilib to re-generate paver-minilib.zip with the new metadata
+6. commit the changes to release-
+7. tag the vX.Y.Z release from the release branch and push to github
 
-7. build the docs in the release branch
-8. recursive-copy docs/build/html outside of the git repo
-9. checkout the gh-pages branch
-10. copy the built docs into a directory vX.Y.Z
-11. change the 'release' symlink to point to the new directory
-12. git add, commit, and push the new directory up to github's gh-pages
+8. build the docs in the release branch
+9. recursive-copy docs/build/html outside of the git repo
+10. checkout the gh-pages branch
+11. copy the built docs into a directory vX.Y.Z
+12. change the 'release' symlink to point to the new directory
+13. git add, commit, and push the new directory up to github's gh-pages
 
-13. run the sdist setuptools command and upload the new tarball to the PYPI
+14. run the sdist setuptools command and upload the new tarball to the PYPI
 
-14. if the major or minor version changed, create a maintenance-X.Y branch from
+15. if the major or minor version changed, create a maintenance-X.Y branch from
     the release branch and push it to github
-15. otherwise, merge the release- branch into the proper maintenance- branch
-16. merge the release- branch into master
-17. close out all fixed tickets for the release
+16. otherwise, merge the release- branch into the proper maintenance- branch
+17. merge the release- branch into master
+18. close out all fixed tickets for the release

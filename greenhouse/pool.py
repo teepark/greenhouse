@@ -66,12 +66,19 @@ class Pool(OneWayPool):
         super(Pool, self).__init__(*args, **kwargs)
         self.outq = utils.Queue()
 
+    def __iter__(self):
+        while True:
+            try:
+                yield self.get()
+            except _PoolClosedError:
+                return
+
     def _handle_one(self, input):
         self.outq.put(self.run_func(*input))
 
     def get(self):
         if self.closed:
-            raise RuntimeError("the pool is closed")
+            raise _PoolClosedError("the pool is closed")
 
         result, succeeded = self.outq.get()
         if not succeeded:
@@ -125,3 +132,7 @@ def map(func, items, pool_size=10):
 
         for item in items:
             yield op.get()
+
+
+class _PoolClosedError(RuntimeError):
+    pass

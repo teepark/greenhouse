@@ -10,24 +10,34 @@ __all__ = ["OneWayPool", "Pool", "OrderedPool", "map"]
 _STOP = object()
 
 
+class PoolClosed(RuntimeError):
+    pass
+
+
 class OneWayPool(object):
     def __init__(self, func, size=10):
         self.func = func
         self.size = size
         self.inq = utils.Queue()
-        self.closed = False
+        self._closing = False
 
     def start(self):
         for i in xrange(self.size):
             scheduler.schedule(self._runner)
-        self.closed = False
+        self._closing = False
 
     def close(self):
-        self.closed = True
+        self._closing = True
         for i in xrange(self.size):
             self.inq.put(_STOP)
 
     __del__ = close
+
+    @property
+    def closing(self):
+        return self._closing
+
+    closed = closing
 
     def _runner(self):
         while 1:
@@ -70,15 +80,20 @@ class Pool(OneWayPool):
         while True:
             try:
                 yield self.get()
-            except _PoolClosedError:
+            except PoolClosed:
                 return
 
     def _handle_one(self, input):
         self.outq.put(self.run_func(*input))
 
+    @property
+    def closed(self):
+        return self._closing and self.outq.empty() and not \
+                any(x is not _STOP for x in self.inq._data)
+
     def get(self):
         if self.closed:
-            raise _PoolClosedError("the pool is closed")
+            raise PoolClosed()
 
         result, succeeded = self.outq.get()
         if not succeeded:
@@ -90,7 +105,7 @@ class Pool(OneWayPool):
         super(Pool, self).close()
         for waiter in self.outq._waiters:
             scheduler.schedule(compat.getcurrent())
-            waiter.throw(RuntimeError("the pool has been closed"))
+            waiter.throw(PoolClosed())
 
 
 class OrderedPool(Pool):
@@ -110,7 +125,7 @@ class OrderedPool(Pool):
 
     def get(self):
         if self.closed:
-            raise RuntimeError("the pool is closed")
+            raise PoolClosed()
 
         while self._getcount not in self._cache:
             counter, result = self.outq.get()
@@ -132,7 +147,3 @@ def map(func, items, pool_size=10):
 
         for item in items:
             yield op.get()
-
-
-class _PoolClosedError(RuntimeError):
-    pass

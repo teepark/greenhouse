@@ -37,7 +37,9 @@ class OneWayPool(object):
     def closing(self):
         return self._closing
 
-    closed = closing
+    @property
+    def closed(self):
+        return self._closing and self.inq._jobs_done.is_set()
 
     def _runner(self):
         while 1:
@@ -46,6 +48,7 @@ class OneWayPool(object):
                 break
             self._handle_one(input)
             self.inq.task_done()
+        self.inq.task_done()
 
     def _handle_one(self, input):
         self.run_func(*input)
@@ -86,11 +89,6 @@ class Pool(OneWayPool):
     def _handle_one(self, input):
         self.outq.put(self.run_func(*input))
 
-    @property
-    def closed(self):
-        return self._closing and self.outq.empty() and not \
-                any(x is not _STOP for x in self.inq._data)
-
     def get(self):
         if self.closed:
             raise PoolClosed()
@@ -106,6 +104,10 @@ class Pool(OneWayPool):
         for waiter in self.outq._waiters:
             scheduler.schedule(compat.getcurrent())
             waiter.throw(PoolClosed())
+
+    @property
+    def closed(self):
+        return super(Pool, self).closed and self.outq.empty()
 
 
 class OrderedPool(Pool):

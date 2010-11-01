@@ -82,8 +82,8 @@ class Pool(OneWayPool):
     def close(self):
         super(Pool, self).close()
         for waiter in self.outq._waiters:
-            scheduler.schedule(compat.getcurrent())
-            waiter.throw(RuntimeError("the pool has been closed"))
+            scheduler.schedule_exception(
+                    RuntimeError("the pool has been closed"), waiter)
 
 
 class OrderedPool(Pool):

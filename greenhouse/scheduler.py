@@ -13,7 +13,6 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
 
 _exception_handlers = []
 
-FAST_POLL_TIMEOUT = 0.001
 SLOW_POLL_TIMEOUT = 1.0
 
 
@@ -227,14 +226,14 @@ def mainloop():
             break
         try:
             if not state.to_run:
-                _hit_poller(FAST_POLL_TIMEOUT)
+                _hit_poller(0)
                 _check_paused()
 
                 while not state.to_run:
                     # if there are timed-paused greenlets, we can
                     # just wait until the first of them wakes up
                     if state.timed_paused:
-                        until = state.timed_paused[0][0] + FAST_POLL_TIMEOUT
+                        until = state.timed_paused[0][0] + 0.001
                         _hit_poller(until - time.time(), _interruption_check)
                         _check_paused(True)
                     else:

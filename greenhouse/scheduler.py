@@ -197,7 +197,10 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
     return target
 
 def schedule_exception(exception, target):
-    'set a greenlet to have *exception* raised in it'
+    '''set a greenlet to have *exception* raised in it
+
+    *target* must be a greenlet, so unlike schedule(), this can not be a
+    decorator'''
     if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
@@ -206,7 +209,10 @@ def schedule_exception(exception, target):
     state.to_raise[target] = exception
 
 def schedule_exception_at(unixtime, exception, target):
-    'set a greenlet to have *exception* raised in it at *unixtime*'
+    '''set a greenlet to have *exception* raised in it at a timestamp
+
+    *target* must be a greenlet. *exception* will be raised in it sometime
+    after *unixtime*, a timestamp'''
     if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
@@ -215,11 +221,17 @@ def schedule_exception_at(unixtime, exception, target):
     state.to_raise[target] = exception
 
 def schedule_exception_in(secs, exception, target):
-    'set a greenlet t have *exception* raised in it in *secs* seconds'
+    '''set a greenlet have *exception* raised in it *secs* seconds later
+
+    *target* must be a greenlet. *exception* will be raised in it sometime
+    after *secs* seconds have elapsed'''
     schedule_exception_at(time.time() + secs, exception, target)
 
 def end(target):
-    'schedule a GreenletExit to be raised in *target*'
+    '''schedule a greenlet to be killed abruptly
+
+    *target* must be a greenlet. it will immediately be scheduled with a
+    compat.GreenletExit to be raised in it'''
     schedule_exception(compat.GreenletExit(), target)
 
 def schedule_to_top(target=None, args=(), kwargs=None):

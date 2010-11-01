@@ -53,6 +53,26 @@
     Schedules a function (*target* may not be a greenlet here) to be run at
     an interval of *seconds*, with *args* and *kwargs* pre-loaded.
 
+.. function:: schedule_exception(*exception*, *target*)
+
+    Schedules *target*, which must be a greenlet, to have *exception* raised in
+    it immediately.
+
+.. function:: schedule_exception_at(*unixtime*, *exception*, *target*)
+
+    Schedules *target*, which must be a greenlet, to have *exception* raised in
+    it at (or shortly after) *unixtime* timestamp.
+
+.. function:: schedule_exception_in(*seconds*, *exception*, *target*)
+
+    Schedules *target*, which must be a greenlet, to have *exception* raised in
+    it after *seconds* seconds have elapsed.
+
+.. function:: end(*target*)
+
+    Schedules a :class:`GreenletExit <greenhouse.compat.GreenletExit>` to be
+    raised in *target* (a greenlet) immediately, killing *target*.
+
 .. function:: add_exception_handler(handler)
 
     *handler* should be a function accepting 3 arguments *type*, *exception*,

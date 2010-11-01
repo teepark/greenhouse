@@ -9,7 +9,9 @@ from greenhouse import compat
 
 
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
-        "schedule_in", "schedule_recurring", "add_exception_handler", "greenlet"]
+        "schedule_in", "schedule_recurring", "schedule_exception",
+        "schedule_exception_at", "schedule_exception_in", "end",
+        "add_exception_handler", "greenlet"]
 
 _exception_handlers = []
 
@@ -32,6 +34,9 @@ state.descriptormap = collections.defaultdict(list)
 
 # lined up to run right away
 state.to_run = collections.deque()
+
+# exceptions queued up for scheduled coros
+state.to_raise = weakref.WeakKeyDictionary()
 
 
 def _hit_poller(timeout, interruption=None):
@@ -191,6 +196,44 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     return target
 
+def schedule_exception(exception, target):
+    '''set a greenlet to have *exception* raised in it
+
+    *target* must be a greenlet, so unlike schedule(), this can not be a
+    decorator'''
+    if not isinstance(target, compat.greenlet):
+        raise TypeError("can only schedule exceptions for greenlets")
+    if target.dead:
+        raise ValueError("can't send exceptions to a dead greenlet")
+    schedule(target)
+    state.to_raise[target] = exception
+
+def schedule_exception_at(unixtime, exception, target):
+    '''set a greenlet to have *exception* raised in it at a timestamp
+
+    *target* must be a greenlet. *exception* will be raised in it sometime
+    after *unixtime*, a timestamp'''
+    if not isinstance(target, compat.greenlet):
+        raise TypeError("can only schedule exceptions for greenlets")
+    if target.dead:
+        raise ValueError("can't send exceptions to a dead greenlet")
+    schedule_at(unixtime, target)
+    state.to_raise[target] = exception
+
+def schedule_exception_in(secs, exception, target):
+    '''set a greenlet have *exception* raised in it *secs* seconds later
+
+    *target* must be a greenlet. *exception* will be raised in it sometime
+    after *secs* seconds have elapsed'''
+    schedule_exception_at(time.time() + secs, exception, target)
+
+def end(target):
+    '''schedule a greenlet to be killed abruptly
+
+    *target* must be a greenlet. it will immediately be scheduled with a
+    compat.GreenletExit to be raised in it'''
+    schedule_exception(compat.GreenletExit(), target)
+
 def schedule_to_top(target=None, args=(), kwargs=None):
     '''set up a function or greenlet to run, skipping to the front of the line
 
@@ -239,7 +282,12 @@ def mainloop():
                     else:
                         _hit_poller(SLOW_POLL_TIMEOUT, _interruption_check)
 
-            state.to_run.popleft().switch()
+            target = state.to_run.popleft()
+            exc = state.to_raise.pop(target, None)
+            if exc is not None:
+                target.throw(exc)
+            else:
+                target.switch()
         except Exception, exc:
             if sys:
                 _consume_exception(*sys.exc_info())

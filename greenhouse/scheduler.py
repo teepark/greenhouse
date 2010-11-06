@@ -68,7 +68,7 @@ def _hit_poller(timeout, interruption=None):
 
         map(objs.pop, removals[::-1])
         if not objs:
-            state.descriptormap.pop(fd)
+            state.descriptormap.pop(fd, None)
 
         if eventmap & (state.poller.INMASK | state.poller.ERRMASK):
             for sock in socks:

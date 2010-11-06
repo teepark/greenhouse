@@ -71,7 +71,11 @@ class Poll(object):
     def _update_registration(self, fd, from_mask, to_mask):
         if from_mask != to_mask:
             if from_mask:
-                self._poller.unregister(fd)
+                try:
+                    self._poller.unregister(fd)
+                except EnvironmentError, exc:
+                    if exc.args[0] != errno.ENOENT:
+                        raise
             if to_mask:
                 self._poller.register(fd, to_mask)
 

@@ -1,7 +1,7 @@
-from greenhouse.io import files, ipc, sockets
+from greenhouse.io import descriptor, files, ipc, sockets
 
 
-__all__ = ["Socket", "File", "pipe", "stdin", "stdout", "stderr"]
+__all__ = ["Socket", "File", "pipe", "stdin", "stdout", "stderr", "wait_fds"]
 
 
 File = files.File
@@ -12,3 +12,5 @@ stderr = files.stderr
 pipe = ipc.pipe
 
 Socket = sockets.Socket
+
+wait_fds = descriptor.wait_fds

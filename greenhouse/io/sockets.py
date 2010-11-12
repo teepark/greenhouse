@@ -96,14 +96,15 @@ class _InnerSocket(object):
                 raise socket.error(*error.args)
             raise
 
-        yield
-
         try:
-            poller.unregister(self, counter)
-        except EnvironmentError, error:
-            if error.args and error.args[0] in errno.errorcode:
-                raise socket.error(*error.args)
-            raise
+            yield
+        finally:
+            try:
+                poller.unregister(self, counter)
+            except EnvironmentError, error:
+                if error.args and error.args[0] in errno.errorcode:
+                    raise socket.error(*error.args)
+                raise
 
     def accept(self):
         with self._registered('re'):

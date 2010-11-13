@@ -19,24 +19,25 @@ tests pass on all supported platforms.
 
 1. update pavement.py's "VERSION"
 2. update greenhouse/__init__.py's "VERSION"
-3. update docs/source/conf.py's "release"
-4. if the major or minor version changed, update docs/source/conf.py's
+3. update RELEASE_NOTES with a summary of changes since the previous release
+4. update docs/source/conf.py's "release"
+5. if the major or minor version changed, update docs/source/conf.py's
    "version"
-5. run paver minilib to re-generate paver-minilib.zip with the new metadata
-6. commit the changes to release-
-7. tag the vX.Y.Z release from the release branch and push to github
+6. run paver minilib to re-generate paver-minilib.zip with the new metadata
+7. commit the changes to release-
+8. tag the vX.Y.Z release from the release branch and push to github
 
-8. build the docs in the release branch
-9. recursive-copy docs/build/html outside of the git repo
-10. checkout the gh-pages branch
-11. copy the built docs into a directory vX.Y.Z
-12. change the 'release' symlink to point to the new directory
-13. git add, commit, and push the new directory up to github's gh-pages
+9. build the docs in the release branch
+10. recursive-copy docs/build/html outside of the git repo
+11. checkout the gh-pages branch
+12. copy the built docs into a directory vX.Y.Z
+13. change the 'release' symlink to point to the new directory
+14. git add, commit, and push the new directory up to github's gh-pages
 
-14. run the sdist setuptools command and upload the new tarball to the PYPI
+15. run the sdist setuptools command and upload the new tarball to the PYPI
 
-15. if the major or minor version changed, create a maintenance-X.Y branch from
+16. if the major or minor version changed, create a maintenance-X.Y branch from
     the release branch and push it to github
-16. otherwise, merge the release- branch into the proper maintenance- branch
-17. merge the release- branch into master
-18. close out all fixed tickets for the release
+17. otherwise, merge the release- branch into the proper maintenance- branch
+18. merge the release- branch into master
+19. close out all fixed tickets for the release

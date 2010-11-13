@@ -1,0 +1,16 @@
+0.5.0 (10/12/2010)
+    - first official release
+
+0.5.1 (10/12/2010)
+    - simple packaging fix
+
+0.5.2 (10/25/2010)
+    - fixes to emulation.patched
+    - fixed a bug with timeouts in the poll-based poller where it used
+      seconds where the poll syscall uses milliseconds, so it was
+      blocking for 1/1000th of the requested time
+    - fixed a bug where coroutines blocked on pool.Pool.get or
+      pool.OrderedPool.get would remain blocked indefinitely if the pool
+      was close()d.
+    - fixed bugs with the cleanup of IO objects (sockets, files, pipes,
+      etc)

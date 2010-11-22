@@ -101,6 +101,7 @@ class Event(object):
             def timer():
                 self._remove_timer(timer_key)
                 awoken[0] = True
+                self._waiters.remove(current)
                 current.switch()
 
             timer_key = self._add_timer(timer)

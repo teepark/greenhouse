@@ -1,6 +1,8 @@
 import bisect
 import collections
 import errno
+import itertools
+import operator
 import sys
 import time
 import weakref
@@ -11,7 +13,7 @@ from greenhouse import compat
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_in", "schedule_recurring", "schedule_exception",
         "schedule_exception_at", "schedule_exception_in", "end",
-        "add_exception_handler", "greenlet"]
+        "add_exception_handler", "greenlet", "handle_exception"]
 
 _exception_handlers = []
 
@@ -290,10 +292,11 @@ def mainloop():
                 target.switch()
         except Exception, exc:
             if sys:
-                _consume_exception(*sys.exc_info())
+                handle_exception(*sys.exc_info())
 state.mainloop = mainloop
 
-def _consume_exception(klass, exc, tb):
+def handle_exception(klass, exc, tb):
+    "run all registered exception handlers"
     _purge_exception_handlers()
 
     for weak in _exception_handlers:
@@ -305,9 +308,8 @@ def _consume_exception(klass, exc, tb):
             pass
 
 def _purge_exception_handlers():
-    bad = [i for i, weak in enumerate(_exception_handlers) if weak() is None]
-    for i in bad[::-1]:
-        _exception_handlers.pop(i)
+    _exception_handlers = filter(itertools.imap(
+        operator.methodcaller("__call__"), _exception_handlers))
 
 def add_exception_handler(handler):
     if not hasattr(handler, "__call__"):

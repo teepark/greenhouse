@@ -82,3 +82,17 @@
 
     A good one to add is in the standard library:
     ``traceback.print_exception``.
+
+.. function:: handle_exception(klass, exc, tb)
+
+    *klass* is an ``Exception`` subclass, the class of the exception to handle
+
+    *exc* is the ``klass`` instance raised
+
+    *tb* is the traceback object
+
+    These 3 arguments are exactly what is returned from ``sys.exc_info()``
+    after an exception is raised.
+
+    This function runs all the handlers registered through
+    :meth:`add_exception_handler`.

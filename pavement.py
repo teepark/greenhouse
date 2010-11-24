@@ -53,6 +53,7 @@ def clean():
 
 @task
 def docs():
+    sh("find docs -name *.rst | xargs touch")
     sh("cd docs; make html")
 
 @task

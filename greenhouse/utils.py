@@ -1,6 +1,7 @@
 import bisect
 import collections
 import functools
+from Queue import Empty, Full
 import time
 import weakref
 
@@ -510,14 +511,14 @@ def _current_thread():
 class Queue(object):
     """a producer-consumer queue
 
-    mirrors the standard library Queue.Queue API
+    :param maxsize:
+        optional limit to the amount of queued data, after which :meth:`put`
+        can block. the default of 0 turns off the limit, so :meth:`put` will
+        never block
+    :type maxsize: int
+
+    mirrors the standard library `Queue.Queue` API
     """
-    class Empty(Exception):
-        pass
-
-    class Full(Exception):
-        pass
-
     def __init__(self, maxsize=0):
         self._maxsize = maxsize
         self._waiters = collections.deque()
@@ -549,7 +550,7 @@ class Queue(object):
         """
         if not self._data:
             if not blocking:
-                raise self.Empty()
+                raise Empty()
 
             glet = compat.getcurrent()
             self._waiters.append(glet)
@@ -558,7 +559,7 @@ class Queue(object):
                 @Timer.wrap(timeout)
                 def timer():
                     self._waiters.remove(glet)
-                    glet.throw(self.Empty)
+                    glet.throw(Empty)
 
             scheduler.state.mainloop.switch()
 
@@ -596,7 +597,7 @@ class Queue(object):
                 @Timer.wrap(timeout)
                 def timer():
                     sef._waiters.remove(glet)
-                    glet.throw(self.Full)
+                    glet.throw(Full)
 
             scheduler.state.mainloop.switch()
 
@@ -659,8 +660,7 @@ class Channel(object):
     @property
     def balance(self):
         "indicates the # of senders (positive) or waiters (negative) blocked"
-        return self._dataqueue and len(self._dataqueue) or \
-                -len(self._waiters)
+        return len(self._dataqueue) or -len(self._waiters)
 
     def close(self):
         "close the channel, ending new communications"

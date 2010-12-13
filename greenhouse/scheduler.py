@@ -16,7 +16,7 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
 
 _exception_handlers = []
 
-SLOW_POLL_TIMEOUT = 1.0
+POLL_TIMEOUT = 1.0
 
 
 state = type('GreenhouseState', (), {})()
@@ -281,7 +281,7 @@ def mainloop():
                         _hit_poller(until - time.time(), _interruption_check)
                         _check_paused(True)
                     else:
-                        _hit_poller(SLOW_POLL_TIMEOUT, _interruption_check)
+                        _hit_poller(POLL_TIMEOUT, _interruption_check)
 
             target = state.to_run.popleft()
             exc = state.to_raise.pop(target, None)

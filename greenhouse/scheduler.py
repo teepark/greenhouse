@@ -1,7 +1,6 @@
 import bisect
 import collections
 import errno
-import itertools
 import operator
 import sys
 import time
@@ -308,8 +307,8 @@ def handle_exception(klass, exc, tb):
             pass
 
 def _purge_exception_handlers():
-    _exception_handlers = filter(itertools.imap(
-        operator.methodcaller("__call__"), _exception_handlers))
+    globals()['_exception_handlers'] = [weak for weak in _exception_handlers
+            if weak()]
 
 def add_exception_handler(handler):
     if not hasattr(handler, "__call__"):

@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 import Queue
 import select
 import socket
@@ -206,7 +208,7 @@ class PatchedModules(StateClearingTestCase):
         assert logging.threading.currentThread is threading.currentThread
 
     def test_socketserver(self):
-        green = emulation.patched("SocketServer")
+        green = emulation.patched("asyncore")
         assert green.select.select is emulation._green_select
         assert getattr(green.select, "poll", emulation._green_poll) is \
                 emulation._green_poll

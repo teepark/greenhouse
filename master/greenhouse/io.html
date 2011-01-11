@@ -368,6 +368,18 @@ descriptor for use in cooperative stdout IO.</p>
 <a class="reference internal" href="#greenhouse.io.File" title="greenhouse.io.File"><tt class="xref py py-class docutils literal"><span class="pre">File</span></tt></a> objects <tt class="docutils literal"><span class="pre">(read,</span> <span class="pre">write)</span></tt> for the two ends of the pipe.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="greenhouse.io.wait_fds">
+<tt class="descclassname">greenhouse.io.</tt><tt class="descname">wait_fds</tt><big>(</big><em>fd_events</em>, <em>inmask=1</em>, <em>outmask=2</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.io.wait_fds" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>fd_events</em> is a list of two-tuples, each one a file descriptor and a mask
+made up of <em>inmask</em> and <em>outmask</em>.</p>
+<p>The function will block until one of the file descriptors has the relevant
+activity, no longer than <em>timeout</em>, if it is specified.</p>
+<p>The return value is a list of two-tuples, each a file descriptor and the
+event mask (also made up of <em>inmask</em> and <em>outmask</em>) that represents the
+actual activity.</p>
+</dd></dl>
+
 </div>
 
 

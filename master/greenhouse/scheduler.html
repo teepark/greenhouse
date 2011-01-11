@@ -150,6 +150,18 @@ be called with the relevant type/exception/traceback.</p>
 <tt class="docutils literal"><span class="pre">traceback.print_exception</span></tt>.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="greenhouse.scheduler.handle_exception">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">handle_exception</tt><big>(</big><em>klass</em>, <em>exc</em>, <em>tb</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.handle_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>klass</em> is an <tt class="docutils literal"><span class="pre">Exception</span></tt> subclass, the class of the exception to handle</p>
+<p><em>exc</em> is the <tt class="docutils literal"><span class="pre">klass</span></tt> instance raised</p>
+<p><em>tb</em> is the traceback object</p>
+<p>These 3 arguments are exactly what is returned from <tt class="docutils literal"><span class="pre">sys.exc_info()</span></tt>
+after an exception is raised.</p>
+<p>This function runs all the handlers registered through
+<a class="reference internal" href="#greenhouse.scheduler.add_exception_handler" title="greenhouse.scheduler.add_exception_handler"><tt class="xref py py-meth docutils literal"><span class="pre">add_exception_handler()</span></tt></a>.</p>
+</dd></dl>
+
 </div>
 
 

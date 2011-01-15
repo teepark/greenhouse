@@ -42,6 +42,11 @@
     What is added is output from the functions run by the pool. The return
     values of the functions are retrievable via the :meth:`get` method.
 
+    Pool (and its subclass OrderedPool) is iterable as well -- it will produce
+    the output of get() calls until the pool is both closed and the results
+    have been exhausted (beware with this feature, it is really easy to get
+    into an infinite loop).
+
     .. method:: get()
 
         Retrieve a result (return value) from a previous invocation of the pool

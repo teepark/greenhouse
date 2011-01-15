@@ -10,24 +10,36 @@ __all__ = ["OneWayPool", "Pool", "OrderedPool", "map"]
 _STOP = object()
 
 
+class PoolClosed(RuntimeError):
+    pass
+
+
 class OneWayPool(object):
     def __init__(self, func, size=10):
         self.func = func
         self.size = size
         self.inq = utils.Queue()
-        self.closed = False
+        self._closing = False
 
     def start(self):
         for i in xrange(self.size):
             scheduler.schedule(self._runner)
-        self.closed = False
+        self._closing = False
 
     def close(self):
-        self.closed = True
+        self._closing = True
         for i in xrange(self.size):
             self.inq.put(_STOP)
 
     __del__ = close
+
+    @property
+    def closing(self):
+        return self._closing
+
+    @property
+    def closed(self):
+        return self._closing and self.inq._jobs_done.is_set()
 
     def _runner(self):
         while 1:
@@ -36,6 +48,7 @@ class OneWayPool(object):
                 break
             self._handle_one(input)
             self.inq.task_done()
+        self.inq.task_done()
 
     def _handle_one(self, input):
         self.run_func(*input)
@@ -66,12 +79,19 @@ class Pool(OneWayPool):
         super(Pool, self).__init__(*args, **kwargs)
         self.outq = utils.Queue()
 
+    def __iter__(self):
+        while True:
+            try:
+                yield self.get()
+            except PoolClosed:
+                return
+
     def _handle_one(self, input):
         self.outq.put(self.run_func(*input))
 
     def get(self):
         if self.closed:
-            raise RuntimeError("the pool is closed")
+            raise PoolClosed()
 
         result, succeeded = self.outq.get()
         if not succeeded:
@@ -82,8 +102,11 @@ class Pool(OneWayPool):
     def close(self):
         super(Pool, self).close()
         for waiter in self.outq._waiters:
-            scheduler.schedule_exception(
-                    RuntimeError("the pool has been closed"), waiter)
+            scheduler.schedule_exception(PoolClosed(), waiter)
+
+    @property
+    def closed(self):
+        return super(Pool, self).closed and self.outq.empty()
 
 
 class OrderedPool(Pool):
@@ -103,7 +126,7 @@ class OrderedPool(Pool):
 
     def get(self):
         if self.closed:
-            raise RuntimeError("the pool is closed")
+            raise PoolClosed()
 
         while self._getcount not in self._cache:
             counter, result = self.outq.get()

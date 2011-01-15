@@ -241,3 +241,15 @@
 
     Creates an inter-process communication pipe, returning it as a pair of
     :class:`File` objects ``(read, write)`` for the two ends of the pipe.
+
+.. function:: wait_fds(fd_events, inmask=1, outmask=2, timeout=None)
+
+    *fd_events* is a list of two-tuples, each one a file descriptor and a mask
+    made up of *inmask* and *outmask*.
+
+    The function will block until one of the file descriptors has the relevant
+    activity, no longer than *timeout*, if it is specified.
+
+    The return value is a list of two-tuples, each a file descriptor and the
+    event mask (also made up of *inmask* and *outmask*) that represents the
+    actual activity.

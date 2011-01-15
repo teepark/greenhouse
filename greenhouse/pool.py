@@ -102,8 +102,7 @@ class Pool(OneWayPool):
     def close(self):
         super(Pool, self).close()
         for waiter in self.outq._waiters:
-            scheduler.schedule(compat.getcurrent())
-            waiter.throw(PoolClosed())
+            scheduler.schedule_exception(PoolClosed(), waiter)
 
     @property
     def closed(self):

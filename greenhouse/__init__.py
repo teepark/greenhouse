@@ -9,9 +9,9 @@ from greenhouse.emulation import *
 from greenhouse.backdoor import *
 
 
-VERSION = (0, 5, 2, '')
+VERSION = (0, 6, 0, '')
 
-__version__ = ".".join(filter(None, map(str, VERSION)))
+__version__ = ".".join(filter(None, (str(x) for x in VERSION)))
 
 # prime the pump. if there is a traceback before the mainloop greenlet
 # has a chance to get into its 'try' block, the mainloop will die of that

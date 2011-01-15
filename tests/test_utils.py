@@ -6,6 +6,7 @@ import unittest
 
 import greenhouse
 import greenhouse.poller
+from greenhouse import utils
 
 from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
@@ -476,21 +477,21 @@ class QueueTestCase(StateClearingTestCase):
 
     def test_nonblocking_raises_empty(self):
         q = greenhouse.Queue()
-        self.assertRaises(q.Empty, q.get_nowait)
+        self.assertRaises(utils.Empty, q.get_nowait)
 
     def test_nonblocking_raises_full(self):
         q = greenhouse.Queue(2)
         q.put(1)
         q.put(2)
 
-        self.assertRaises(q.Full, q.put_nowait, 3)
+        self.assertRaises(utils.Full, q.put_nowait, 3)
 
     def test_put_sized_nonblocking(self):
         q = greenhouse.Queue(3)
         q.put(4)
         q.put(5)
         q.put(6)
-        self.assertRaises(q.Full, q.put, 7, blocking=False)
+        self.assertRaises(utils.Full, q.put, 7, blocking=False)
 
     def test_put_sized_blocking(self):
         l = [False]
@@ -515,7 +516,7 @@ class QueueTestCase(StateClearingTestCase):
 
     def test_timeout(self):
         q = greenhouse.Queue()
-        self.assertRaises(q.Empty, q.get, timeout=TESTING_TIMEOUT)
+        self.assertRaises(utils.Empty, q.get, timeout=TESTING_TIMEOUT)
 
     def test_joins(self):
         l = [False]

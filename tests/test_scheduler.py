@@ -237,27 +237,8 @@ class ScheduleMixin(object):
 
         self.assertEqual(l, [1, 2])
 
+    class CustomError(Exception): pass
 
-class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):
-    POLLER = greenhouse.poller.Select
-
-
-if greenhouse.poller.Poll._POLLER:
-    class ScheduleTestsWithPoll(ScheduleMixin, StateClearingTestCase):
-        POLLER = greenhouse.poller.Poll
-
-
-if greenhouse.poller.Epoll._POLLER:
-    class ScheduleTestsWithEpoll(ScheduleMixin, StateClearingTestCase):
-        POLLER = greenhouse.poller.Epoll
-
-
-if greenhouse.poller.KQueue._POLLER:
-    class ScheduleTestsWithKQueue(ScheduleMixin, StateClearingTestCase):
-        POLLER = greenhouse.poller.KQueue
-
-
-class PausingTestCase(StateClearingTestCase):
     def test_pause(self):
         l = [False]
 
@@ -280,9 +261,6 @@ class PausingTestCase(StateClearingTestCase):
         greenhouse.pause_until(until)
         assert until + 0.03 > time.time() >= until
 
-class ExceptionsTestCase(StateClearingTestCase):
-    class CustomError(Exception): pass
-
     def test_exceptions_raised_in_grlets(self):
         l = [False]
 
@@ -297,6 +275,169 @@ class ExceptionsTestCase(StateClearingTestCase):
         greenhouse.pause()
 
         assert not l[0]
+
+    def test_schedule_exception(self):
+        l = [False]
+        exc = []
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def glet():
+            try:
+                greenhouse.pause()
+            except Exception, err:
+                exc.append(err)
+                return
+            l[0] = True
+
+        greenhouse.pause()
+        greenhouse.schedule_exception(self.CustomError(), glet)
+
+        greenhouse.pause()
+
+        assert not l[0]
+        assert isinstance(exc[0], self.CustomError), exc
+
+    def test_schedule_exception_rejects_funcs(self):
+        def f(): pass
+        self.assertRaises(
+                TypeError, greenhouse.schedule_exception, Exception(), f)
+
+    def test_schedule_exception_rejects_dead_glets(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            pass
+
+        greenhouse.pause()
+        self.assertRaises(
+                ValueError, greenhouse.schedule_exception, Exception(), g)
+
+    def test_schedule_exception_in(self):
+        l = [False]
+        excs = []
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def glet():
+            try:
+                greenhouse.pause_for(TESTING_TIMEOUT * 2)
+            except Exception, exc:
+                excs.append(exc)
+                return
+            l[0] = True
+
+        greenhouse.pause()
+        greenhouse.schedule_exception_in(
+                TESTING_TIMEOUT, self.CustomError(), glet)
+
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
+
+        assert not l[0]
+        assert isinstance(excs[0], self.CustomError), excs
+
+    def test_schedule_exception_in_rejects_funcs(self):
+        def f(): pass
+        self.assertRaises(
+                TypeError, greenhouse.schedule_exception_in, 1, Exception(), f)
+
+    def test_schedule_exception_in_rejects_dead_glets(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            pass
+
+        greenhouse.pause()
+        self.assertRaises(
+                ValueError, greenhouse.schedule_exception_in, 1, Exception(), g)
+
+    def test_schedule_exception_at(self):
+        l = [False]
+        excs = []
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def glet():
+            try:
+                greenhouse.pause_until(time.time() + TESTING_TIMEOUT * 2)
+            except Exception, exc:
+                excs.append(exc)
+                return
+            l[0] = True
+
+        greenhouse.pause()
+        greenhouse.schedule_exception_at(
+                time.time() + TESTING_TIMEOUT, self.CustomError(), glet)
+
+        greenhouse.pause_until(time.time() + TESTING_TIMEOUT * 2)
+
+        assert not l[0]
+        assert isinstance(excs[0], self.CustomError), excs
+
+    def test_schedule_exception_at_rejects_funcs(self):
+        def f(): pass
+        self.assertRaises(
+                TypeError, greenhouse.schedule_exception_at,
+                time.time() + 1, Exception(), f)
+
+    def test_schedule_exception_at_rejects_dead_glets(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            pass
+
+        greenhouse.pause()
+        self.assertRaises(
+                ValueError, greenhouse.schedule_exception_at,
+                time.time() + 1, Exception(), g)
+
+    def test_end(self):
+        l = [False]
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def glet():
+            greenhouse.pause()
+            l[0] = True
+
+        greenhouse.pause()
+        greenhouse.end(glet)
+
+        greenhouse.pause()
+
+        assert not l[0]
+
+    def test_end_rejects_funcs(self):
+        def f(): pass
+        self.assertRaises(TypeError, greenhouse.end, f)
+
+    def test_end_rejects_dead_glets(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            pass
+
+        greenhouse.pause()
+        self.assertRaises(ValueError, greenhouse.end, g)
+
+
+class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):
+    POLLER = greenhouse.poller.Select
+
+
+if greenhouse.poller.Poll._POLLER:
+    class ScheduleTestsWithPoll(ScheduleMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Poll
+
+
+if greenhouse.poller.Epoll._POLLER:
+    class ScheduleTestsWithEpoll(ScheduleMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Epoll
+
+
+if greenhouse.poller.KQueue._POLLER:
+    class ScheduleTestsWithKQueue(ScheduleMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.KQueue
 
 
 if __name__ == '__main__':

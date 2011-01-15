@@ -53,6 +53,26 @@
     Schedules a function (*target* may not be a greenlet here) to be run at
     an interval of *seconds*, with *args* and *kwargs* pre-loaded.
 
+.. function:: schedule_exception(*exception*, *target*)
+
+    Schedules *target*, which must be a greenlet, to have *exception* raised in
+    it immediately.
+
+.. function:: schedule_exception_at(*unixtime*, *exception*, *target*)
+
+    Schedules *target*, which must be a greenlet, to have *exception* raised in
+    it at (or shortly after) *unixtime* timestamp.
+
+.. function:: schedule_exception_in(*seconds*, *exception*, *target*)
+
+    Schedules *target*, which must be a greenlet, to have *exception* raised in
+    it after *seconds* seconds have elapsed.
+
+.. function:: end(*target*)
+
+    Schedules a :class:`GreenletExit <greenhouse.compat.GreenletExit>` to be
+    raised in *target* (a greenlet) immediately, killing *target*.
+
 .. function:: add_exception_handler(handler)
 
     *handler* should be a function accepting 3 arguments *type*, *exception*,
@@ -62,3 +82,17 @@
 
     A good one to add is in the standard library:
     ``traceback.print_exception``.
+
+.. function:: handle_exception(klass, exc, tb)
+
+    *klass* is an ``Exception`` subclass, the class of the exception to handle
+
+    *exc* is the ``klass`` instance raised
+
+    *tb* is the traceback object
+
+    These 3 arguments are exactly what is returned from ``sys.exc_info()``
+    after an exception is raised.
+
+    This function runs all the handlers registered through
+    :meth:`add_exception_handler`.

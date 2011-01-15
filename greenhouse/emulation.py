@@ -1,4 +1,3 @@
-import functools
 import select
 import sys
 import types
@@ -92,7 +91,7 @@ def _green_select(rlist, wlist, xlist, timeout=None):
         else:
             fds[fd] = 2
 
-    events = _multi_wait(fds, timeout=timeout, inmask=1, outmask=2)
+    events = io.wait_fds(fds.items(), timeout=timeout, inmask=1, outmask=2)
 
     rlist_out, wlist_out = [], []
     for fd, event in events:
@@ -119,7 +118,7 @@ class _green_poll(object):
     def poll(self, timeout=None):
         if timeout is not None:
             timeout = float(timeout) / 1000
-        return _multi_wait(self._registry, timeout=timeout,
+        return io.wait_fds(self._registry.items(), timeout=timeout,
                 inmask=select.POLLIN, outmask=select.POLLOUT)
 
     def register(self, fd, eventmask):
@@ -222,83 +221,6 @@ class _green_kqueue(object):
 
 if hasattr(select, "kqueue"):
     _select_patchers['kqueue'] = _green_kqueue
-
-
-# wait for the first of multiple file descriptors with the greenhouse poller
-#
-# fd_map is a dictionary mapping integer file descriptors to masks, which
-# include bitwise ORd 1 for read, 2 for write.
-#
-# if timeout is None it can wait indefinitely, if a nonzero number then it
-# will not wait longer, if zero then the current coroutine will still be
-# paused, but will awake around again in the very next mainloop iteration.
-def _multi_wait(fd_map, timeout=None, inmask=1, outmask=2):
-    current = compat.getcurrent()
-    poller = scheduler.state.poller
-    dmap = scheduler.state.descriptormap
-
-    timer = None
-
-    activated = {}
-    def activate(fd, event):
-        if not activated and (timeout or timeout is None):
-            scheduler.schedule(current)
-            if timer: timer.cancel()
-        activated.setdefault(fd, 0)
-        activated[fd] |= event
-
-    fakesocks = []
-    registrations = {}
-    for fd, events in fd_map.iteritems():
-        fakesock = _FakeSocket()
-        fakesocks.append(fakesock)
-        poller_events = 0
-
-        if events & inmask:
-            fakesock._readable.set = functools.partial(activate, fd, inmask)
-            poller_events |= poller.INMASK
-
-        if events & outmask:
-            fakesock._writable.set = functools.partial(activate, fd, outmask)
-            poller_events |= poller.OUTMASK
-
-        dmap[fd].append(weakref.ref(fakesock))
-
-        registrations[fd] = poller.register(fd, poller_events)
-
-    if timeout is not None and not timeout:
-        # timeout == 0, only pause for 1 loop iteration
-        scheduler.pause()
-    elif timeout:
-        # real timeout value, schedule a timer to bring us back in
-        @utils.Timer.wrap(timeout)
-        def timer():
-            if not activated:
-                scheduler.schedule(current)
-        scheduler.state.mainloop.switch()
-    else:
-        # timeout is None, it's up to _hit_poller->activate to bring us back
-        scheduler.state.mainloop.switch()
-
-    for fd, reg in registrations.iteritems():
-        poller.unregister(fd, reg)
-
-    return activated.items()
-
-
-class _FakeSocket(object):
-    _closed = False
-
-    def __init__(self):
-        self._readable = _FakeEvent()
-        self._writable = _FakeEvent()
-
-class _FakeEvent(object):
-    def set(self):
-        pass
-
-    def clear(self):
-        pass
 
 
 def _green_socketpair(*args, **kwargs):

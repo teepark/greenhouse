@@ -243,6 +243,11 @@ class SocketPollerMixin(object):
             else:
                 assert 0
 
+    def test_fd_poller_cleanup_with_exception(self):
+        sock = greenhouse.Socket()
+        self.assertRaises(socket.error, sock.connect, ("", 893748))
+        assert sock.fileno() not in greenhouse.scheduler.state.poller._registry
+
 
 if greenhouse.poller.Epoll._POLLER:
     class EpollSocketTestCase(SocketPollerMixin, StateClearingTestCase):

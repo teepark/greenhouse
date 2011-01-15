@@ -246,6 +246,30 @@ class PoolTestCase(OneWayPoolTestCase):
 
         assert raised[0]
 
+    def test_iteration(self):
+        def runner(x):
+            if x > 10:
+                pool.close()
+            return x ** 2
+
+        def putter(pool):
+            i = 0
+            while 1:
+                i += 1
+                pool.put(i)
+                greenhouse.pause()
+
+        pool = self.POOL(runner, 3)
+        pool.start()
+
+        greenhouse.schedule(putter, args=(pool,))
+
+        results = []
+        for item in pool:
+            results.append(item)
+
+        self.assertEqual(results, [x ** 2 for x in xrange(1, 11)])
+
 
 class OrderedPoolTestCase(PoolTestCase):
     POOL = greenhouse.OrderedPool

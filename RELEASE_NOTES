@@ -14,3 +14,33 @@
       was close()d.
     - fixed bugs with the cleanup of IO objects (sockets, files, pipes,
       etc)
+
+0.6.0 (1/14/2011)
+    - new backdoor module
+        - backdoor.run_backdoor creates a small server that runs a
+          python interpreter in any connections made to it
+        - backdoor.backdoor_handler takes an already-connected socket
+          and runs a python interpreter over it
+    - some fixes to utils.Channel, and then promoted it to the global
+      greenhouse namespace and added documentation.
+    - there was a bug in re-starting pools, calling start() after a call
+      to close() now works
+    - fix to emulation.patched -- it only worked on pre-imported stdlib
+      modules before
+    - new things emulated:
+        - select.select
+        - select.poll
+        - select.epoll
+        - select.kqueue
+    - new functions for sending an exception to another coroutine
+        - scheduler.schedule_exception
+        - scheduler.schedule_exception_in
+        - scheduler.schedule_exception_at
+        - and scheduler.end exits the targeted coroutine immediately
+    - new function io.wait_fds blocks the current coroutine waiting
+      directly on file descriptor integers
+    - new function scheduler.handle_exception performs the same handling
+      on the provided exception as if it were unhandled and ended the
+      coroutine (using the registered handlers)
+    - utils.Queue uses the Empty and Full exception classes from the
+      stdlib Queue module, and the emulation doesn't patch them any more

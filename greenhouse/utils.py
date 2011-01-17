@@ -445,6 +445,21 @@ class Timer(object):
         self.cancelled = False
         scheduler.schedule_at(waketime, glet)
 
+    @classmethod
+    def _remove_from_timedout(cls, waketime, glet):
+        tp = scheduler.state.timed_paused
+        if not tp:
+            return False
+        index = bisect.bisect(tp, (waketime, None))
+        if tp[index][1].run is glet.run:
+            tp[index:index + 1] = []
+        else:
+            try:
+                scheduler.state.to_run.remove(glet)
+            except ValueError:
+                return False
+        return True
+
     def cancel(self):
         """attempt to prevent the timer from ever running its function
 
@@ -452,19 +467,10 @@ class Timer(object):
             ``True`` if it was successful, ``False`` if the timer had already
             run or been cancelled
         """
-        tp = scheduler.state.timed_paused
-        if self.cancelled or not tp:
+        if self.cancelled:
             return False
         self.cancelled = True
-        index = bisect.bisect(tp, (self.waketime, None))
-        if tp[index][1].run is self.run:
-            tp[index:index + 1] = []
-        else:
-            try:
-                scheduler.state.to_run.remove(self._glet)
-            except ValueError:
-                return False
-        return True
+        return self._remove_from_timedout(self.waketime, self._glet)
 
     @classmethod
     def wrap(cls, secs, args=(), kwargs=None):

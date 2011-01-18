@@ -37,7 +37,7 @@ class Event(object):
     """
     def __init__(self):
         self._is_set = False
-        self._waiters = set()
+        self._waiters = []
 
     def is_set(self):
         """indicates whether waiting on the event will block right now
@@ -59,7 +59,7 @@ class Event(object):
         """
         self._is_set = True
         scheduler.state.awoken_from_events.update(x[0] for x in self._waiters)
-        self._waiters = set()
+        self._waiters = []
 
     def clear(self):
         """clear the event from being triggered
@@ -92,12 +92,14 @@ class Event(object):
         if timeout is not None:
             scheduler.schedule_at(waketime, current)
 
-        self._waiters.add((current, waketime))
+        self._waiters.append((current, waketime))
         scheduler.state.mainloop.switch()
 
         if timeout is not None:
-            self._waiters.discard((current, waketime))
-            return not Timer._remove_from_timedout(waketime, current)
+            timedout = not Timer._remove_from_timedout(waketime, current)
+            if timedout:
+                self._waiters.remove((current, waketime))
+            return timedout
 
         return False
 

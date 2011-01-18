@@ -103,7 +103,7 @@ class EventsTestCase(StateClearingTestCase):
 
         assert l[0]
 
-        self.assertEqual(ev._waiters, set())
+        self.assertEqual(ev._waiters, [])
 
 class LockTestCase(StateClearingTestCase):
     LOCK = greenhouse.Lock

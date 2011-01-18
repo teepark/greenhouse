@@ -273,6 +273,11 @@ class SelectSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         greenhouse.poller.set(greenhouse.poller.Select())
 
 class FilePollerMixin(object):
+    def setUp(self):
+        super(FilePollerMixin, self).setUp()
+        self.fname = tempfile.mktemp()
+        greenhouse.poller.set(self.POLLER())
+
     def tearDown(self):
         super(FilePollerMixin, self).tearDown()
         if os.path.exists(self.fname):
@@ -428,32 +433,24 @@ test""")
 
 if greenhouse.poller.Epoll._POLLER:
     class FileWithEpollTestCase(FilePollerMixin, StateClearingTestCase):
-        def setUp(self):
-            StateClearingTestCase.setUp(self)
-            self.fname = tempfile.mktemp()
-            greenhouse.poller.set(greenhouse.poller.Epoll())
+        POLLER = greenhouse.poller.Epoll
 
 if greenhouse.poller.Poll._POLLER:
     class FileWithPollTestCase(FilePollerMixin, StateClearingTestCase):
-        def setUp(self):
-            StateClearingTestCase.setUp(self)
-            self.fname = tempfile.mktemp()
-            greenhouse.poller.set(greenhouse.poller.Poll())
+        POLLER = greenhouse.poller.Poll
 
 if greenhouse.poller.KQueue._POLLER:
     class FileWithKQueueTestCase(FilePollerMixin, StateClearingTestCase):
-        def setUp(self):
-            StateClearingTestCase.setUp(self)
-            self.fname = tempfile.mktemp()
-            greenhouse.poller.set(greenhouse.poller.KQueue())
+        POLLER = greenhouse.poller.KQueue
 
 class FileWithSelectTestCase(FilePollerMixin, StateClearingTestCase):
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        self.fname = tempfile.mktemp()
-        greenhouse.poller.set(greenhouse.poller.Select())
+    POLLER = greenhouse.poller.Select
 
 class PipePollerMixin(object):
+    def setUp(self):
+        super(PipePollerMixin, self).setUp()
+        greenhouse.poller.set(self.POLLER())
+
     def test_basic(self):
         rfp, wfp = greenhouse.pipe()
         try:
@@ -485,26 +482,18 @@ class PipePollerMixin(object):
 
 if greenhouse.poller.Epoll._POLLER:
     class PipeWithEpollTestCase(PipePollerMixin, StateClearingTestCase):
-        def setUp(self):
-            StateClearingTestCase.setUp(self)
-            greenhouse.poller.set(greenhouse.poller.Epoll())
+        POLLER = greenhouse.poller.Epoll
 
 if greenhouse.poller.Poll._POLLER:
     class PipeWithPollTestCase(PipePollerMixin, StateClearingTestCase):
-        def setUp(self):
-            StateClearingTestCase.setUp(self)
-            greenhouse.poller.set(greenhouse.poller.Poll())
+        POLLER = greenhouse.poller.Poll
 
 if greenhouse.poller.KQueue._POLLER:
     class PipeWithKQueueTestCase(PipePollerMixin, StateClearingTestCase):
-        def setUp(self):
-            StateClearingTestCase.setUp(self)
-            greenhouse.poller.set(greenhouse.poller.KQueue())
+        POLLER = greenhouse.poller.KQueue
 
 class PipeWithSelectTestCase(PipePollerMixin, StateClearingTestCase):
-    def setUp(self):
-        StateClearingTestCase.setUp(self)
-        greenhouse.poller.set(greenhouse.poller.Select())
+    POLLER = greenhouse.poller.Select
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import functools
+import time
 import weakref
 
 from greenhouse import compat, scheduler, utils
@@ -25,21 +26,23 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
     current = compat.getcurrent()
     poller = scheduler.state.poller
     dmap = scheduler.state.descriptormap
-    timer = None
     activated = {}
+    fakesocks = {}
+    awoken = [False]
 
     def activate(fd, event):
         if not activated and (timeout or timeout is None):
             scheduler.schedule(current)
-            if timer: timer.cancel()
+            if timeout and not awoken[0]:
+                utils.Timer._remove_from_timedout(waketime, current)
+                awoken[0] = True
         activated.setdefault(fd, 0)
         activated[fd] |= event
 
-    fakesocks = []
     registrations = {}
     for fd, events in fd_events:
         fakesock = _FakeSocket()
-        fakesocks.append(fakesock)
+        fakesocks[fd] = fakesock
         poller_events = 0
 
         if events & inmask:
@@ -54,16 +57,13 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
 
         registrations[fd] = poller.register(fd, poller_events)
 
-    if timeout is not None and not timeout:
+    if timeout:
+        # real timeout value, schedule outself `timeout` seconds in the future
+        waketime = time.time() + timeout
+        scheduler.pause_until(waketime)
+    elif timeout is not None:
         # timeout == 0, only pause for 1 loop iteration
         scheduler.pause()
-    elif timeout:
-        # real timeout value, schedule a timer to bring us back in
-        @utils.Timer.wrap(timeout)
-        def timer():
-            if not activated:
-                scheduler.schedule(current)
-        scheduler.state.mainloop.switch()
     else:
         # timeout is None, it's up to _hit_poller->activate to bring us back
         scheduler.state.mainloop.switch()

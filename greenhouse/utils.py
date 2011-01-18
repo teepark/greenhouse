@@ -277,22 +277,25 @@ class Condition(object):
         """
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        self._lock.release()
 
         current = compat.getcurrent()
-        self._waiters.append(current)
 
+        waketime = None if timeout is None else time.time() + timeout
         if timeout is not None:
-            @Timer.wrap(timeout)
-            def timer():
-                self._waiters.remove(current)
-                current.switch()
+            scheduler.schedule_at(waketime, current)
+        self._waiters.append((current, waketime))
 
+        self._lock.release()
         scheduler.state.mainloop.switch()
         self._lock.acquire()
 
         if timeout is not None:
-            timer.cancel()
+            timedout = not Timer._remove_from_timedout(waketime, current)
+            if timedout:
+                self._waiters.remove((current, waketime))
+            return timedout
+
+        return False
 
     def notify(self, num=1):
         """wake one or more waiting greenlets
@@ -307,7 +310,7 @@ class Condition(object):
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
         for i in xrange(min(num, len(self._waiters))):
-            scheduler.state.awoken_from_events.add(self._waiters.popleft())
+            scheduler.state.awoken_from_events.add(self._waiters.popleft()[0])
 
     def notify_all(self):
         """wake all waiting greenlets
@@ -318,7 +321,7 @@ class Condition(object):
         """
         if not self._is_owned():
             raise RuntimeError("cannot wait on un-acquired lock")
-        scheduler.state.awoken_from_events.update(self._waiters)
+        scheduler.state.awoken_from_events.update(x[0] for x in self._waiters)
         self._waiters.clear()
     notifyAll = notify_all
 

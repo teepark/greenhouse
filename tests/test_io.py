@@ -4,6 +4,7 @@ import array
 import os
 import socket
 import stat
+import sys
 import tempfile
 import threading
 import time
@@ -493,6 +494,62 @@ if greenhouse.poller.KQueue._POLLER:
         POLLER = greenhouse.poller.KQueue
 
 class PipeWithSelectTestCase(PipePollerMixin, StateClearingTestCase):
+    POLLER = greenhouse.poller.Select
+
+
+class WaitFDsMixin(object):
+    def setUp(self):
+        super(WaitFDsMixin, self).setUp()
+        greenhouse.poller.set(self.POLLER())
+
+    def test_stdio(self):
+        # stdin, stdout, stderr should all come up as writable but not readable
+        evs = greenhouse.wait_fds([(0, 3), (1, 3), (2, 3)])
+        self.assertEqual(sorted(evs), [(0, 2), (1, 2), (2, 2)])
+
+    def test_stdio_with_alternative_masks(self):
+        evs = greenhouse.wait_fds([(0, 12), (1, 12), (2, 12)],
+                inmask=4, outmask=8)
+        self.assertEqual(sorted(evs), [(0, 8), (1, 8), (2, 8)])
+
+    def test_with_partial_return(self):
+        evs = greenhouse.wait_fds([(0, 1), (1, 3), (2, 1)])
+        self.assertEqual(evs, [(1, 2)])
+
+    def test_sockets(self):
+        with self.socketpair() as (client, server):
+            evs = greenhouse.wait_fds(
+                    [(client.fileno(), 3), (server.fileno(), 3)],
+                    timeout=TESTING_TIMEOUT)
+            self.assertEqual(
+                    sorted(evs),
+                    sorted([(client.fileno(), 2), (server.fileno(), 2)]))
+            evs = greenhouse.wait_fds(
+                    [(client.fileno(), 1), (server.fileno(), 1)],
+                    timeout=TESTING_TIMEOUT)
+            self.assertEqual(evs, [])
+
+            client.sendall("hello")
+
+            evs = greenhouse.wait_fds(
+                    [(client.fileno(), 1), (server.fileno(), 1)],
+                    timeout=TESTING_TIMEOUT)
+            self.assertEqual(evs, [(server.fileno(), 1)])
+
+
+if greenhouse.poller.Epoll._POLLER:
+    class WaitFDsWithEpoll(WaitFDsMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Epoll
+
+if greenhouse.poller.Poll._POLLER:
+    class WaitFDsWithPoll(WaitFDsMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.Poll
+
+if greenhouse.poller.KQueue._POLLER:
+    class WaitFDsWithKQueue(WaitFDsMixin, StateClearingTestCase):
+        POLLER = greenhouse.poller.KQueue
+
+class WaitFDsWithSelect(WaitFDsMixin, StateClearingTestCase):
     POLLER = greenhouse.poller.Select
 
 

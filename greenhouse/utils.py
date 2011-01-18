@@ -87,7 +87,6 @@ class Event(object):
             return
 
         current = compat.getcurrent() # the waiting greenlet
-        awoken = [False]
 
         waketime = None if timeout is None else time.time() + timeout
         if timeout is not None:

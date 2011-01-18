@@ -90,6 +90,21 @@ class EventsTestCase(StateClearingTestCase):
 
         assert l[0]
 
+    def test_timeout_clears_waiters(self):
+        ev = greenhouse.Event()
+        l = [False]
+
+        @greenhouse.schedule
+        def f():
+            ev.wait(TESTING_TIMEOUT)
+            l[0] = True
+
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
+
+        assert l[0]
+
+        self.assertEqual(ev._waiters, [])
+
 class LockTestCase(StateClearingTestCase):
     LOCK = greenhouse.Lock
 

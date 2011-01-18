@@ -38,25 +38,6 @@ class Event(object):
     def __init__(self):
         self._is_set = False
         self._waiters = []
-        self._reset_timers(clear=False)
-
-    def _reset_timers(self, clear=True):
-        if clear:
-            for timer in self._timers.itervalues():
-                timer.cancel()
-            self._timers.clear()
-        else:
-            self._timers = {}
-        self._timer_counter = 1
-
-    def _add_timer(self, timer):
-        counter = self._timer_counter
-        self._timer_counter += 1
-        self._timers[counter] = timer
-        return counter
-
-    def _remove_timer(self, timer_key):
-        return bool(self._timers.pop(timer_key, False))
 
     def is_set(self):
         """indicates whether waiting on the event will block right now
@@ -77,9 +58,8 @@ class Event(object):
         :meth:`clear` has been called
         """
         self._is_set = True
-        scheduler.state.awoken_from_events.update(self._waiters)
+        scheduler.state.awoken_from_events.update(x[0] for x in self._waiters)
         self._waiters = []
-        self._reset_timers()
 
     def clear(self):
         """clear the event from being triggered
@@ -109,20 +89,21 @@ class Event(object):
         current = compat.getcurrent() # the waiting greenlet
         awoken = [False]
 
+        waketime = None if timeout is None else time.time() + timeout
         if timeout is not None:
-            @Timer.wrap(timeout)
-            def timer():
-                self._remove_timer(timer_key)
-                awoken[0] = True
-                self._waiters.remove(current)
-                current.switch()
+            scheduler.schedule_at(waketime, current)
 
-            timer_key = self._add_timer(timer)
-
-        self._waiters.append(current)
+        self._waiters.append((current, waketime))
         scheduler.state.mainloop.switch()
 
-        return awoken[0]
+        if timeout is not None:
+            try:
+                self._waiters.remove((current, waketime))
+            except ValueError:
+                pass
+            return not Timer._remove_from_timedout(waketime, current)
+
+        return False
 
 #@_debugger
 class Lock(object):
@@ -448,16 +429,16 @@ class Timer(object):
     @classmethod
     def _remove_from_timedout(cls, waketime, glet):
         tp = scheduler.state.timed_paused
-        if not tp:
+        if tp:
+            index = bisect.bisect(tp, (waketime, None))
+            if tp[index][1] is glet:
+                tp[index:index + 1] = []
+                return True
+
+        try:
+            scheduler.state.to_run.remove(glet)
+        except ValueError:
             return False
-        index = bisect.bisect(tp, (waketime, None))
-        if tp[index][1].run is glet.run:
-            tp[index:index + 1] = []
-        else:
-            try:
-                scheduler.state.to_run.remove(glet)
-            except ValueError:
-                return False
         return True
 
     def cancel(self):

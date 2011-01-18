@@ -741,22 +741,22 @@ class Queue(object):
             if not blocking:
                 raise Empty()
 
-            glet = compat.getcurrent()
-            self._waiters.append(glet)
+            current = compat.getcurrent()
 
-            if timeout:
-                @Timer.wrap(timeout)
-                def timer():
-                    self._waiters.remove(glet)
-                    glet.throw(Empty)
+            waketime = None if timeout is None else time.time() + timeout
+            if timeout is not None:
+                scheduler.schedule_at(waketime, current)
+            self._waiters.append((current, waketime))
 
             scheduler.state.mainloop.switch()
 
-            if timeout:
-                timer.cancel()
+            if timeout is not None:
+                if not Timer._remove_from_timedout(waketime, current):
+                    self._waiters.remove((current, waketime))
+                    raise Empty()
 
         if self.full() and self._waiters:
-            scheduler.schedule(self._waiters.popleft())
+            scheduler.schedule(self._waiters.popleft()[0])
 
         return self._data.popleft()
 
@@ -795,22 +795,22 @@ class Queue(object):
             if not blocking:
                 raise Full()
 
-            glet = compat.getcurrent()
-            self._waiters.append(glet)
+            current = compat.getcurrent()
 
-            if timeout:
-                @Timer.wrap(timeout)
-                def timer():
-                    sef._waiters.remove(glet)
-                    glet.throw(Full)
+            waketime = None if timeout is None else time.time() + timeout
+            if timeout is not None:
+                scheduler.schedule_at(waketime, current)
+            self._waiters.append((current, waketime))
 
             scheduler.state.mainloop.switch()
 
-            if timeout:
-                timer.cancel()
+            if timeout is not None:
+                if not Timer._remove_from_timedout(waketime, current):
+                    self._waiters.remove((current, waketime))
+                    raise Full()
 
         if self._waiters and not self.full():
-            scheduler.schedule(self._waiters.popleft())
+            scheduler.schedule(self._waiters.popleft()[0])
 
         if not self._open_tasks:
             self._jobs_done.clear()

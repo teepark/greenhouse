@@ -471,38 +471,45 @@ class LocalTestCase(StateClearingTestCase):
         self.assertRaises(AttributeError, lambda: loc.foo)
 
 class QueueTestCase(StateClearingTestCase):
-    def test_fifo_order(self):
-        q = greenhouse.Queue()
-        q.put(5)
-        q.put(7)
-        assert q.get() == 5
-        assert q.get() == 7
+    klass = greenhouse.Queue
+
+    def test_order(self):
+        q = self.klass()
+        l = [32, 17, 0, 34, 3, 18, 41, 21, 14, 29, 28, 35, 15, 47, 9, 8, 44,
+                30, 20, 46, 25, 24, 36, 11, 12, 38, 10, 19, 23, 13, 31, 4, 7,
+                39, 27, 1, 2, 40, 33, 6, 26, 22, 48, 5, 49, 45, 42, 16, 43, 37]
+        map(q.put, l)
+
+        for item in l:
+            self.assertEqual(q.get(), item)
 
     def test_blocks(self):
-        q = greenhouse.Queue()
+        q = self.klass()
         l = [False]
 
         @greenhouse.schedule
         def f():
-            l[0] = True
             q.put(None)
+            l[0] = True
 
         q.get()
         assert l[0]
 
     def test_nonblocking_raises_empty(self):
-        q = greenhouse.Queue()
+        q = self.klass()
         self.assertRaises(utils.Empty, q.get_nowait)
+        self.assertRaises(utils.Empty, q.get, blocking=False)
 
     def test_nonblocking_raises_full(self):
-        q = greenhouse.Queue(2)
+        q = self.klass(2)
         q.put(1)
         q.put(2)
 
         self.assertRaises(utils.Full, q.put_nowait, 3)
+        self.assertRaises(utils.Full, q.put, 3, blocking=False)
 
     def test_put_sized_nonblocking(self):
-        q = greenhouse.Queue(3)
+        q = self.klass(3)
         q.put(4)
         q.put(5)
         q.put(6)
@@ -510,7 +517,7 @@ class QueueTestCase(StateClearingTestCase):
 
     def test_put_sized_blocking(self):
         l = [False]
-        q = greenhouse.Queue(3)
+        q = self.klass(3)
         q.put(4)
         q.put(5)
         q.put(6)
@@ -523,19 +530,18 @@ class QueueTestCase(StateClearingTestCase):
         greenhouse.pause()
         assert not l[0]
 
-        assert q.get() == 4
+        q.get()
 
         greenhouse.pause()
         assert l[0]
 
-
     def test_timeout(self):
-        q = greenhouse.Queue()
+        q = self.klass()
         self.assertRaises(utils.Empty, q.get, timeout=TESTING_TIMEOUT)
 
     def test_joins(self):
         l = [False]
-        q = greenhouse.Queue()
+        q = self.klass()
         q.put(1)
 
         @greenhouse.schedule
@@ -555,14 +561,14 @@ class QueueTestCase(StateClearingTestCase):
         assert l[0]
 
     def test_calling_task_done_too_many_times(self):
-        q = greenhouse.Queue()
+        q = self.klass()
         q.put(1)
 
         q.task_done()
         self.assertRaises(ValueError, q.task_done)
 
     def test_empty_method(self):
-        q = greenhouse.Queue()
+        q = self.klass()
         assert q.empty()
 
         q.put(5)
@@ -572,7 +578,7 @@ class QueueTestCase(StateClearingTestCase):
         assert q.empty()
 
     def test_full_method(self):
-        q = greenhouse.Queue(2)
+        q = self.klass(2)
         assert not q.full()
 
         q.put(4)
@@ -588,7 +594,7 @@ class QueueTestCase(StateClearingTestCase):
         assert q.full()
 
     def test_qsize(self):
-        q = greenhouse.Queue()
+        q = self.klass()
         assert q.qsize() == 0
 
         q.put(4)
@@ -601,6 +607,34 @@ class QueueTestCase(StateClearingTestCase):
         q.put(6)
         q.put(7)
         assert q.qsize() == 3
+
+
+class LifoQueueTestCase(QueueTestCase):
+    klass = greenhouse.LifoQueue
+
+    def test_order(self):
+        q = self.klass()
+        l = [32, 17, 0, 34, 3, 18, 41, 21, 14, 29, 28, 35, 15, 47, 9, 8, 44,
+                30, 20, 46, 25, 24, 36, 11, 12, 38, 10, 19, 23, 13, 31, 4, 7,
+                39, 27, 1, 2, 40, 33, 6, 26, 22, 48, 5, 49, 45, 42, 16, 43, 37]
+        map(q.put, l)
+
+        for item in l[::-1]:
+            self.assertEqual(q.get(), item)
+
+
+class PriorityQueueTestCase(QueueTestCase):
+    klass = greenhouse.PriorityQueue
+
+    def test_order(self):
+        q = self.klass()
+        l = [32, 17, 0, 34, 3, 18, 41, 21, 14, 29, 28, 35, 15, 47, 9, 8, 44,
+                30, 20, 46, 25, 24, 36, 11, 12, 38, 10, 19, 23, 13, 31, 4, 7,
+                39, 27, 1, 2, 40, 33, 6, 26, 22, 48, 5, 49, 45, 42, 16, 43, 37]
+        map(q.put, l)
+
+        for item in sorted(l):
+            self.assertEqual(q.get(), item)
 
 
 class ThreadTestCase(StateClearingTestCase):

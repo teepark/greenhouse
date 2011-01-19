@@ -1,6 +1,7 @@
 import bisect
 import collections
 import functools
+import heapq
 from Queue import Empty, Full
 import time
 import weakref
@@ -9,7 +10,8 @@ from greenhouse import compat, scheduler
 
 
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
-           "BoundedSemaphore", "Timer", "Local", "Thread", "Queue", "Channel"]
+           "BoundedSemaphore", "Timer", "Local", "Thread", "Queue",
+           "LifoQueue", "PriorityQueue", "Channel"]
 
 def _debugger(cls):
     import types
@@ -691,10 +693,12 @@ class Queue(object):
 
     mirrors the standard library `Queue.Queue` API
     """
+    _data_type = collections.deque
+
     def __init__(self, maxsize=0):
         self._maxsize = maxsize
         self._waiters = collections.deque()
-        self._data = collections.deque()
+        self._data = self._data_type()
         self._open_tasks = 0
         self._jobs_done = Event()
         self._jobs_done.clear()
@@ -714,6 +718,9 @@ class Queue(object):
             ``False``
         """
         return self._maxsize > 0 and len(self._data) == self._maxsize
+
+    def _get(self):
+        return self._data.popleft()
 
     def get(self, blocking=True, timeout=None):
         """get an item out of the queue
@@ -758,7 +765,7 @@ class Queue(object):
         if self.full() and self._waiters:
             scheduler.schedule(self._waiters.popleft()[0])
 
-        return self._data.popleft()
+        return self._get()
 
     def get_nowait(self):
         """get an item out of the queue without ever blocking
@@ -768,6 +775,9 @@ class Queue(object):
         :returns: something that was previously :meth:`put` in the queue
         """
         return self.get(blocking=False)
+
+    def _put(self, item):
+        self._data.append(item)
 
     def put(self, item, blocking=True, timeout=None):
         """put an item into the queue
@@ -816,7 +826,7 @@ class Queue(object):
             self._jobs_done.clear()
         self._open_tasks += 1
 
-        self._data.append(item)
+        self._put(item)
 
     def put_nowait(self, item):
         """put an item into the queue without any chance of blocking
@@ -866,6 +876,46 @@ class Queue(object):
             ``True`` if `timeout` was provided and expired, otherwise ``False``
         """
         return self._jobs_done.wait(timeout)
+
+
+class LifoQueue(Queue):
+    """a producer-consumer queue that produces items in LIFO order
+
+    :param maxsize:
+        optional limit to the amount of queued data, after which :meth:`put`
+        can block. the default of 0 turns off the limit, so :meth:`put` will
+        never block
+    :type maxsize: int
+
+    mirrors the standard library `Queue.LifoQueue` API
+    """
+    _data_type = list
+
+    def _get(self):
+        return self._data.pop()
+
+    def _put(self, item):
+        self._data.append(item)
+
+
+class PriorityQueue(Queue):
+    """a producer-consumer queue that produces items in prioritized order
+
+    :param maxsize:
+        optional limit to the amount of queued data, after which :meth:`put`
+        can block. the default of 0 turns off the limit, so :meth:`put` will
+        never block
+    :type maxsize: int
+
+    mirrors the standard library `Queue.LifoQueue` API
+    """
+    _data_type = list
+
+    def _get(self):
+        return heapq.heappop(self._data)
+
+    def _put(self, item):
+        heapq.heappush(self._data, item)
 
 
 class Channel(object):

@@ -1,3 +1,5 @@
+import fcntl
+import os
 import select
 import sys
 import types
@@ -8,6 +10,8 @@ from greenhouse import compat, io, scheduler, utils
 
 __all__ = ["patch", "unpatch", "patched"]
 
+
+OS_TIMEOUT = 0.001
 
 def patch(*module_names):
     if not module_names:
@@ -140,7 +144,7 @@ class _green_epoll(object):
         if from_ep:
             self._epoll = from_ep
         else:
-            self._epoll = select.epoll()
+            self._epoll = _original_epoll()
         scheduler.state.descriptormap[self._epoll.fileno()].append(
                 weakref.ref(self))
 
@@ -179,6 +183,7 @@ class _green_epoll(object):
 
 if hasattr(select, "epoll"):
     _select_patchers['epoll'] = _green_epoll
+    _original_epoll = select.epoll
 
 
 class _green_kqueue(object):
@@ -234,6 +239,53 @@ def _green_start(function, args, kwargs=None):
     return id(glet)
 
 
+def _nonblocking_fd(fd):
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    if flags & os.O_NONBLOCK:
+        return True, flags
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    return False, flags
+
+
+_original_os_read = os.read
+_original_os_write = os.write
+
+def _green_read(fd, buffsize):
+    nonblocking, flags = _nonblocking_fd(fd)
+    if nonblocking:
+        return _original_os_read(fd, buffsize)
+
+    try:
+        while 1:
+            try:
+                return _original_os_read(fd, buffsize)
+            except EnvironmentError, exc:
+                if exc.args[0] != errno.EAGAIN:
+                    raise
+                io.wait_fds([(fd, 1)])
+    finally:
+        if not nonblocking:
+            fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+
+
+def _green_write(fd, data):
+    nonblocking, flags = _nonblocking_fd(fd)
+    if nonblocking:
+        return _original_os_write(fd, data)
+
+    try:
+        while 1:
+            try:
+                return _original_os_write(fd, data)
+            except EnvironmentError, exc:
+                if exc.args[0] != errno.EAGAIN:
+                    raise
+                io.wait_fds([(fd, 2)])
+    finally:
+        if not nonblocking:
+            fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+
+
 _patchers = {
     '__builtin__': {
         'file': io.File,
@@ -281,6 +333,15 @@ _patchers = {
     },
 
     'select': _select_patchers,
+
+    'os': {
+        'read': _green_read,
+        'write': _green_write,
+    },
+
+    'time': {
+        'sleep': scheduler.pause_for,
+    }
 }
 
 _standard = {}

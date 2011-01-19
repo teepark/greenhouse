@@ -219,7 +219,7 @@ class File(FileBase):
     @staticmethod
     def _add_flags(fd, flags):
         fdflags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        if fdflags & flags != flags:
+        if fdflags | flags != fdflags:
             fcntl.fcntl(fd, fcntl.F_SETFL, flags | fdflags)
 
     @classmethod

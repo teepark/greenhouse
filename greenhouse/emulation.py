@@ -324,6 +324,8 @@ _patchers = {
 
     'Queue': {
         'Queue': utils.Queue,
+        'LifoQueue': utils.LifoQueue,
+        'PriorityQueue': utils.PriorityQueue,
     },
 
     'sys': {

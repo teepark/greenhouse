@@ -28,19 +28,14 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
     dmap = scheduler.state.descriptormap
     activated = {}
     fakesocks = {}
+    awoken = [False]
 
     def activate(fd, event):
-        if not activated and timeout != 0:
-            # this is the first invocation of `activated` for a blocking
-            # `wait_fds` call, so re-schedule the blocked coroutine
+        if not activated and (timeout or timeout is None):
             scheduler.schedule(current)
-
-            # if there was a timeout then also have to pull
-            # the coroutine from the timed_paused structure
-            if timeout:
+            if timeout and not awoken[0]:
                 utils.Timer._remove_from_timedout(waketime, current)
-
-        # in any case, set the event information
+                awoken[0] = True
         activated.setdefault(fd, 0)
         activated[fd] |= event
 
@@ -63,10 +58,10 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
         registrations[fd] = poller.register(fd, poller_events)
 
     if timeout:
-        # real timeout value, schedule ourself `timeout` seconds in the future
+        # real timeout value, schedule outself `timeout` seconds in the future
         waketime = time.time() + timeout
         scheduler.pause_until(waketime)
-    elif timeout == 0:
+    elif timeout is not None:
         # timeout == 0, only pause for 1 loop iteration
         scheduler.pause()
     else:

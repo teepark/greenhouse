@@ -279,10 +279,9 @@ def mainloop():
                     if state.timed_paused:
                         until = state.timed_paused[0][0] + 0.001
                         _hit_poller(until - time.time(), _interruption_check)
-                        _check_paused()
+                        _check_paused(True)
                     else:
                         _hit_poller(POLL_TIMEOUT, _interruption_check)
-                        _check_paused()
 
             target = state.to_run.popleft()
             exc = state.to_raise.pop(target, None)

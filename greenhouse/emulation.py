@@ -258,6 +258,7 @@ _original_os_spawnl = os.spawnl
 _original_os_spawnle = os.spawnle
 _original_os_spawnlp = os.spawnlp
 _original_os_spawnlpe = os.spawnlpe
+_original_os_spawnv = os.spawnv
 _original_os_spawnve = os.spawnve
 _original_os_spawnvp = os.spawnvp
 _original_os_spawnvpe = os.spawnvpe
@@ -387,14 +388,14 @@ def _green_spawner(func):
             return -(details & 0xff)
         return details >> 8
 
-_green_spawnl = _green_spawner(_original_spawnl)
-_green_spawnle = _green_spawner(_original_spawnle)
-_green_spawnlp = _green_spawner(_original_spawnlp)
-_green_spawnlpe = _green_spawner(_original_spawnlpe)
-_green_spawnv = _green_spawner(_original_spawnv)
-_green_spawnve = _green_spawner(_original_spawnve)
-_green_spawnvp = _green_spawner(_original_spawnvp)
-_green_spawnvpe = _green_spawner(_original_spawnvpe)
+_green_spawnl = _green_spawner(_original_os_spawnl)
+_green_spawnle = _green_spawner(_original_os_spawnle)
+_green_spawnlp = _green_spawner(_original_os_spawnlp)
+_green_spawnlpe = _green_spawner(_original_os_spawnlpe)
+_green_spawnv = _green_spawner(_original_os_spawnv)
+_green_spawnve = _green_spawner(_original_os_spawnve)
+_green_spawnvp = _green_spawner(_original_os_spawnvp)
+_green_spawnvpe = _green_spawner(_original_os_spawnvpe)
 
 
 # the definitive list of which attributes of which modules get monkeypatched

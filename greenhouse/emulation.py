@@ -249,6 +249,18 @@ _original_os_waitpid = os.waitpid
 _original_os_wait = os.wait
 _original_os_wait3 = os.wait3
 _original_os_wait4 = os.wait4
+_original_os_popen = os.popen
+_original_os_popen2 = os.popen2
+_original_os_popen3 = os.popen3
+_original_os_popen4 = os.popen4
+_original_os_system = os.system
+_original_os_spawnl = os.spawnl
+_original_os_spawnle = os.spawnle
+_original_os_spawnlp = os.spawnlp
+_original_os_spawnlpe = os.spawnlpe
+_original_os_spawnve = os.spawnve
+_original_os_spawnvp = os.spawnvp
+_original_os_spawnvpe = os.spawnvpe
 
 def _green_read(fd, buffsize):
     nonblocking, flags = _nonblocking_fd(fd)
@@ -307,16 +319,82 @@ def _polling_green_version(func, retry_test, opt_arg_num, arg_count, timeout):
 
 _green_waitpid = _polling_green_version(
         _original_os_waitpid, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
-
 _green_wait3 = _polling_green_version(
         _original_os_wait3, lambda x: not (x[0] or x[1]), 0, 1, OS_TIMEOUT)
-
 _green_wait4 = _polling_green_version(
         _original_os_wait4, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
 
 @functools.wraps(_original_os_wait)
 def _green_wait():
     return _green_waitpid(0, 0)
+
+class _green_popen_pipe(io.File):
+    @classmethod
+    def fromfd(cls, fd, mode, pid):
+        fp = super(_green_popen_pipe, cls).fromfd(fd, mode)
+        fp._pid = pid
+        return fp
+
+    def close(self):
+        super(_green_popen_pipe, self).close()
+        return _green_waitpid(self._pid, 0)[1] or None
+
+@functools.wraps(_original_os_popen)
+def _green_popen(cmd, mode='r', bufsize=-1):
+    if 'r' in mode:
+        pipe = 'stdout'
+    if 'w' in mode:
+        pipe = 'stderr'
+    kwarg = {pipe: _green_subprocess.PIPE}
+
+    proc = _green_subprocess.Popen(cmd, shell=1, bufsize=bufsize, **kwarg)
+    return _green_popen_pipe.fromfd(getattr(proc, pipe), mode, proc.pid)
+
+@functools.wraps(_original_os_popen2)
+def _green_popen2(cmd, mode='r', bufsize=-1):
+    proc = _green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
+            stdin=_green_subprocess.PIPE, stdout=_green_subprocess.PIPE)
+    return proc.stdin, proc.stdout
+
+@functools.wraps(_original_os_popen3)
+def _green_popen3(cmd, mode='r', bufsize=-1):
+    proc = _green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
+            stdin=_green_subprocess.PIPE, stdout=_green_subprocess.PIPE,
+            stderr=_green_subprocess.PIPE)
+    return proc.stdin, proc.stdout, proc.stderr
+
+@functools.wraps(_original_os_popen4)
+def _green_popen4(cmd, mode='r', bufsize=-1):
+    proc = _green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
+            stdin=_green_subprocess.PIPE, stdout=_green_subprocess.PIPE,
+            stderr=_green_subprocess.STDOUT)
+    return proc.stdin, proc.stdout
+
+@functools.wraps(_original_os_system)
+def _green_system(cmd):
+    return _green_waitpid(_green_subprocess.Popen(cmd, shell=1).pid, 0)[1]
+
+def _green_spawner(func):
+    @functools.wraps(func)
+    def green_version(mode, *args):
+        if mode != os.P_WAIT:
+            return func(mode, *args)
+
+        pid = func(os.P_NOWAIT, *args)
+        details = _green_waitpid(pid, 0)[1]
+
+        if details & 0xff:
+            return -(details & 0xff)
+        return details >> 8
+
+_green_spawnl = _green_spawner(_original_spawnl)
+_green_spawnle = _green_spawner(_original_spawnle)
+_green_spawnlp = _green_spawner(_original_spawnlp)
+_green_spawnlpe = _green_spawner(_original_spawnlpe)
+_green_spawnv = _green_spawner(_original_spawnv)
+_green_spawnve = _green_spawner(_original_spawnve)
+_green_spawnvp = _green_spawner(_original_spawnvp)
+_green_spawnvpe = _green_spawner(_original_spawnvpe)
 
 
 # the definitive list of which attributes of which modules get monkeypatched
@@ -378,6 +456,11 @@ _patchers = {
         'wait': _green_wait,
         'wait3': _green_wait3,
         'wait4': _green_wait4,
+        'popen': _green_popen,
+        'popen2': _green_popen2,
+        'popen3': _green_popen3,
+        'popen4': _green_popen4,
+        'system': _green_system,
     },
 
     'time': {

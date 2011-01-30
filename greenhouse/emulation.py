@@ -1,4 +1,6 @@
+import errno
 import fcntl
+import functools
 import os
 import select
 import sys
@@ -243,6 +245,10 @@ def _nonblocking_fd(fd):
 
 _original_os_read = os.read
 _original_os_write = os.write
+_original_os_waitpid = os.waitpid
+_original_os_wait = os.wait
+_original_os_wait3 = os.wait3
+_original_os_wait4 = os.wait4
 
 def _green_read(fd, buffsize):
     nonblocking, flags = _nonblocking_fd(fd)
@@ -278,7 +284,42 @@ def _green_write(fd, data):
         if not nonblocking:
             fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
+def _polling_green_version(func, retry_test, opt_arg_num, arg_count, timeout):
+    @functools.wraps(func)
+    def _green_version(*args):
+        if len(args) < arg_count:
+            raise TypeError("%s takes %d arguments" % (
+                func.__name__, arg_count))
 
+        options = args[opt_arg_num]
+        if options & os.WNOHANG:
+            return func(*args)
+
+        args = list(args)
+        args[opt_arg_num] = options | os.WNOHANG
+        while 1:
+            result = func(*args)
+            if not retry_test(result):
+                return result
+            scheduler.pause_for(timeout)
+
+    return _green_version
+
+_green_waitpid = _polling_green_version(
+        _original_os_waitpid, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
+
+_green_wait3 = _polling_green_version(
+        _original_os_wait3, lambda x: not (x[0] or x[1]), 0, 1, OS_TIMEOUT)
+
+_green_wait4 = _polling_green_version(
+        _original_os_wait4, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
+
+@functools.wraps(_original_os_wait)
+def _green_wait():
+    return _green_waitpid(0, 0)
+
+
+# the definitive list of which attributes of which modules get monkeypatched
 _patchers = {
     '__builtin__': {
         'file': io.File,
@@ -332,6 +373,10 @@ _patchers = {
     'os': {
         'read': _green_read,
         'write': _green_write,
+        'waitpid': _green_waitpid,
+        'wait': _green_wait,
+        'wait3': _green_wait3,
+        'wait4': _green_wait4,
     },
 
     'time': {
@@ -346,3 +391,7 @@ for mod_name, patchers in _patchers.items():
     for attr_name, patcher in patchers.items():
         _standard[mod_name][attr_name] = getattr(module, attr_name, None)
 del mod_name, patchers, module, attr_name, patcher
+
+# implementing child process-related things in
+# the os/popen2/command modules in terms of this
+_green_subprocess = patched('subprocess')

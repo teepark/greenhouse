@@ -223,7 +223,7 @@ class File(FileBase):
             fcntl.fcntl(fd, fcntl.F_SETFL, flags | fdflags)
 
     @classmethod
-    def fromfd(cls, fd, mode='rb'):
+    def fromfd(cls, fd, mode='rb', bufsize=-1):
         fp = object.__new__(cls) # bypass __init__
         fp.mode = mode
         fp._fileno = fd

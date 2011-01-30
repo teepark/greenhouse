@@ -371,6 +371,7 @@ _patchers = {
     'select': _select_patchers,
 
     'os': {
+        'fdopen': io.File.fromfd,
         'read': _green_read,
         'write': _green_write,
         'waitpid': _green_waitpid,

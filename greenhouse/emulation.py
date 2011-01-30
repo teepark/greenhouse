@@ -57,7 +57,7 @@ def patched(module_name):
     old_module = sys.modules.pop(module_name, None)
 
     # apply all the standard library patches we have
-    saved = []
+    saved = [(module_name, old_module)]
     for name, patch in _patchers.iteritems():
         new_mod = _patched_copy(name, patch)
         saved.append((name, sys.modules.pop(name)))
@@ -66,18 +66,12 @@ def patched(module_name):
     # import the requested module with patches in place
     result = __import__(module_name, {}, {}, module_name.rsplit(".")[0])
 
-    # put the original modules back as they were
+    # put all the original modules back as they were
     for name, old_mod in saved:
         if old_mod is None:
             sys.modules.pop(name)
         else:
             sys.modules[name] = old_mod
-
-    # and put the old version of this module back
-    if old_module is None:
-        sys.modules.pop(module_name)
-    else:
-        sys.modules[module_name] = old_module
 
     return result
 
@@ -266,7 +260,6 @@ def _green_read(fd, buffsize):
     finally:
         if not nonblocking:
             fcntl.fcntl(fd, fcntl.F_SETFL, flags)
-
 
 def _green_write(fd, data):
     nonblocking, flags = _nonblocking_fd(fd)

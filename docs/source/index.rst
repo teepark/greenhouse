@@ -71,7 +71,6 @@ Modules
     greenhouse/io
     greenhouse/utils
     greenhouse/pool
-    greenhouse/poller
     greenhouse/compat
     greenhouse/emulation
     greenhouse/backdoor

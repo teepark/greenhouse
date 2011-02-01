@@ -7,9 +7,6 @@ import sys
 from greenhouse import scheduler
 
 
-__all__ = ["Epoll", "Poll", "Select", "best", "set"]
-
-
 class Poll(object):
     "a greenhouse poller using the poll system call"
     INMASK = getattr(select, 'POLLIN', 0)

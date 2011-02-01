@@ -4,7 +4,7 @@
 
 .. automodule:: greenhouse.utils
     :members:
-    :undoc-members:
+    :show-inheritance:
 
 .. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 

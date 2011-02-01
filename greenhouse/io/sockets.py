@@ -10,36 +10,362 @@ from greenhouse.io.files import FileBase
 from greenhouse.scheduler import state
 
 
+__all__ = ["Socket"]
+
 _socket = socket.socket
 _socketpair = socket.socketpair
 _fromfd = socket.fromfd
 
 SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 
-_more_sock_methods = ("accept", "makefile")
-
 
 class Socket(object):
-    __slots__ = ["_sock", "__weakref__"]
+    """a replacement class for the standard library's ``socket.socket``
 
-    def __getattr__(self, name):
-        if name in self._socket_methods:
-            return getattr(self._sock, name)
-        raise AttributeError("'Socket' object has not attribute '%s'" % name)
+    :class:`greenhouse.Socket<Socket>`\ s wrap the standard library's sockets,
+    using the underlying socket in a non-blocking way and blocking the current
+    coroutine where appropriate.
+
+    They provide a totally matching API, however
+    """
+    __slots__ = ["_sock", "__weakref__"]
 
     def __init__(self, *args, **kwargs):
         self._sock = _InnerSocket(*args, **kwargs)
 
     def close(self):
+        """close the current connection on the socket
+
+        After this point all operations attempted on this socket will fail, and
+        once any queued data is flushed, the remote end will not receive any
+        more data
+        """
         self._sock = socket._closedsocket()
 
     def dup(self):
+        """create a new copy of the current socket on the same file descriptor
+
+        :returns: a new :class:`Socket`
+        """
         copy = object.__new__(type(self))
         copy._sock = self._sock.dup()
         return copy
 
-    _socket_methods = set(socket._delegate_methods + socket._socketmethods +
-            _more_sock_methods)
+    def accept(self):
+        """accept a connection on the host/port to which the socket is bound
+
+        If there is no connection attempt already queued, this method will
+        block until a connection is made
+
+        :returns:
+            a two-tuple of ``(socket, address)`` where the socket is connected,
+            and the address is the ``(ip_address, port)`` of the remote end
+        """
+        return self._sock.accept()
+
+    def bind(self, address):
+        """set the socket to operate on an address
+
+        :param address:
+            the address on which the socket will operate. the format of this
+            argument depends on the socket's type; for TCP sockets, this is a
+            ``(host, port)`` two-tuple
+        """
+        return self._sock.bind(address)
+
+    def connect(self, address):
+        """initiate a new connection to a remote socket bound to an address
+
+        this method will block until the connection has been made; in the case
+        of TCP sockets this includes the TCP handshake
+
+        :param address:
+            the address to which to initiate a connection, the format of which
+            depends on the socket's type; for TCP sockets, this is a
+            ``(host, port``) two-tuple
+        """
+        return self._sock.connect(address)
+
+    def connect_ex(self, address):
+        """initiate a connection without blocking
+
+        :param address:
+            the address to which to initiate a connection, the format of which
+            depends on the socket's type; for TCP sockets, this is a
+            ``(host, port)`` two-tuple
+
+        :returns:
+            the error code for the connection attempt -- 0 indicates success
+        """
+        return self._sock.connect_ex(address)
+
+    def fileno(self):
+        """get the file descriptor
+
+        :returns: the integer file descriptor of the socket
+        """
+        return self._sock.fileno()
+
+    def getpeername(self):
+        """address information for the remote end of a connection
+
+        :returns:
+            a representation of the address at the remote end of the
+            connection, the format depends on the socket's type
+        """
+        return self._sock.getpeername()
+
+    def getsockname(self):
+        """address information for the local end of a connection
+
+        :returns:
+            a representation of the address at the local end of the connection,
+            the format depends on the socket's type
+        """
+        return self._sock.getsockname()
+
+    def getsockopt(self, level, optname, *args, **kwargs):
+        """get the value of a given socket option
+
+        the values for ``level`` and ``optname`` will usually come from
+        constants in the standard library ``socket`` module. consult the unix
+        manpage ``getsockopt(2)`` for more information.
+
+        :param level: the level of the requested socket option
+        :type level: int
+        :param optname: the specific socket option requested
+        :type optname: int
+        :param buflen:
+            the length of the buffer to use to collect the raw value of the
+            socket option. if provided, the buffer is returned as a string and
+            it is not parsed.
+        :type buflen: int
+
+        :returns: a string of the socket option's value
+        """
+        return self._sock.getsockopt(level, optname, *args, **kwargs)
+
+    def gettimeout(self):
+        """get the timeout set for this specific socket
+
+        :returns:
+            the number of seconds the socket's blocking operations should block
+            before raising a ``socket.timeout`` in a float value
+        """
+        return self._sock.gettimeout()
+
+    def listen(self, backlog):
+        """listen for connections made to the socket
+
+        :param backlog:
+            the queue length for connections that haven't yet been
+            :meth:`accept`\ ed
+        :type backlog: int
+        """
+        return self._sock.listen(backlog)
+
+    def makefile(self, mode='r', bufsize=-1):
+        """create a file-like object that wraps the socket
+
+        :param mode:
+            like the ``mode`` argument for other files, indicates read ``'r'``,
+            write ``'w'``, or both ``'r+'`` (default ``'r'``)
+        :type mode: str
+        :param bufsize:
+            the length of the read buffer to use. 0 means unbuffered, < 0 means
+            use the system default (default -1)
+        :type bufsize: int
+
+        :returns:
+            a file-like object for which reading and writing sends and receives
+            data over the socket connection
+        """
+        return self._sock.makefile(mode, bufsize)
+
+    def recv(self, bufsize, flags=0):
+        """receive data from the connection
+
+        this method will block until data is available to be read
+
+        see the unix manpage for ``recv(2)`` for more information
+
+        :param bufsize:
+            the maximum number of bytes to receive. fewer may be returned,
+            however
+        :type bufsize: int
+        :param flags:
+            flags for the receive call. consult the unix manpage for
+            ``recv(2)`` for what flags are available
+        :type flags: int
+
+        :returns: the data it read from the socket connection
+        """
+        return self._sock.recv(bufsize, flags)
+
+    def recv_into(self, buffer, bufsize=-1, flags=0):
+        """receive data from the connection and place it into a buffer
+
+        this method will block until data is available to be read
+
+        :param buffer:
+            a sized buffer object to receive the data (this is generally an
+            ``array.array('c', ...)`` instance)
+        :param bufsize:
+            the maximum number of bytes to receive. fewer may be returned,
+            however. defaults to the size available in the provided buffer.
+        :type bufsize: int
+        :param flags:
+            flags for the receive call. consult the unix manpage for
+            ``recv(2)`` for what flags are available
+        :type flags: int
+
+        :returns: the number of bytes received and placed in the buffer
+        """
+        return self._sock.recv_into(buffer, bufsize, flags)
+
+    def recvfrom(self, bufsize, flags=0):
+        """receive data on a socket that isn't necessarily a 1-1 connection
+
+        this method will block until data is available to be read
+
+        :param bufsize:
+            the maximum number of bytes to receive. fewer may be returned,
+            however
+        :type bufsize: int
+        :param flags:
+            flags for the receive call. consult the unix manpage for
+            ``recv(2)`` for what flags are available
+        :type flags: int
+
+        :returns:
+            a two-tuple of ``(data, address)`` -- the string data received and
+            the address from which it was received
+        """
+        return self._sock.recvfrom(bufsize, flags)
+
+    def recvfrom_into(self, buffer, bufsize=-1, flags=0):
+        """receive data on a non-TCP socket and place it in a buffer
+
+        this method will block until data is available to be read
+
+        :param buffer:
+            a sized buffer object to receive the data (this is generally an
+            ``array.array('c', ...)`` instance)
+        :param bufsize:
+            the maximum number of bytes to receive. fewer may be returned,
+            however. defaults to the size available in the provided buffer.
+        :type bufsize: int
+        :param flags:
+            flags for the receive call. consult the unix manpage for
+            ``recv(2)`` for what flags are available
+        :type flags: int
+
+        :returns:
+            a two-tuple of ``(bytes, address)`` -- the number of bytes received
+            and placed in the buffer, and the address it was received from
+        """
+        return self._sock.recvfrom_into(buffer, bufsize, flags)
+
+    def send(self, data, flags=0):
+        """send data over the socket connection
+
+        this method may block if the socket's send buffer is full
+
+        :param data: the data to send
+        :type data: str
+        :param flags:
+            flags for the send call. this has the same meaning as for
+            :meth:`recv`
+        :type flags: int
+
+        :returns:
+            the number of bytes successfully sent, which may not necessarily be
+            all the provided data
+        """
+        return self._sock.send(data, flags)
+
+    def sendall(self, data, flags=0):
+        """send data over the connection, and keep sending until it all goes
+
+        this method may block if the socket's send buffer is full
+
+        :param data: the data to send
+        :type data: str
+        :param flags:
+            flags for the send call. this has the same meaning as for
+            :meth:`recv`
+        :type flags: int
+        """
+        return self._sock.sendall(data, flags)
+
+    def sendto(self, data, *args):
+        """send data to a particular address
+
+        this method may block if the socket's send buffer is full
+
+        :param data: the data to send
+        :type data: str
+        :param flags:
+            flags for the send call. this has the same meaning as for
+            :meth:`recv`. defaults to 0
+        :type flags: int
+        :param address:
+            a representation of the address to which to send the data, the
+            format depends on the socket's type
+        """
+        return self._sock.sendto(data, *args)
+
+    def setblocking(self, flag):
+        """modify the behavior of blocking methods on the socket
+
+        greenhouse sockets already ``setblocking(False)`` on the underlying
+        standard python socket, but modifying this flag will affect the
+        behavior of sockets either blocking the current coroutine or not.
+
+        if this blocking is turned off, then blocking methods (such as
+        :meth:`recv`) will raise the relevant exception when they would
+        otherwise block the coroutine.
+
+        :param flag: whether to enable or disable blocking
+        :type flag: bool
+        """
+        return self._sock.setblocking(flag)
+
+    def setsockopt(self, level, optname, value):
+        """set the value of a given socket option
+
+        the values for ``level`` and ``optname`` will usually come from
+        constants in the standard library ``socket`` module. consult the unix
+        manpage ``setsockopt(2)`` for more information.
+
+        :param level: the level of the set socket option
+        :type level: int
+        :param optname: the specific socket option to set
+        :type optname: int
+        :param value: the value to set for the option
+        :type value: int
+        """
+        return self._sock.setsockopt(level, optname, value)
+
+    def shutdown(self, how):
+        """close one or both ends of the connection
+
+        :param how:
+            the end(s) of the connection to shutdown. valid values are
+            ``socket.SHUT_RD``, ``socket.SHUT_WR``, and ``socket.SHUT_RW``
+            for shutting down the read end, the write end, or both respectively
+        """
+        return self._sock.shutdown(how)
+
+    def settimeout(self, timeout):
+        """set the timeout for this specific socket
+
+        :param timeout:
+            the number of seconds the socket's blocking operations should block
+            before raising a ``socket.timeout``
+        :type timeout: float or None
+        """
+        return self._sock.settimeout(timeout)
 
 
 def socket_fromfd(fd, family, type_, *args):

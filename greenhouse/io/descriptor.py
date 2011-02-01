@@ -9,20 +9,25 @@ __all__ = ["wait_fds"]
 
 
 def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
-    '''wait for the first of multiple descriptors with the greenhouse poller
+    """wait for the first of a number of file descriptors to have activity
+    
+    :param fd_events:
+        two-tuples, each one a file descriptor and a mask made up of the inmask
+        and/or the outmask bitwise-ORd together
+    :type fd_events: list
+    :param inmask: the mask to use for readable events (default 1)
+    :type inmask: int
+    :param outmask: the mask to use for writable events (default 2)
+    :type outmask: int
+    :param timeout:
+        the maximum time to wait before raising an exception (default None)
+    :type timeout: int, float or None
 
-    `fd_events` is a list of 2-tuples mapping integer file descriptors to
-    masks, which include bitwise ORed `inmask` for read, `outmask` for write.
-
-    if timeout is None it can wait indefinitely, if a nonzero number then it
-    will not wait longer, if zero then the current coroutine will still be
-    paused, but will awake around again in the very next mainloop iteration.
-
-    the return value is a list of (fd, event) pairs where fd is one of the
-    descriptors from fd_events, and event is `inmask` or `outmask`, or both
-    bitwise ORed if both apply (the events returned for a fd will be a subset
-    of those asked for in `fd_events`).
-    '''
+    :returns:
+        a list of two-tuples, each is a file descriptor and an event mask (made
+        up of inmask and/or outmask bitwise-ORd together) representing readable
+        and writable events
+    """
     current = compat.getcurrent()
     poller = scheduler.state.poller
     dmap = scheduler.state.descriptormap

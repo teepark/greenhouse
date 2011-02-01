@@ -22,15 +22,22 @@ without it having to have been explicitly written that way.
     everything it can.
 
     Valid arguments are ``"__builtin__"``, ``"socket"``, ``"thread"``,
-    ``"threading"``, ``"Queue"``, ``"sys"``, ``"select"``.
+    ``"threading"``, ``"Queue"``, ``"sys"``, ``"select"``, ``"os"``,
+    ``"time"``.
 
     Raises a ``ValueError`` if anything else is provided.
+
+    Note that lots of other standard library modules will work cooperatively as
+    a result of patching the ones above -- for example after patching ``os``
+    and ``select``, the ``subprocess`` module works cooperatively with no
+    further modifications, and by patching just ``socket``, the modules
+    ``httplib``, ``urllib``, and ``urllib2`` work cooperatively as well.
 
 .. function:: unpatch(\*module_names)
 
     Like :func:`patch`, but does the reverse operation returning standard
     library modules to their original state.
-    
+
     Also raises ``ValueError`` for unrecognized arguments, and unpatches
     everything with no arguments.
 

@@ -12,7 +12,7 @@ from greenhouse import compat
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_in", "schedule_recurring", "schedule_exception",
         "schedule_exception_at", "schedule_exception_in", "end",
-        "add_exception_handler", "greenlet", "handle_exception"]
+        "add_exception_handler", "handle_exception", "greenlet"]
 
 _exception_handlers = []
 
@@ -95,6 +95,20 @@ def _check_paused(skip_simple=False):
         state.paused = []
 
 def greenlet(func, args=(), kwargs=None):
+    """create a new greenlet from a function and arguments
+
+    :param func: the function the new greenlet should run
+    :type func: function
+    :param args: any positional arguments for the function
+    :type args: tuple
+    :param kwargs: any keyword arguments for the function
+    :type kwargs: dict or None
+
+    the only major difference between this function and that of the basic
+    greenlet api is that this one sets the new greenlet's parent to be the
+    greenhouse main loop greenlet, which is a requirement for greenlets that
+    will wind up in the greenhouse scheduler.
+    """
     if args or kwargs:
         def target():
             return func(*args, **(kwargs or {}))
@@ -103,26 +117,55 @@ def greenlet(func, args=(), kwargs=None):
     return compat.greenlet(target, mainloop)
 
 def pause():
-    'pause and reschedule the current greenlet and switch to the next'
+    "pause and reschedule the current greenlet and switch to the next"
     schedule(compat.getcurrent())
     mainloop.switch()
 
 def pause_until(unixtime):
-    '''pause and reschedule the current greenlet until a set time,
-    then switch to the next'''
+    """pause and reschedule the current greenlet until a set time
+
+    :param unixtime: the unix timestamp of when to bring this greenlet back
+    :type unixtime: int or float
+    """
     schedule_at(unixtime, compat.getcurrent())
     mainloop.switch()
 
 def pause_for(secs):
-    '''pause and reschedule the current greenlet for a set number of seconds,
-    then switch to the next'''
+    """pause and reschedule the current greenlet for a set number of seconds
+
+    :param secs: number of seconds to pause
+    :type secs: int or float
+    """
     pause_until(time.time() + secs)
 
 def schedule(target=None, args=(), kwargs=None):
-    '''set up a greenlet or function to run later
+    """insert a greenlet into the scheduler
 
-    if *target* is a function, it is wrapped in a new greenlet. the greenlet
-    will be run at an undetermined time. also usable as a decorator'''
+    If provided a function, it is wrapped in a new greenlet
+
+    :param target: what to schedule
+    :type target: function or greenlet
+    :param args:
+        arguments for the function (only used if ``target`` is a function)
+    :type args: tuple
+    :param kwargs:
+        keyword arguments for the function (only used if ``target`` is a
+        function)
+    :type kwargs: dict or None
+
+    :returns: the ``target`` argument
+
+    This function can also be used as a decorator, either preloading ``args``
+    and/or ``kwargs`` or not:
+
+    >>> @schedule
+    >>> def f():
+    ...     print 'hello from f'
+
+    >>> @schedule(args=('world',))
+    >>> def f(name):
+    ...     print 'hello %s' % name
+    """
     if target is None:
         def decorator(target):
             return schedule(target, args=args, kwargs=kwargs)
@@ -135,10 +178,37 @@ def schedule(target=None, args=(), kwargs=None):
     return target
 
 def schedule_at(unixtime, target=None, args=(), kwargs=None):
-    '''set up a greenlet or function to run at the specified timestamp
+    """insert a greenlet into the scheduler to be run at a set time
 
-    if *target* is a function, it is wrapped in a new greenlet. the greenlet
-    will be run sometime after *unixtime*, a timestamp'''
+    If provided a function, it is wrapped in a new greenlet
+
+    :param unixtime:
+        the unix timestamp at which the new greenlet should be started
+    :type unixtime: int or float
+    :param target: what to schedule
+    :type target: function or greenlet
+    :param args:
+        arguments for the function (only used if ``target`` is a function)
+    :type args: tuple
+    :param kwargs:
+        keyword arguments for the function (only used if ``target`` is a
+        function)
+    :type kwargs: dict or None
+
+    :returns: the ``target`` argument
+
+    This function can also be used as a decorator:
+
+    >>> @schedule_at(1296423834)
+    >>> def f():
+    ...     print 'hello from f'
+
+    and args/kwargs can also be preloaded:
+
+    >>> @schedule_at(1296423834, args=('world',))
+    >>> def f(name):
+    ...     print 'hello %s' % name
+    """
     if target is None:
         def decorator(target):
             return schedule_at(unixtime, target, args=args, kwargs=kwargs)
@@ -151,24 +221,73 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
     return target
 
 def schedule_in(secs, target=None, args=(), kwargs=None):
-    '''set up a greenlet or function to run in the specified number of seconds
+    """insert a greenlet into the scheduler to run after a set time
 
-    if *target* is a function, it is wrapped in a new greenlet. the greenlet
-    will be run sometime after *secs* seconds have passed'''
+    If provided a function, it is wrapped in a new greenlet
+
+    :param secs: the number of seconds to wait before running the target
+    :type unixtime: int or float
+    :param target: what to schedule
+    :type target: function or greenlet
+    :param args:
+        arguments for the function (only used if ``target`` is a function)
+    :type args: tuple
+    :param kwargs:
+        keyword arguments for the function (only used if ``target`` is a
+        function)
+    :type kwargs: dict or None
+
+    :returns: the ``target`` argument
+
+    This function can also be used as a decorator:
+
+    >>> @schedule_in(30)
+    >>> def f():
+    ...     print 'hello from f'
+
+    and args/kwargs can also be preloaded:
+
+    >>> @schedule_in(30, args=('world',))
+    >>> def f(name):
+    ...     print 'hello %s' % name
+    """
     return schedule_at(time.time() + secs, target, args, kwargs)
 
 def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
         args=(), kwargs=None):
-    '''set up a function to run at a regular interval
+    """insert a greenlet into the scheduler to run regularly at an interval
 
-    every *interval* seconds, *target* will be wrapped in a new greenlet
-    and run
+    If provided a function, it is wrapped in a new greenlet
 
-    if *maxtimes* is greater than 0, *target* will stop being scheduled after
-    *maxtimes* runs
+    :param interval: the number of seconds between invocations
+    :type interval: int or float
+    :param target: what to schedule
+    :type target: function or greenlet
+    :param maxtimes: if provided, do not run more than ``maxtimes`` iterations
+    :type maxtimes: int
+    :param starting_at:
+        the unix timestamp of when to schedule it for the first time (defaults
+        to the time of the ``schedule_recurring`` call)
+    :type starting_at: int or float
+    :param args: arguments for the function
+    :type args: tuple
+    :param kwargs: keyword arguments for the function
+    :type kwargs: dict or None
 
-    if *starting_at* is greater than 0, the recurring runs will begin at that
-    unix timestamp, instead of ``time.time() + interval``'''
+    :returns: the ``target`` argument
+
+    This function can also be used as a decorator:
+
+    >>> @schedule_recurring(30)
+    >>> def f():
+    ...     print "the regular 'hello' from f"
+
+    and args/kwargs can also be preloaded:
+
+    >>> @schedule_recurring(30, args=('world',))
+    >>> def f(name):
+    ...     print 'the regular hello %s' % name
+    """
     starting_at = starting_at or time.time()
 
     if target is None:
@@ -198,10 +317,13 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
     return target
 
 def schedule_exception(exception, target):
-    '''set a greenlet to have *exception* raised in it
+    """schedule a greenlet to have an exception raised in it immediately
 
-    *target* must be a greenlet, so unlike schedule(), this can not be a
-    decorator'''
+    :param exception: the exception to raise in the greenlet
+    :type exception: Exception
+    :param target: the greenlet that should receive the exception
+    :type target: greenlet
+    """
     if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
@@ -210,10 +332,15 @@ def schedule_exception(exception, target):
     state.to_raise[target] = exception
 
 def schedule_exception_at(unixtime, exception, target):
-    '''set a greenlet to have *exception* raised in it at a timestamp
+    """schedule a greenlet to have an exception raised at a unix timestamp
 
-    *target* must be a greenlet. *exception* will be raised in it sometime
-    after *unixtime*, a timestamp'''
+    :param unixtime: when to raise the exception in the target
+    :type unixtime: int or float
+    :param exception: the exception to raise in the greenlet
+    :type exception: Exception
+    :param target: the greenlet that should receive the exception
+    :type target: greenlet
+    """
     if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
@@ -222,30 +349,29 @@ def schedule_exception_at(unixtime, exception, target):
     state.to_raise[target] = exception
 
 def schedule_exception_in(secs, exception, target):
-    '''set a greenlet have *exception* raised in it *secs* seconds later
+    """schedule a greenlet receive an exception after a number of seconds
 
-    *target* must be a greenlet. *exception* will be raised in it sometime
-    after *secs* seconds have elapsed'''
+    :param secs: the number of seconds to wait before raising
+    :type secs: int or float
+    :param exception: the exception to raise in the greenlet
+    :type exception: Exception
+    :param target: the greenlet that should receive the exception
+    :type target: greenlet
+    """
     schedule_exception_at(time.time() + secs, exception, target)
 
 def end(target):
-    '''schedule a greenlet to be killed abruptly
+    """schedule a greenlet to be stopped immediately
 
-    *target* must be a greenlet. it will immediately be scheduled with a
-    compat.GreenletExit to be raised in it'''
+    :param target: the greenlet to end
+    :type target: greenlet
+    """
     schedule_exception(compat.GreenletExit(), target)
 
-def schedule_to_top(target=None, args=(), kwargs=None):
-    '''set up a function or greenlet to run, skipping to the front of the line
-
-    if *target* is a function, it is wrapped in a new greenlet. the greenlet
-    will be the next greenlet run, unless you call this function again before
-    the next blocking action, in which case that one will have skipped to the
-    front as well.
-    '''
+def _schedule_to_top(target=None, args=(), kwargs=None):
     if target is None:
         def decorator(target):
-            return schedule_to_top(target, args, kwargs)
+            return _schedule_to_top(target, args, kwargs)
         return decorator
     if isinstance(target, compat.greenlet):
         glet = target
@@ -296,7 +422,17 @@ def mainloop():
 state.mainloop = mainloop
 
 def handle_exception(klass, exc, tb):
-    "run all registered exception handlers"
+    """run all the registered exception handlers
+
+    the arguments to this function match the output of ``sys.exc_info()``
+
+    :param klass: the exception klass
+    :type klass: type
+    :param exc: the exception instance
+    :type exc: Exception
+    :param tb: the traceback object
+    :type tb: Traceback
+    """
     _purge_exception_handlers()
 
     for weak in _exception_handlers:
@@ -308,10 +444,21 @@ def handle_exception(klass, exc, tb):
             pass
 
 def _purge_exception_handlers():
-    globals()['_exception_handlers'] = [weak for weak in _exception_handlers
-            if weak()]
+    globals()['_exception_handlers'] = [
+            weak for weak in _exception_handlers if weak()]
 
 def add_exception_handler(handler):
+    """add a callback for when an exception goes uncaught in a greenlet
+
+    :param handler:
+        the callback function. must be a function taking 3 arguments: ``klass``
+        the exception class, ``exc`` the exception instance, and ``tb`` the
+        traceback object
+    :type handler: function
+
+    Note also that the callback is only held by a weakref, so if all other refs
+    to the function are lost it will stop handling greenlets' exceptions
+    """
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
     _exception_handlers.append(weakref.ref(handler))

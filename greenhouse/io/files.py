@@ -40,6 +40,15 @@ class FileBase(object):
         self.close()
 
     def read(self, size=-1):
+        """read a number of bytes from the file and return it as a string
+        
+        :param size:
+            the maximum number of bytes to read from the file. < 0 means read
+            the file to the end
+        :type size: int
+
+        :returns: a string of the read file contents
+        """
         chunksize = size < 0 and self.CHUNKSIZE or min(self.CHUNKSIZE, size)
 
         buf = self._rbuf
@@ -74,6 +83,12 @@ class FileBase(object):
         return rc
 
     def readline(self):
+        """read from the file until a newline is encountered
+        
+        :returns:
+            a string of the line it read from the file, including the newline
+            at the end
+        """
         buf = self._rbuf
         newline, chunksize = self.NEWLINE, self.CHUNKSIZE
         buf.seek(0)
@@ -104,9 +119,25 @@ class FileBase(object):
         return rc
 
     def readlines(self, bufsize=-1):
+        """reads the entire file, producing the lines one at a time
+        
+        :param bufsize: the read buffer size to use
+        :type bufsize: int
+
+        :returns:
+            a lazy iterator that reads a chunk from the file whenever it
+            doesn't already have a newline in its buffer, and yields the lines
+        """
         return list(self.__iter__())
 
     def write(self, data):
+        """write data to the file
+
+        :param data:
+            the data to write into the file, at the descriptor's current
+            position
+        :type data: str
+        """
         while data:
             went = self._write_chunk(data)
             if went is None:
@@ -114,6 +145,13 @@ class FileBase(object):
             data = data[went:]
 
     def writelines(self, lines):
+        """write a sequence of strings into the file
+
+        :meth:`writelines` does not add newlines to the strings
+
+        :param lines: a sequence of strings to write to the file
+        :type lines: iterable
+        """
         self.write("".join(lines))
 
     @staticmethod
@@ -134,6 +172,13 @@ class FileBase(object):
 
 
 class File(FileBase):
+    """the greenhouse drop-in replacement for the built-in ``file`` type
+
+    this class will use non-blocking file descriptors for its IO, so that
+    whatever readystate information the OS and filesystem provide will be used
+    to block only a single coroutine rather than the whole process.
+    unfortunately filesystems tend to be very unreliable in this regard.
+    """
     def __init__(self, name, mode='rb'):
         super(File, self).__init__()
         self.mode = mode
@@ -224,6 +269,18 @@ class File(FileBase):
 
     @classmethod
     def fromfd(cls, fd, mode='rb', bufsize=-1):
+        """create a cooperating greenhouse file from an existing descriptor
+
+        :param fd: the file descriptor to wrap in a new file object
+        :type fd: int
+        :param mode: the file mode
+        :type mode: str
+        :param bufsize:
+            the size of read buffer to use. 0 indicates unbuffered, and < 0
+            means use the system default. defaults to -1
+
+        :returns: a new :class:`File` object connected to the descriptor
+        """
         fp = object.__new__(cls) # bypass __init__
         fp.mode = mode
         fp._fileno = fd
@@ -236,20 +293,45 @@ class File(FileBase):
         return fp
 
     def close(self):
+        "close the file, and its underlying descriptor"
         self._closed = True
         os.close(self._fileno)
 
     def fileno(self):
+        "get the file descriptor integer"
         return self._fileno
 
     def flush(self):
+        """flush buffered writes to disk immediately
+        
+        this is provided for compatibility -- this class does no write
+        buffering itself, so it is a no-op
+        """
         return None
 
     def isatty(self):
-        return self._fileno in (0, 1, 2)
+        "return whether the file is connected to a tty or not"
+        try:
+            return os.isatty(self._fileno)
+        except OSError, e:
+            raise IOError(*e.args)
 
-    def seek(self, pos, modifier=0):
-        os.lseek(self._fileno, pos, modifier)
+    def seek(self, position, modifier=0):
+        """move the cursor on the file descriptor to a different location
+        
+        :param position:
+            an integer offset from the location indicated by the modifier
+        :type position: int
+        :param modifier:
+            an indicator of how to find the seek location.
+
+            - ``os.SEEK_START`` means start from the beginning of the file
+            - ``os.SEEK_CUR`` means start wherever the cursor already is
+            - ``os.SEEK_END`` means start from the end of the file
+
+            the default is ``os.SEEK_START``
+        """
+        os.lseek(self._fileno, position, modifier)
 
         # clear out the buffer
         buf = self._rbuf
@@ -257,10 +339,16 @@ class File(FileBase):
         buf.truncate()
 
     def tell(self):
+        "get the file descriptor's position relative to the file's beginning"
         with os.fdopen(os.dup(self._fileno)) as fp:
             return fp.tell()
 
 
 stdin = File.fromfd(getattr(sys.stdin, "fileno", lambda: 0)())
+"a non-blocking file object for cooperative stdin reading"
+
 stdout = File.fromfd(getattr(sys.stdout, "fileno", lambda: 1)())
+"a non-blocking file object for cooperative stdout writing"
+
 stderr = File.fromfd(getattr(sys.stderr, "fileno", lambda: 2)())
+"a non-blocking file object for cooperative stderr writing"

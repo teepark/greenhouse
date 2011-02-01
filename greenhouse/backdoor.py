@@ -1,3 +1,16 @@
+"""
+These functions enable running an additional server in greenhouse server
+processes, which accepts connections and runs interactive python interpreters
+on them, enabling entirely flexible and ad-hoc server administration at
+runtime.
+
+.. warning:: **backdoors are a gaping security hole**
+
+    Make certain that you either use ``"127.0.0.1"`` as the host on which to
+    listen for connections so that it will only accept connection requests made
+    locally. If you must connect to it from another machine, at least make sure
+    it is behind a firewall that will block the backdoor port.
+"""
 from __future__ import with_statement
 
 import code
@@ -22,14 +35,24 @@ PS2 = getattr(sys, "ps2", "... ")
 
 
 def run_backdoor(address, namespace=None):
-    '''start a server in the current coroutine that accepts connections on
-    the specified address and starts backdoor interpreters on them
+    """start a server that runs python interpreters on connections made to it
 
-    namespace is optionally a dictionary that will serve as the execution context
-    for the connected interpreters. an empty dictionary would not put anything
-    into the namespace, but would cause all connected backdoors to share a
-    single namespace while the default of None causes them to be separate.
-    '''
+    .. note::
+        this function blocks effectively indefinitely -- it runs the listening
+        socket loop in the current greenlet. to keep the current greenlet free,
+        :func:`schedule<greenhouse.scheduler.schedule>` this function.
+
+    :param address:
+        the address on which to listen for backdoor connections, in the form of
+        a two-tuple ``(host, port)``
+    :type address: tuple
+    :param namespace:
+        an optional dictionary to use as the global namespace for connections.
+        if this is provided, then it will be shared among all connections made
+        to this server, unless the default value of ``None`` is used, in which
+        case a distinct dictionary is created for every connection.
+    :type namespace: dict or None
+    """
     serversock = io.Socket()
     serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     serversock.bind(address)
@@ -41,15 +64,18 @@ def run_backdoor(address, namespace=None):
 
 
 def backdoor_handler(clientsock, namespace=None):
-    '''start a backdoor interpreter on an existing connection
+    """start an interactive python interpreter on an existing connection
 
-    this function effectively takes over the coroutine it is started in,
-    blocking for input over the socket and acting on it until the connection
-    is closed
+    .. note::
+        this function will block for as long as the connection remains alive.
 
-    namespace is optionally a dictionary that will serve as the execution context
-    for the interpreter-over-socket
-    '''
+    :param sock: the socket on which to serve the interpreter
+    :type sock: :class:`Socket<greenhouse.io.sockets.Socket>`
+    :param namespace:
+        the local namespace dict for the interpreter, or None to have the
+        function create its own empty namespace
+    :type namespace: dict or None
+    """
     console = code.InteractiveConsole({} if namespace is None else namespace)
     clientfile = clientsock.makefile('r')
     multiline_statement = []

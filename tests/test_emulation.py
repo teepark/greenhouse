@@ -285,7 +285,7 @@ class GreenSelectMixin(object):
         def test_kqueue(self):
             with self.socketpair() as (client, server):
                 kq = emulation._green_kqueue()
-                kq.control([
+                events = [
                         select.kevent(client.fileno(), select.KQ_FILTER_READ,
                             select.KQ_EV_ADD),
                         select.kevent(client.fileno(), select.KQ_FILTER_WRITE,
@@ -293,7 +293,14 @@ class GreenSelectMixin(object):
                         select.kevent(server.fileno(), select.KQ_FILTER_READ,
                             select.KQ_EV_ADD),
                         select.kevent(server.fileno(), select.KQ_FILTER_WRITE,
-                            select.KQ_EV_ADD)], 0)
+                            select.KQ_EV_ADD)]
+
+                if sys.platform == 'darwin':
+                    for event in events:
+                        # stupid busted OS X kqueue
+                        kq.control([event], 0)
+                else:
+                    kq.control(events, 0)
 
                 events = [(ke.ident, ke.filter)
                         for ke in kq.control(None, 4, 0)]

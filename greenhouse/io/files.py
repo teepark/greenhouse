@@ -41,7 +41,7 @@ class FileBase(object):
 
     def read(self, size=-1):
         """read a number of bytes from the file and return it as a string
-        
+
         :param size:
             the maximum number of bytes to read from the file. < 0 means read
             the file to the end
@@ -84,7 +84,7 @@ class FileBase(object):
 
     def readline(self):
         """read from the file until a newline is encountered
-        
+
         :returns:
             a string of the line it read from the file, including the newline
             at the end
@@ -120,7 +120,7 @@ class FileBase(object):
 
     def readlines(self, bufsize=-1):
         """reads the entire file, producing the lines one at a time
-        
+
         :param bufsize: the read buffer size to use
         :type bufsize: int
 
@@ -303,7 +303,7 @@ class File(FileBase):
 
     def flush(self):
         """flush buffered writes to disk immediately
-        
+
         this is provided for compatibility -- this class does no write
         buffering itself, so it is a no-op
         """
@@ -318,7 +318,7 @@ class File(FileBase):
 
     def seek(self, position, modifier=0):
         """move the cursor on the file descriptor to a different location
-        
+
         :param position:
             an integer offset from the location indicated by the modifier
         :type position: int

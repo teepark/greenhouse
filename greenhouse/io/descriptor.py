@@ -10,7 +10,7 @@ __all__ = ["wait_fds"]
 
 def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
     """wait for the first of a number of file descriptors to have activity
-    
+
     :param fd_events:
         two-tuples, each one a file descriptor and a mask made up of the inmask
         and/or the outmask bitwise-ORd together

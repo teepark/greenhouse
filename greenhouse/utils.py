@@ -771,7 +771,7 @@ class Queue(object):
         """get an item out of the queue without ever blocking
 
         this call is equivalent to ``get(blocking=False)``
-        
+
         :returns: something that was previously :meth:`put` in the queue
         """
         return self.get(blocking=False)
@@ -781,7 +781,7 @@ class Queue(object):
 
     def put(self, item, blocking=True, timeout=None):
         """put an item into the queue
-        
+
         if the queue was instantiated with a nonzero `maxsize` and that size
         has already been reached, this method will block until another greenlet
         :meth:`get`\ s an item out
@@ -830,7 +830,7 @@ class Queue(object):
 
     def put_nowait(self, item):
         """put an item into the queue without any chance of blocking
-        
+
         this call is equivalent to ``put(blocking=False)``
 
         ;param item: the object to put into the queue, can be any type
@@ -839,7 +839,7 @@ class Queue(object):
 
     def qsize(self):
         """the number of queued pieces of data
-        
+
         :returns: int
         """
         return len(self._data)
@@ -847,7 +847,7 @@ class Queue(object):
     def task_done(self):
         """mark that a "job" (corresponding to a :meth:`put` or
         :meth:`put_nowait` call) is finished
-        
+
         the :meth:`join` method won't complete until the number of
         :meth:`task_done` calls equals the number of :meth:`put` calls
         """

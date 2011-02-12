@@ -59,6 +59,5 @@ def connection_handler(clientsock):
     broadcast("*** %s has left the building\n" % name)
 
 
-
 if __name__ == "__main__":
     start()

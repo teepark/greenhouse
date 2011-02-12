@@ -11,10 +11,6 @@ def connection_handler(clientsock, address):
     print "connection made from %s:%s" % address
     clientfile = clientsock.makefile()
     while 1:
-        if clientsock._closed:
-            print "connection was closed"
-            break
-
         input = received = clientsock.recv(8192)
         if not input:
             print "connection was closed"

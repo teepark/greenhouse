@@ -46,7 +46,7 @@ Let's look at a few.
 
 Greenhouse takes the parallelism/memory ratio strength of non-blocking I/O and
 uses coroutines to provide an api that blocks from a control-flow standpoint,
-but which is actually executing in a single thread and single process. 
+but which is actually executing in a single thread and single process.
 
 Greenlet's coroutines are much lighter in memory than operating system threads,
 allowing greenlet-per-connection into the thousands, much faster to switch
@@ -61,11 +61,13 @@ by monkey-patching in greenhouse's drop-in replacements for sockets and files,
 most third-party libraries written to block threads will work unmodified,
 blocking greenlets instead.
 
-Modules
-=======
+Index
+=====
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
+
+    tutorial
 
     greenhouse/scheduler
     greenhouse/io

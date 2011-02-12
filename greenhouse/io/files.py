@@ -124,9 +124,7 @@ class FileBase(object):
         :param bufsize: the read buffer size to use
         :type bufsize: int
 
-        :returns:
-            a lazy iterator that reads a chunk from the file whenever it
-            doesn't already have a newline in its buffer, and yields the lines
+        :returns: a list of all the lines in the file to the end
         """
         return list(self.__iter__())
 

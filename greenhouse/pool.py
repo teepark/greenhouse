@@ -161,7 +161,7 @@ class Pool(OneWayPool):
 
         this method sets the :attr:`closing` attribute, lines up the
         :attr:`closed` attribute to be set once any queued data has been
-        processed, and raises a PoolClosed() exception in any coroutines
+        processed, and raises a PoolClosed() exception in any coroutines still
         blocked on :meth:`get`.
         """
         super(Pool, self).close()

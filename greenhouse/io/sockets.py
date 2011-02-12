@@ -40,6 +40,7 @@ class Socket(object):
         once any queued data is flushed, the remote end will not receive any
         more data
         """
+        self._sock.close()
         self._sock = socket._closedsocket()
 
     def dup(self):
@@ -612,6 +613,10 @@ class SocketFile(FileBase):
         self.mode = mode
         if bufsize > 0:
             self.CHUNKSIZE = bufsize
+
+    @property
+    def closed(self):
+        return isinstance(self._sock._sock, socket._closedsocket)
 
     def close(self):
         self._sock.close()

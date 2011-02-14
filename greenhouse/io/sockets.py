@@ -40,7 +40,6 @@ class Socket(object):
         once any queued data is flushed, the remote end will not receive any
         more data
         """
-        self._sock.close()
         self._sock = socket._closedsocket()
 
     def dup(self):

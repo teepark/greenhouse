@@ -10,3 +10,6 @@ html/*
 
 .coverage
 coverage_annotated/*
+
+examples/ircbot/run.py
+examples/ircbot/#*

@@ -671,6 +671,28 @@ class Thread(object):
 
     _active = {}
 
+_main_thread = object.__new__(Thread)
+_main_thread.__dict__.update({
+    'name': 'MainThread',
+    '_target': None,
+    '_args': (),
+    '_kwargs': {},
+    '_started': True,
+    '_finished': Event(),
+    '_glet': compat.main_greenlet,
+})
+
+_dummy_thread = object.__new__(Thread)
+_dummy_thread.__dict__.update({
+    'name': 'GreenThread',
+    '_target': None,
+    '_args': (),
+    '_kwargs': {},
+    '_started': True,
+    '_finished': Event(),
+    '_glet': None,
+})
+
 
 def _enumerate_threads():
     return Thread._active.values()
@@ -679,7 +701,9 @@ def _active_thread_count():
     return len(Thread._active)
 
 def _current_thread():
-    return Thread._active.get(compat.getcurrent())
+    if compat.getcurrent() is compat.main_greenlet:
+        return _main_thread
+    return Thread._active.get(compat.getcurrent(), _dummy_thread)
 
 
 class Queue(object):

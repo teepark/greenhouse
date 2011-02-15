@@ -11,7 +11,7 @@ from greenhouse import compat, scheduler
 
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
            "BoundedSemaphore", "Timer", "Local", "Thread", "Queue",
-           "LifoQueue", "PriorityQueue", "Channel"]
+           "LifoQueue", "PriorityQueue", "Channel", "Counter"]
 
 def _debugger(cls):
     import types
@@ -1052,3 +1052,48 @@ class Channel(object):
             self._dataqueue.append(item)
             self._waiters.append(compat.getcurrent())
             scheduler.state.mainloop.switch()
+
+
+class Counter(object):
+    "a counter object that can block"
+    def __init__(self):
+        self._count = 0
+        self._waiters = {}
+
+    def acquire(self):
+        "increment the counter"
+        self._count += 1
+    __enter__ = acquire
+
+    def release(self):
+        "decrement the counter, potentially waking blocked waiters"
+        self._count = max(self._count - 1, 0)
+        for waiter in self._waiters.pop(self._count, []):
+            scheduler.schedule(waiter)
+
+    def __exit__(self, etype, exc, tb):
+        self.release()
+
+    @property
+    def count(self):
+        "the current integer value of the counter"
+        return self._count
+
+    def wait_for(self, num):
+        """block until the count is <= a particular number
+
+        .. note:: this method can block the current greenlet
+
+        :param num: the number to wait for the count to get down to
+        :type num: int
+        """
+        if self._count > num:
+            self._waiters.setdefault(num, []).append(compat.getcurrent())
+            scheduler.state.mainloop.switch()
+
+    def wait(self):
+        """wait until the count has reached 0
+
+        .. note:: this method can block the current greenlet
+        """
+        self.wait_for(0)

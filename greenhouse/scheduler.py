@@ -366,11 +366,11 @@ def end(target):
     :param target: the greenlet to end
     :type target: greenlet
     """
-    try:
-        schedule_exception(compat.GreenletExit(), target)
-    except ValueError, exc:
-        if exc.args[0] != "can't send exceptions to a dead greenlet":
-            raise
+    if not isinstance(target, compat.greenlet):
+        raise TypeError("argument must be a greenlet")
+    if not target.dead:
+        schedule(target)
+        state.to_raise[target] = compat.GreenletExit()
 
 def _schedule_to_top(target=None, args=(), kwargs=None):
     if target is None:

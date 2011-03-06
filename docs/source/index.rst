@@ -67,7 +67,7 @@ Index
 .. toctree::
     :maxdepth: 1
 
-    tutorial
+    tutorial/parallel-urls
 
     greenhouse/scheduler
     greenhouse/io

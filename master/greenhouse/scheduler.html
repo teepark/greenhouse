@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="top" title="greenhouse v0.6.0 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.io – Cooperative I/O Drop-Ins" href="io.html" />
-    <link rel="prev" title="Welcome to the Greenhouse Documentation!" href="../index.html" /> 
+    <link rel="prev" title="Tutorial" href="../tutorial/parallel-urls.html" /> 
   </head>
   <body>
     <div class="related">
@@ -39,7 +39,7 @@
           <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="Welcome to the Greenhouse Documentation!"
+          <a href="../tutorial/parallel-urls.html" title="Tutorial"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">greenhouse v0.6.0 documentation</a> &raquo;</li> 
       </ul>
@@ -55,111 +55,327 @@
 <dl class="function">
 <dt id="greenhouse.scheduler.pause">
 <tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pauses execution of the current greenlet to let others run. This greenlet
-will be picked up in the next iteration of the main scheduler loop.</p>
+<dd><p>pause and reschedule the current greenlet and switch to the next</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.pause_until">
 <tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause_until</tt><big>(</big><em>unixtime</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause_until" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pauses the current greenlet and does not allow it to be put back into the
-runnable queue until <em>unixtime</em> (a unix timestamp int or float).</p>
+<dd><p>pause and reschedule the current greenlet until a set time</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>unixtime</strong> (<em>int or float</em>) &#8211; the unix timestamp of when to bring this greenlet back</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.pause_for">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause_for</tt><big>(</big><em>seconds</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause_for" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pauses the current greenlet and does not allow it to be put back into the
-runnable queue until <em>seconds</em> seconds (int or float) have gone by.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">pause_for</tt><big>(</big><em>secs</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.pause_for" title="Permalink to this definition">¶</a></dt>
+<dd><p>pause and reschedule the current greenlet for a set number of seconds</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>secs</strong> (<em>int or float</em>) &#8211; number of seconds to pause</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule</tt><big>(</big><em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a new greenlet around <em>target</em> (if it is a function) or uses the
-one provided (if <em>target</em> is a greenlet), and schedules it such that it
-will get picked up in the next iteration of the main scheduler loop.</p>
-<p>If it is a function, arguments and keyword arguments can be pre-loaded with
-<em>args</em> and <em>kwargs</em> respectively.</p>
-<p><a class="reference internal" href="#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule()</span></tt></a> is also usable as a decorator in two ways: pre-loading
-arguments (and therefore calling it inside the decorator syntax as in
-<tt class="docutils literal"><span class="pre">&#64;schedule(args=(...))</span></tt>), or using it as a simple decorator
-(<tt class="docutils literal"><span class="pre">&#64;schedule</span></tt>).</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule</tt><big>(</big><em>target=None</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert a greenlet into the scheduler</p>
+<p>If provided a function, it is wrapped in a new greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a function)</li>
+<li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; keyword arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a
+function)</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This function can also be used as a decorator, either preloading <tt class="docutils literal"><span class="pre">args</span></tt>
+and/or <tt class="docutils literal"><span class="pre">kwargs</span></tt> or not:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;hello from f&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;world&#39;</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;hello </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule_at">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_at</tt><big>(</big><em>unixtime</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_at" title="Permalink to this definition">¶</a></dt>
-<dd><p>Like <a class="reference internal" href="#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule()</span></tt></a>, but will not put the scheduled greenlet into the
-runnable queue until <em>unixtime</em>.</p>
-<p>Because the <em>unixtime</em> argument is required, if it is used as a decorator
-then it must be invoked inside the &#64;-decorator syntax.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_at</tt><big>(</big><em>unixtime</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert a greenlet into the scheduler to be run at a set time</p>
+<p>If provided a function, it is wrapped in a new greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>unixtime</strong> (<em>int or float</em>) &#8211; the unix timestamp at which the new greenlet should be started</li>
+<li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a function)</li>
+<li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; keyword arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a
+function)</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This function can also be used as a decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule_at</span><span class="p">(</span><span class="mi">1296423834</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;hello from f&#39;</span>
+</pre></div>
+</div>
+<p>and args/kwargs can also be preloaded:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule_at</span><span class="p">(</span><span class="mi">1296423834</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;world&#39;</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;hello </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule_in">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_in</tt><big>(</big><em>*seconds*</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_in" title="Permalink to this definition">¶</a></dt>
-<dd><p>Like <a class="reference internal" href="#greenhouse.scheduler.schedule_at" title="greenhouse.scheduler.schedule_at"><tt class="xref py py-func docutils literal"><span class="pre">schedule_at()</span></tt></a>, but the scheduled greenlet will be run <em>seconds</em>
-(int or float) seconds after the <a class="reference internal" href="#greenhouse.scheduler.schedule_in" title="greenhouse.scheduler.schedule_in"><tt class="xref py py-func docutils literal"><span class="pre">schedule_in()</span></tt></a> call rather than at a
-particular unix timestamp.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_in</tt><big>(</big><em>secs</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_in" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert a greenlet into the scheduler to run after a set time</p>
+<p>If provided a function, it is wrapped in a new greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>secs</strong> &#8211; the number of seconds to wait before running the target</li>
+<li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a function)</li>
+<li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; keyword arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a
+function)</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This function can also be used as a decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule_in</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;hello from f&#39;</span>
+</pre></div>
+</div>
+<p>and args/kwargs can also be preloaded:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule_in</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;world&#39;</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;hello </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule_recurring">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_recurring</tt><big>(</big><em>*seconds*</em>, <em>target=None</em>, <em>args=()</em>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_recurring" title="Permalink to this definition">¶</a></dt>
-<dd><p>Schedules a function (<em>target</em> may not be a greenlet here) to be run at
-an interval of <em>seconds</em>, with <em>args</em> and <em>kwargs</em> pre-loaded.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_recurring</tt><big>(</big><em>interval</em>, <em>target=None</em>, <em>maxtimes=0</em>, <em>starting_at=0</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_recurring" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert a greenlet into the scheduler to run regularly at an interval</p>
+<p>If provided a function, it is wrapped in a new greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>interval</strong> (<em>int or float</em>) &#8211; the number of seconds between invocations</li>
+<li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
+<li><strong>maxtimes</strong> (<em>int</em>) &#8211; if provided, do not run more than <tt class="docutils literal"><span class="pre">maxtimes</span></tt> iterations</li>
+<li><strong>starting_at</strong> (<em>int or float</em>) &#8211; the unix timestamp of when to schedule it for the first time (defaults
+to the time of the <tt class="docutils literal"><span class="pre">schedule_recurring</span></tt> call)</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function</li>
+<li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; keyword arguments for the function</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This function can also be used as a decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule_recurring</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;the regular &#39;hello&#39; from f&quot;</span>
+</pre></div>
+</div>
+<p>and args/kwargs can also be preloaded:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@schedule_recurring</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;world&#39;</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;the regular hello </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule_exception">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_exception</tt><big>(</big><em>*exception*</em>, <em>*target*</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_exception" title="Permalink to this definition">¶</a></dt>
-<dd><p>Schedules <em>target</em>, which must be a greenlet, to have <em>exception</em> raised in
-it immediately.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_exception</tt><big>(</big><em>exception</em>, <em>target</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>schedule a greenlet to have an exception raised in it immediately</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to raise in the greenlet</li>
+<li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet that should receive the exception</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule_exception_at">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_exception_at</tt><big>(</big><em>*unixtime*</em>, <em>*exception*</em>, <em>*target*</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_exception_at" title="Permalink to this definition">¶</a></dt>
-<dd><p>Schedules <em>target</em>, which must be a greenlet, to have <em>exception</em> raised in
-it at (or shortly after) <em>unixtime</em> timestamp.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_exception_at</tt><big>(</big><em>unixtime</em>, <em>exception</em>, <em>target</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_exception_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>schedule a greenlet to have an exception raised at a unix timestamp</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>unixtime</strong> (<em>int or float</em>) &#8211; when to raise the exception in the target</li>
+<li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to raise in the greenlet</li>
+<li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet that should receive the exception</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.schedule_exception_in">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_exception_in</tt><big>(</big><em>*seconds*</em>, <em>*exception*</em>, <em>*target*</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_exception_in" title="Permalink to this definition">¶</a></dt>
-<dd><p>Schedules <em>target</em>, which must be a greenlet, to have <em>exception</em> raised in
-it after <em>seconds</em> seconds have elapsed.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">schedule_exception_in</tt><big>(</big><em>secs</em>, <em>exception</em>, <em>target</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.schedule_exception_in" title="Permalink to this definition">¶</a></dt>
+<dd><p>schedule a greenlet receive an exception after a number of seconds</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>secs</strong> (<em>int or float</em>) &#8211; the number of seconds to wait before raising</li>
+<li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to raise in the greenlet</li>
+<li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet that should receive the exception</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.end">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">end</tt><big>(</big><em>*target*</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.end" title="Permalink to this definition">¶</a></dt>
-<dd><p>Schedules a <a class="reference internal" href="compat.html#greenhouse.compat.GreenletExit" title="greenhouse.compat.GreenletExit"><tt class="xref py py-class docutils literal"><span class="pre">GreenletExit</span></tt></a> to be
-raised in <em>target</em> (a greenlet) immediately, killing <em>target</em>.</p>
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">end</tt><big>(</big><em>target</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>schedule a greenlet to be stopped immediately</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet to end</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.add_exception_handler">
 <tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">add_exception_handler</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.add_exception_handler" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>handler</em> should be a function accepting 3 arguments <em>type</em>, <em>exception</em>,
-<em>traceback</em> - the triple returned by <tt class="docutils literal"><span class="pre">sys.exc_info()</span></tt>. Whenever there is
-an unhandled traceback in a scheduled greenlet, all exception handlers will
-be called with the relevant type/exception/traceback.</p>
-<p>A good one to add is in the standard library:
-<tt class="docutils literal"><span class="pre">traceback.print_exception</span></tt>.</p>
+<dd><p>add a callback for when an exception goes uncaught in a greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; the callback function. must be a function taking 3 arguments: <tt class="docutils literal"><span class="pre">klass</span></tt>
+the exception class, <tt class="docutils literal"><span class="pre">exc</span></tt> the exception instance, and <tt class="docutils literal"><span class="pre">tb</span></tt> the
+traceback object</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note also that the callback is only held by a weakref, so if all other refs
+to the function are lost it will stop handling greenlets&#8217; exceptions</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="greenhouse.scheduler.handle_exception">
 <tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">handle_exception</tt><big>(</big><em>klass</em>, <em>exc</em>, <em>tb</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.handle_exception" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>klass</em> is an <tt class="docutils literal"><span class="pre">Exception</span></tt> subclass, the class of the exception to handle</p>
-<p><em>exc</em> is the <tt class="docutils literal"><span class="pre">klass</span></tt> instance raised</p>
-<p><em>tb</em> is the traceback object</p>
-<p>These 3 arguments are exactly what is returned from <tt class="docutils literal"><span class="pre">sys.exc_info()</span></tt>
-after an exception is raised.</p>
-<p>This function runs all the handlers registered through
-<a class="reference internal" href="#greenhouse.scheduler.add_exception_handler" title="greenhouse.scheduler.add_exception_handler"><tt class="xref py py-meth docutils literal"><span class="pre">add_exception_handler()</span></tt></a>.</p>
+<dd><p>run all the registered exception handlers</p>
+<p>the arguments to this function match the output of <tt class="docutils literal"><span class="pre">sys.exc_info()</span></tt></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>klass</strong> (<em>type</em>) &#8211; the exception klass</li>
+<li><strong>exc</strong> (<em>Exception</em>) &#8211; the exception instance</li>
+<li><strong>tb</strong> (<em>Traceback</em>) &#8211; the traceback object</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.greenlet">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">greenlet</tt><big>(</big><em>func</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.greenlet" title="Permalink to this definition">¶</a></dt>
+<dd><p>create a new greenlet from a function and arguments</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>func</strong> (<em>function</em>) &#8211; the function the new greenlet should run</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; any positional arguments for the function</li>
+<li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; any keyword arguments for the function</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>the only major difference between this function and that of the basic
+greenlet api is that this one sets the new greenlet&#8217;s parent to be the
+greenhouse main loop greenlet, which is a requirement for greenlets that
+will wind up in the greenhouse scheduler.</p>
 </dd></dl>
 
 </div>
@@ -171,8 +387,8 @@ after an exception is raised.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../index.html"
-                        title="previous chapter">Welcome to the Greenhouse Documentation!</a></p>
+  <p class="topless"><a href="../tutorial/parallel-urls.html"
+                        title="previous chapter">Tutorial</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="io.html"
                         title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins</a></p>
@@ -211,7 +427,7 @@ after an exception is raised.</p>
           <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
              >next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="Welcome to the Greenhouse Documentation!"
+          <a href="../tutorial/parallel-urls.html" title="Tutorial"
              >previous</a> |</li>
         <li><a href="../index.html">greenhouse v0.6.0 documentation</a> &raquo;</li> 
       </ul>

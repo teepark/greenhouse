@@ -5,18 +5,13 @@
 .. module:: greenhouse.compat
 .. moduleauthor:: Travis J Parker <travis.parker@gmail.com>
 
-.. class:: greenlet
-
-    The underlying greenlet class. Raw (user-created) greenlets can be used
-    with the greenhouse scheduler. The only thing to be aware of is the raw
-    greenlet's parent - the greenlet to which it switches when it dies may or
-    may not in the greenhouse scheduler. To fully swallow the cool-aid and let
-    greenhouse manage a greenlet created outside of greenhouse, just set the
-    ``parent`` attribute of the greenlet to ``greenhouse.scheduler.mainloop``.
-
 .. data:: main_greenlet
 
-    This module attribute should always be set to the main greenlet.
+    This module attribute should always be set to the main root greenlet.
+
+.. function:: getcurrent()
+
+    get the current greenlet
 
 .. class:: GreenletExit
 

@@ -50,34 +50,37 @@
 <span id="greenhouse-backdoor-interpreter-on-a-socket"></span><h1><a class="reference internal" href="#module-greenhouse.backdoor" title="greenhouse.backdoor"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.backdoor</span></tt></a> &#8211; Interpreter On A Socket<a class="headerlink" href="#module-greenhouse.backdoor" title="Permalink to this headline">¶</a></h1>
 <p>These functions enable running an additional server in greenhouse server
 processes, which accepts connections and runs interactive python interpreters
-over them, enabling entirely flexible and ad-hoc server administration at
+on them, enabling entirely flexible and ad-hoc server administration at
 runtime.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p><strong>backdoors are a gaping security hole</strong></p>
-<p class="last">Make absolutely certain that you use <tt class="docutils literal"><span class="pre">&quot;127.0.0.1&quot;</span></tt> as the host on which
-to listen for connections, so that it will only accept connection requests
-coming from localhost. If you <em>must</em> connect to it from another machine, be
-absolutely certain that you are behind a firewall that blocks the backdoor
-port.</p>
+<p class="last">Make certain that you either use <tt class="docutils literal"><span class="pre">&quot;127.0.0.1&quot;</span></tt> as the host on which to
+listen for connections so that it will only accept connection requests made
+locally. If you must connect to it from another machine, at least make sure
+it is behind a firewall that will block the backdoor port.</p>
 </div>
 <dl class="function">
 <dt id="greenhouse.backdoor.run_backdoor">
 <tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">run_backdoor</tt><big>(</big><em>address</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.run_backdoor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Starts a server on the specified address that creates interactive
-interpreters on any connections made.</p>
-<p>This function blocks; it waits for connections in the current coroutine, so
-it can be a good idea to <a class="reference internal" href="scheduler.html#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule</span></tt></a> it</p>
+<dd><p>start a server that runs python interpreters on connections made to it</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this function blocks effectively indefinitely &#8211; it runs the listening
+socket loop in the current greenlet. to keep the current greenlet free,
+<a class="reference internal" href="scheduler.html#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule</span></tt></a> this function.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>address</strong> (<em>(string, int) tuple</em>) &#8211; the host and port on which to listen for connections</li>
-<li><strong>namespace</strong> (<em>dict</em>) &#8211; overrides the local namespace for connected interpreters. currently,
-passing a dictionary at all will cause all connected interpreters to
-share a local namespace. This means that passing an empty dict has
-different semantics than the default <tt class="xref docutils literal"><span class="pre">None</span></tt>.</li>
+<li><strong>address</strong> (<em>tuple</em>) &#8211; the address on which to listen for backdoor connections, in the form of
+a two-tuple <tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt></li>
+<li><strong>namespace</strong> (<em>dict or None</em>) &#8211; an optional dictionary to use as the global namespace for connections.
+if this is provided, then it will be shared among all connections made
+to this server, unless the default value of <tt class="xref docutils literal"><span class="pre">None</span></tt> is used, in which
+case a distinct dictionary is created for every connection.</li>
 </ul>
 </td>
 </tr>
@@ -87,15 +90,20 @@ different semantics than the default <tt class="xref docutils literal"><span cla
 
 <dl class="function">
 <dt id="greenhouse.backdoor.backdoor_handler">
-<tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">backdoor_handler</tt><big>(</big><em>sock</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.backdoor_handler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Starts an interactive interpreter on a connected socket.</p>
+<tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">backdoor_handler</tt><big>(</big><em>clientsock</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.backdoor_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>start an interactive python interpreter on an existing connection</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this function will block for as long as the connection remains alive.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sock</strong> (<a class="reference internal" href="io.html#greenhouse.io.Socket" title="greenhouse.io.Socket"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.io.Socket</span></tt></a>) &#8211; the socket on which to serve the interpreter</li>
-<li><strong>namespace</strong> (<em>dict</em>) &#8211; the local namespace dictionary for the interpreter</li>
+<li><strong>sock</strong> (<a class="reference internal" href="io.html#greenhouse.io.sockets.Socket" title="greenhouse.io.sockets.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a>) &#8211; the socket on which to serve the interpreter</li>
+<li><strong>namespace</strong> (<em>dict or None</em>) &#8211; the local namespace dict for the interpreter, or None to have the
+function create its own empty namespace</li>
 </ul>
 </td>
 </tr>

@@ -55,7 +55,8 @@
 <dl class="class">
 <dt id="greenhouse.utils.Event">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Event</tt><a class="headerlink" href="#greenhouse.utils.Event" title="Permalink to this definition">¶</a></dt>
-<dd><p>an event for which greenlets can wait</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>an event for which greenlets can wait</p>
 <p>mirrors the standard library <cite>threading.Event</cite> API</p>
 <dl class="method">
 <dt id="greenhouse.utils.Event.clear">
@@ -134,7 +135,8 @@ all. otherwise it will block until <a class="reference internal" href="#greenhou
 <dl class="class">
 <dt id="greenhouse.utils.Lock">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Lock</tt><a class="headerlink" href="#greenhouse.utils.Lock" title="Permalink to this definition">¶</a></dt>
-<dd><p>an object that can only be &#8216;owned&#8217; by one greenlet at a time</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>an object that can only be &#8216;owned&#8217; by one greenlet at a time</p>
 <p>mirrors the standard library <cite>threading.Lock</cite> API</p>
 <dl class="method">
 <dt id="greenhouse.utils.Lock.acquire">
@@ -193,7 +195,8 @@ not be otherwise.</p>
 <dl class="class">
 <dt id="greenhouse.utils.RLock">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">RLock</tt><a class="headerlink" href="#greenhouse.utils.RLock" title="Permalink to this definition">¶</a></dt>
-<dd><p>a lock which may be acquired more than once by the same greenlet</p>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.utils.Lock" title="greenhouse.utils.Lock"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.utils.Lock</span></tt></a></p>
+<p>a lock which may be acquired more than once by the same greenlet</p>
 <p>mirrors the standard library <cite>threading.RLock</cite> API</p>
 <dl class="method">
 <dt id="greenhouse.utils.RLock.acquire">
@@ -243,7 +246,8 @@ release then a waiting greenlet is awoken</p>
 <dl class="class">
 <dt id="greenhouse.utils.Condition">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Condition</tt><big>(</big><em>lock=None</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Condition" title="Permalink to this definition">¶</a></dt>
-<dd><p>a synchronization object capable of waking all or one of its waiters</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a synchronization object capable of waking all or one of its waiters</p>
 <p>mirrors the standard library <cite>threading.Condition</cite> API</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -327,7 +331,8 @@ release then a waiting greenlet is awoken</p>
 <dl class="class">
 <dt id="greenhouse.utils.Semaphore">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Semaphore</tt><big>(</big><em>value=1</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Semaphore" title="Permalink to this definition">¶</a></dt>
-<dd><p>a synchronization object with a counter that blocks when it reaches 0</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a synchronization object with a counter that blocks when it reaches 0</p>
 <p>mirrors the api of <cite>threading.Semaphore</cite></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -374,7 +379,8 @@ have blocked until it could decrement the counter)</p>
 <dl class="class">
 <dt id="greenhouse.utils.BoundedSemaphore">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">BoundedSemaphore</tt><big>(</big><em>value=1</em><big>)</big><a class="headerlink" href="#greenhouse.utils.BoundedSemaphore" title="Permalink to this definition">¶</a></dt>
-<dd><p>a semaphore with an upper limit to the counter</p>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.utils.Semaphore" title="greenhouse.utils.Semaphore"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.utils.Semaphore</span></tt></a></p>
+<p>a semaphore with an upper limit to the counter</p>
 <p>mirrors the api of <cite>threading.BoundedSemaphore</cite></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -398,7 +404,8 @@ have blocked until it could decrement the counter)</p>
 <dl class="class">
 <dt id="greenhouse.utils.Timer">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Timer</tt><big>(</big><em>secs</em>, <em>func</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Timer" title="Permalink to this definition">¶</a></dt>
-<dd><p>creates a greenlet from a function and schedules it to run later</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>creates a greenlet from a function and schedules it to run later</p>
 <p>mirrors the standard library <cite>threading.Timer</cite> API</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -463,7 +470,8 @@ run or been cancelled</td>
 <dl class="class">
 <dt id="greenhouse.utils.Local">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Local</tt><a class="headerlink" href="#greenhouse.utils.Local" title="Permalink to this definition">¶</a></dt>
-<dd><p>an object that holds greenlet-local data</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>an object that holds greenlet-local data</p>
 <p>mirrors the standard library <cite>threading.local</cite> API</p>
 <p>to use, simply create an instance with no arguments, and any attribute gets
 and sets will be specific to that greenlet</p>
@@ -472,7 +480,8 @@ and sets will be specific to that greenlet</p>
 <dl class="class">
 <dt id="greenhouse.utils.Thread">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Thread</tt><big>(</big><em>group=None</em>, <em>target=None</em>, <em>name=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>verbose=None</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Thread" title="Permalink to this definition">¶</a></dt>
-<dd><p>a standin class for threads, but powered by greenlets</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a standin class for threads, but powered by greenlets</p>
 <p>this class is useful for <a class="reference internal" href="emulation.html#module-greenhouse.emulation" title="greenhouse.emulation"><tt class="xref py py-mod docutils literal"><span class="pre">monkey-patching</span></tt></a>
 the standard library, but for code written explicitly for greenhouse, the
 functions in <a class="reference internal" href="scheduler.html#module-greenhouse.scheduler" title="greenhouse.scheduler"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.scheduler</span></tt></a> are a better way to go</p>
@@ -721,7 +730,8 @@ started</p>
 <dl class="class">
 <dt id="greenhouse.utils.Queue">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Queue</tt><big>(</big><em>maxsize=0</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>a producer-consumer queue</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a producer-consumer queue</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -899,9 +909,52 @@ has already been reached, this method will block until another greenlet
 </dd></dl>
 
 <dl class="class">
+<dt id="greenhouse.utils.LifoQueue">
+<em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">LifoQueue</tt><big>(</big><em>maxsize=0</em><big>)</big><a class="headerlink" href="#greenhouse.utils.LifoQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.utils.Queue" title="greenhouse.utils.Queue"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.utils.Queue</span></tt></a></p>
+<p>a producer-consumer queue that produces items in LIFO order</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>maxsize</strong> (<em>int</em>) &#8211; optional limit to the amount of queued data, after which <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt>
+can block. the default of 0 turns off the limit, so <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt> will
+never block</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>mirrors the standard library <cite>Queue.LifoQueue</cite> API</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.utils.PriorityQueue">
+<em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">PriorityQueue</tt><big>(</big><em>maxsize=0</em><big>)</big><a class="headerlink" href="#greenhouse.utils.PriorityQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.utils.Queue" title="greenhouse.utils.Queue"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.utils.Queue</span></tt></a></p>
+<p>a producer-consumer queue that produces items in prioritized order</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>maxsize</strong> (<em>int</em>) &#8211; optional limit to the amount of queued data, after which <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt>
+can block. the default of 0 turns off the limit, so <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt> will
+never block</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>mirrors the standard library <cite>Queue.LifoQueue</cite> API</p>
+</dd></dl>
+
+<dl class="class">
 <dt id="greenhouse.utils.Channel">
 <em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Channel</tt><a class="headerlink" href="#greenhouse.utils.Channel" title="Permalink to this definition">¶</a></dt>
-<dd><p>a pipe for inter-coroutine messaging</p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a pipe for inter-coroutine messaging</p>
 <p>mirrors Stackless Python&#8217;s <cite>stackless.channel</cite> API</p>
 <dl class="attribute">
 <dt id="greenhouse.utils.Channel.balance">
@@ -973,6 +1026,62 @@ item now, otherwise block until another coroutine sends something.</p>
 <dd><p>send data over the channel.</p>
 <p>if there is a waiting receiver, re-schedule it and return immediately,
 otherwise block until there is a receiver to accept the item.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.utils.Counter">
+<em class="property">class </em><tt class="descclassname">greenhouse.utils.</tt><tt class="descname">Counter</tt><a class="headerlink" href="#greenhouse.utils.Counter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a counter object that can block</p>
+<dl class="method">
+<dt id="greenhouse.utils.Counter.acquire">
+<tt class="descname">acquire</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Counter.acquire" title="Permalink to this definition">¶</a></dt>
+<dd><p>increment the counter</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.utils.Counter.count">
+<tt class="descname">count</tt><a class="headerlink" href="#greenhouse.utils.Counter.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>the current integer value of the counter</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Counter.release">
+<tt class="descname">release</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Counter.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>decrement the counter, potentially waking blocked waiters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Counter.wait">
+<tt class="descname">wait</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.utils.Counter.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait until the count has reached 0</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method can block the current greenlet</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.utils.Counter.wait_for">
+<tt class="descname">wait_for</tt><big>(</big><em>num</em><big>)</big><a class="headerlink" href="#greenhouse.utils.Counter.wait_for" title="Permalink to this definition">¶</a></dt>
+<dd><p>block until the count is &lt;= a particular number</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method can block the current greenlet</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num</strong> (<em>int</em>) &#8211; the number to wait for the count to get down to</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>

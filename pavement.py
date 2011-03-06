@@ -3,7 +3,7 @@ from paver.path import path
 from paver.setuputils import setup
 
 
-VERSION = (0, 6, 0, "")
+VERSION = (1, 0, 0, "dev")
 
 setup(
     name="greenhouse",

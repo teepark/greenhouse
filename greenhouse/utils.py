@@ -429,6 +429,9 @@ class Timer(object):
         self.cancelled = False
         scheduler.schedule_at(waketime, glet)
 
+    def start(self):
+        pass
+
     @classmethod
     def _remove_from_timedout(cls, waketime, glet):
         tp = scheduler.state.timed_paused
@@ -623,22 +626,19 @@ class Thread(object):
         """whether the thread is in daemonized mode
 
         :returns:
-            ``False``. this is here for compatibility with `threading.Thread`,
-            but daemonized mode is not supported.
+            ``True``. this is here for compatibility with `threading.Thread`,
+            greenhouse-based threads always operate like daemonized threads.
         """
-        return False
+        return True
     isDaemon = is_daemon
 
     def set_daemon(self, daemonic):
-        """here for compatibility with `threading.Thread`, this doesn't work
+        """here for compatibility with `threading.Thread` (this doesn't work).
 
         :param daemonic: whether attempting to turn daemon mode on or off
         :type daemonic: bool
-
-        :raises: `RuntimeError` when attempting to turn on daemonic mode
         """
-        if daemonic:
-            raise RuntimeError("green threads don't support daemonic operation")
+        return
     setDaemon = set_daemon
 
     daemon = property(is_daemon, set_daemon,

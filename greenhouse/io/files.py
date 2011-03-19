@@ -203,9 +203,9 @@ class File(FileBase):
         self._set_up_waiting()
 
     def _set_up_waiting(self):
+        counter = None
         try:
             counter = scheduler.state.poller.register(self)
-            scheduler.state.poller.unregister(self, counter)
         except EnvironmentError:
             self._waiter = "_wait_yield"
         else:
@@ -214,6 +214,9 @@ class File(FileBase):
             self._writable = utils.Event()
             scheduler.state.descriptormap[self._fileno].append(
                     weakref.ref(self))
+        finally:
+            if counter is not None:
+                scheduler.state.poller.unregister(self, counter)
 
     def _wait_event(self, reading):
         "wait on our events"

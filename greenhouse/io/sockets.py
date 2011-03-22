@@ -61,7 +61,10 @@ class Socket(object):
             a two-tuple of ``(socket, address)`` where the socket is connected,
             and the address is the ``(ip_address, port)`` of the remote end
         """
-        return self._sock.accept()
+        innersock, address = self._sock.accept()
+        client = object.__new__(type(self))
+        client._sock = innersock
+        return client, address
 
     def bind(self, address):
         """set the socket to operate on an address

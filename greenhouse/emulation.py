@@ -28,26 +28,31 @@ OS_TIMEOUT = 0.001
 
 
 def _green_select(rlist, wlist, xlist, timeout=None):
+    robjs = {}
+    wobjs = {}
     fds = {}
+
     for fd in rlist:
-        fd = fd if isinstance(fd, int) else fd.fileno()
-        fds[fd] = 1
+        fdnum = fd if isinstance(fd, int) else fd.fileno()
+        robjs[fdnum] = fd
+        fds[fdnum] = 1
 
     for fd in wlist:
-        fd = fd if isinstance(fd, int) else fd.fileno()
-        if fd in fds:
-            fds[fd] |= 2
+        fdnum = fd if isinstance(fd, int) else fd.fileno()
+        wobjs[fdnum] = fd
+        if fdnum in fds:
+            fds[fdnum] |= 2
         else:
-            fds[fd] = 2
+            fds[fdnum] = 2
 
     events = io.wait_fds(fds.items(), timeout=timeout, inmask=1, outmask=2)
 
     rlist_out, wlist_out = [], []
     for fd, event in events:
         if event & 1:
-            rlist_out.append(fd)
+            rlist_out.append(robjs[fd])
         if event & 2:
-            wlist_out.append(fd)
+            wlist_out.append(wobjs[fd])
 
     return rlist_out, wlist_out, []
 

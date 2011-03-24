@@ -227,19 +227,19 @@ class GreenSelectMixin(object):
         with self.socketpair() as (client, server):
             rlist, wlist, xlist = emulation._green_select(
                     [client, server], [client, server], [], 0)
-            assert client.fileno() not in rlist
-            assert client.fileno() in wlist
-            assert server.fileno() not in rlist
-            assert server.fileno() in wlist
+            assert client not in rlist
+            assert client in wlist
+            assert server not in rlist
+            assert server in wlist
 
             client.send("hello")
 
             rlist, wlist, xlist = emulation._green_select(
                     [client, server], [client, server], [], 0)
-            assert client.fileno() not in rlist
-            assert client.fileno() in wlist
-            assert server.fileno() in rlist
-            assert server.fileno() in wlist
+            assert client not in rlist
+            assert client in wlist
+            assert server in rlist
+            assert server in wlist
 
     if hasattr(select, "poll"):
         def test_poll(self):

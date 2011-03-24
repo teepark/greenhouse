@@ -411,6 +411,17 @@ class ScheduleMixin(object):
         def f(): pass
         self.assertRaises(TypeError, greenhouse.end, f)
 
+    def test_end_permits_dead_glets(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            pass
+
+        greenhouse.pause()
+
+        # no assert, just make sure we don't raise
+        greenhouse.end(g)
+
 
 class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):
     POLLER = greenhouse.poller.Select

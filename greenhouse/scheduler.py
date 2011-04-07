@@ -437,19 +437,23 @@ def handle_exception(klass, exc, tb):
     :param tb: the traceback object
     :type tb: Traceback
     """
-    _purge_exception_handlers()
+    global _exception_handlers
 
+    replacement = []
     for weak in _exception_handlers:
+        func = weak()
+        if func is None:
+            continue
         try:
-            weak()(klass, exc, tb)
+            func(klass, exc, tb)
         except Exception:
-            # exceptions from within exception handlers get
-            # squashed so as not to create an infinite loop
-            pass
+            # exceptions from within exception handlers get squashed so as not
+            # to create an infinite loop, but we won't be using this handler
+            # any more
+            continue
+        replacement.append(weak)
 
-def _purge_exception_handlers():
-    globals()['_exception_handlers'] = [
-            weak for weak in _exception_handlers if weak()]
+    _exception_handlers = replacement
 
 def add_exception_handler(handler):
     """add a callback for when an exception goes uncaught in a greenlet

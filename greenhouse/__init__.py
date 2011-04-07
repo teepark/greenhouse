@@ -2,8 +2,11 @@ from greenhouse.compat import *
 from greenhouse.scheduler import *
 from greenhouse.utils import *
 from greenhouse.pool import *
+
 # scheduler.state.poller needs to be in place before the io import
 import greenhouse.poller
+greenhouse.poller.set()
+
 from greenhouse.io import *
 from greenhouse.emulation import *
 from greenhouse.backdoor import *

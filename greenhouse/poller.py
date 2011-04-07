@@ -203,13 +203,15 @@ class Select(object):
 def best():
     if hasattr(select, 'epoll'):
         return Epoll()
+
     if hasattr(select, 'kqueue'):
         return KQueue()
-    elif hasattr(select, 'poll'):
+
+    if hasattr(select, 'poll'):
         return Poll()
+
     return Select()
 
 
 def set(poller=None):
     scheduler.state.poller = poller or best()
-set()

@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
+import socket
+import traceback
+
 import greenhouse
+
 SocketServer = greenhouse.patched("SocketServer")
 
-import traceback
 greenhouse.add_exception_handler(traceback.print_exception)
 
 PORT = 9000
-
 connections = {}
 
 
@@ -27,8 +29,7 @@ class NCChatHandler(SocketServer.StreamRequestHandler):
         connections[name] = self
 
         greenhouse.schedule(self._broadcast, args=(
-            "** %s has entered the room" % name,
-            self))
+            "** %s has entered the room" % name,))
 
         for line in self.rfile:
             if not line:
@@ -36,18 +37,20 @@ class NCChatHandler(SocketServer.StreamRequestHandler):
                 break
 
             greenhouse.schedule(self._broadcast, args=(
-                "%s: %s" % (name, line.rstrip()),))
+                "%s: %s" % (name, line.rstrip()), self))
 
         greenhouse.schedule(self._broadcast, args=(
-            "** %s has left the room" % name,
-            self))
+            "** %s has left the room" % name, self))
 
     def _broadcast(self, message, skip=None):
-        for conn in connections.itervalues():
-            if (skip and conn is skip) or conn.connection._closed:
+        for name, conn in connections.items():
+            if skip and conn is skip:
                 continue
 
-            conn.connection.sendall("%s\r\n" % message)
+            try:
+                conn.connection.sendall("%s\r\n" % message)
+            except socket.error:
+                connections.pop(name, None)
 
 
 if __name__ == '__main__':
@@ -59,5 +62,5 @@ if __name__ == '__main__':
         server.serve_forever()
     except KeyboardInterrupt:
         print "KeyboardInterrupt caught, closing connections"
-        for conn in connections.itervalues():
+        for conn in connections.values():
             conn.connection.close()

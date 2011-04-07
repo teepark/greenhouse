@@ -8,7 +8,7 @@ VERSION = (1, 0, 0, "dev")
 setup(
     name="greenhouse",
     description="An I/O parallelism library making use of coroutines",
-    packages=["greenhouse", "greenhouse.io"],
+    packages=["greenhouse", "greenhouse.io", "greenhouse.ext"],
     version=".".join(filter(None, map(str, VERSION))),
     author="Travis Parker",
     author_email="travis.parker@gmail.com",

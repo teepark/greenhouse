@@ -360,7 +360,8 @@ _green_spawnvpe = _green_spawner(_original_os_spawnvpe)
 
 if zmq:
     _zmq_context = zmq.Context
-    _zmq_socket = zmq.core.Socket
+    _zmq_socket = zmq.Socket
+    _zmq_poller = zmq.Poller
 
     class ZMQContext(_zmq_context):
         def socket(self, sock_type):
@@ -392,6 +393,22 @@ if zmq:
                     if exc.errno != errno.EAGAIN:
                         raise
                     gzmq.wait_socks([(self, 1)])
+
+    class ZMQPoller(object):
+        def __init__(self):
+            self._registry = {}
+
+        def register(self, socket, flags=zmq.POLLIN | zmq.POLLOUT):
+            self._registry[socket] = flags
+
+        modify = register
+
+        def unregister(self, socket):
+            del self._registry[socket]
+
+        def poll(self, timeout=None):
+            return gzmq.wait_socks(self._registry.items(),
+                    inmask=zmq.POLLIN, outmask=zmq.POLLOUT, timeout=timeout)
 
 
 # the definitive list of which attributes of which modules get monkeypatched
@@ -469,10 +486,12 @@ if zmq:
     _patchers['zmq'] = {
         'Context': ZMQContext,
         'Socket': ZMQSocket,
+        'Poller': ZMQPoller,
     }
     _patchers['zmq.core'] = _patchers['zmq']
     _patchers['zmq.core.context'] = {'Context': ZMQContext}
     _patchers['zmq.core.socket'] = {'Socket': ZMQSocket}
+    _patchers['zmq.core.poll'] = {'Poller': ZMQPoller}
 
 _standard = {}
 for mod_name, patchers in _patchers.items():

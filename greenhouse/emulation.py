@@ -426,7 +426,8 @@ _patchers = {
 _standard = {}
 for mod_name, patchers in _patchers.items():
     _standard[mod_name] = {}
-    module = __import__(mod_name)
+
+    module = __import__(mod_name, {}, {}, mod_name.rsplit(".", 1)[0])
     for attr_name, patcher in patchers.items():
         _standard[mod_name][attr_name] = getattr(module, attr_name, None)
 del mod_name, patchers, module, attr_name, patcher
@@ -472,7 +473,7 @@ def patch(*module_names):
             raise ValueError("'%s' is not greenhouse-patchable" % module_name)
 
     for module_name in module_names:
-        module = __import__(module_name)
+        module = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
         for attr, patch in _patchers[module_name].items():
             setattr(module, attr, patch)
 
@@ -497,13 +498,13 @@ def unpatch(*module_names):
             raise ValueError("'%s' is not greenhouse-patchable" % module_name)
 
     for module_name in module_names:
-        module = __import__(module_name)
+        module = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
         for attr, value in _standard[module_name].items():
             setattr(module, attr, value)
 
 
 def _patched_copy(mod_name, patch):
-    old_mod = __import__(mod_name, {}, {}, mod_name.rsplit(".")[0])
+    old_mod = __import__(mod_name, {}, {}, mod_name.rsplit(".", 1)[0])
     new_mod = types.ModuleType(old_mod.__name__)
     new_mod.__dict__.update(old_mod.__dict__)
     new_mod.__dict__.update(patch)
@@ -546,7 +547,7 @@ def patched(module_name):
         sys.modules[name] = new_mod
 
     # import the requested module with patches in place
-    result = __import__(module_name, {}, {}, module_name.rsplit(".")[0])
+    result = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
 
     # put all the original modules back as they were
     for name, old_mod in saved:

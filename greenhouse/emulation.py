@@ -20,6 +20,12 @@ import weakref
 
 from greenhouse import compat, io, scheduler, utils
 
+try:
+    import zmq
+    from greenhouse.ext import zmq as gzmq
+except ImportError:
+    zmq = gzmq = None
+
 
 __all__ = ["patch", "unpatch", "patched"]
 
@@ -352,6 +358,42 @@ _green_spawnvp = _green_spawner(_original_os_spawnvp)
 _green_spawnvpe = _green_spawner(_original_os_spawnvpe)
 
 
+if zmq:
+    _zmq_context = zmq.Context
+    _zmq_socket = zmq.core.Socket
+
+    class ZMQContext(_zmq_context):
+        def socket(self, sock_type):
+            return ZMQSocket(self, sock_type)
+
+    class ZMQSocket(_zmq_socket):
+        def send(self, msg, flags=0):
+            if flags & zmq.NOBLOCK:
+                return super(ZMQSocket, self).send(msg, flags)
+            flags |= zmq.NOBLOCK
+
+            while 1:
+                try:
+                    return super(ZMQSocket, self).send(msg, flags)
+                except zmq.ZMQError, exc:
+                    if exc.errno != errno.EAGAIN:
+                        raise
+                    gzmq.wait_socks([(self, 2)])
+
+        def recv(self, flags=0, copy=True, track=False):
+            if flags & zmq.NOBLOCK:
+                return super(ZMQSocket, self).recv(flags, copy, track)
+            flags |= zmq.NOBLOCK
+
+            while 1:
+                try:
+                    return super(ZMQSocket, self).recv(flags, copy, track)
+                except zmq.ZMQError, exc:
+                    if exc.errno != errno.EAGAIN:
+                        raise
+                    gzmq.wait_socks([(self, 1)])
+
+
 # the definitive list of which attributes of which modules get monkeypatched
 _patchers = {
     '__builtin__': {
@@ -422,6 +464,15 @@ _patchers = {
         'sleep': scheduler.pause_for,
     }
 }
+
+if zmq:
+    _patchers['zmq'] = {
+        'Context': ZMQContext,
+        'Socket': ZMQSocket,
+    }
+    _patchers['zmq.core'] = _patchers['zmq']
+    _patchers['zmq.core.context'] = {'Context': ZMQContext}
+    _patchers['zmq.core.socket'] = {'Socket': ZMQSocket}
 
 _standard = {}
 for mod_name, patchers in _patchers.items():

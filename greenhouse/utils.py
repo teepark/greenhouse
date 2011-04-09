@@ -434,12 +434,8 @@ class Timer(object):
 
     @classmethod
     def _remove_from_timedout(cls, waketime, glet):
-        tp = scheduler.state.timed_paused
-        if tp:
-            index = bisect.bisect(tp, (waketime, None))
-            if tp[index][1] is glet:
-                tp[index:index + 1] = []
-                return True
+        if scheduler.state.timed_paused.remove(waketime, glet):
+            return True
 
         try:
             scheduler.state.to_run.remove(glet)

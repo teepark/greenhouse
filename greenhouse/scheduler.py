@@ -17,15 +17,13 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
 _exception_handlers = []
 
 POLL_TIMEOUT = 1.0
+DEFAULT_BTREE_ORDER = 64
 
 
 state = type('GreenhouseState', (), {})()
 
 # from events that have triggered
 state.awoken_from_events = set()
-
-# cooperatively yielded for a set timeout
-state.timed_paused = []
 
 # executed a simple cooperative yield
 state.paused = []
@@ -38,6 +36,78 @@ state.to_run = collections.deque()
 
 # exceptions queued up for scheduled coros
 state.to_raise = weakref.WeakKeyDictionary()
+
+class TimeoutManager(object):
+    def __nonzero__(self):
+        return bool(self.data)
+
+    def first(self):
+        if self.data:
+            return iter(self.data).next()
+        return None
+
+    @classmethod
+    def install(cls):
+        state.timed_paused = cls(state.timed_paused.dump())
+
+class BisectingTimeoutManager(TimeoutManager):
+    def __init__(self, data=None):
+        self.data = data or []
+
+    def clear(self):
+        del self.data[:]
+
+    def insert(self, unixtime, glet):
+        bisect.insort(self.data, (unixtime, glet))
+
+    def check(self):
+        index = bisect.bisect(self.data, (time.time(), None))
+        state.to_run.extend(pair[1] for pair in self.data[:index])
+        self.data = self.data[index:]
+
+    def remove(self, unixtime, glet):
+        index = bisect.bisect(self.data, (unixtime, None))
+        while index < len(self.data) and self.data[index][0] == unixtime:
+            if self.data[index][1] is glet:
+                del self.data[index:index + 1]
+                return True
+            index += 1
+        return False
+
+    def dump(self):
+        return self.data
+
+class BTreeTimeoutManager(TimeoutManager):
+    def __init__(self, data=None, order=DEFAULT_BTREE_ORDER):
+        self.data = btree.sorted_btree.bulkload(data or [], order)
+
+    def clear(self):
+        self.data = btree.sorted_btree(self.data.order)
+
+    def insert(self, unixtime, glet):
+        self.data.insert((unixtime, glet))
+
+    def check(self):
+        left, right = self.data.split((time.time(), None))
+        state.to_run.extend(pair[1] for pair in left)
+        self.data = right
+
+    def remove(self, unixtime, glet):
+        try:
+            self.data.remove((unixtime, glet))
+        except ValueError:
+            return False
+        return True
+
+    def dump(self):
+        return list(self.data)
+
+# cooperatively yielded for a set timeout
+try:
+    import btree
+    state.timed_paused = BTreeTimeoutManager()
+except ImportError:
+    state.timed_paused = BisectingTimeoutManager()
 
 
 def _hit_poller(timeout, interruption=None):
@@ -85,14 +155,11 @@ def _check_events():
     state.to_run.extend(state.awoken_from_events)
     state.awoken_from_events.clear()
 
-def _check_paused(skip_simple=False):
-    index = bisect.bisect(state.timed_paused, (time.time(), None))
-    state.to_run.extend(p[1] for p in state.timed_paused[:index])
-    state.timed_paused = state.timed_paused[index:]
+def _check_paused():
+    state.timed_paused.check()
 
-    if not skip_simple:
-        state.to_run.extend(state.paused)
-        state.paused = []
+    state.to_run.extend(state.paused)
+    state.paused = []
 
 def greenlet(func, args=(), kwargs=None):
     """create a new greenlet from a function and arguments
@@ -217,7 +284,7 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
         glet = target
     else:
         glet = greenlet(target, args, kwargs)
-    bisect.insort(state.timed_paused, (unixtime, glet))
+    state.timed_paused.insert(unixtime, glet)
     return target
 
 def schedule_in(secs, target=None, args=(), kwargs=None):
@@ -407,7 +474,7 @@ def mainloop():
                     # if there are timed-paused greenlets, we can
                     # just wait until the first of them wakes up
                     if state.timed_paused:
-                        until = state.timed_paused[0][0] + 0.001
+                        until = state.timed_paused.first()[0] + 0.001
                         _hit_poller(until - time.time(), _interruption_check)
                         _check_paused()
                     else:

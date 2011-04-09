@@ -23,7 +23,7 @@ class StateClearingTestCase(unittest.TestCase):
 
         state = greenhouse.scheduler.state
         state.awoken_from_events.clear()
-        state.timed_paused[:] = []
+        state.timed_paused.clear()
         state.paused[:] = []
         state.descriptormap.clear()
         state.to_run.clear()

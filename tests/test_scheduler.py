@@ -426,20 +426,67 @@ class ScheduleMixin(object):
 class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):
     POLLER = greenhouse.poller.Select
 
-
 if greenhouse.poller.Poll._POLLER:
     class ScheduleTestsWithPoll(ScheduleMixin, StateClearingTestCase):
         POLLER = greenhouse.poller.Poll
-
 
 if greenhouse.poller.Epoll._POLLER:
     class ScheduleTestsWithEpoll(ScheduleMixin, StateClearingTestCase):
         POLLER = greenhouse.poller.Epoll
 
-
 if greenhouse.poller.KQueue._POLLER:
     class ScheduleTestsWithKQueue(ScheduleMixin, StateClearingTestCase):
         POLLER = greenhouse.poller.KQueue
+
+
+try:
+    import btree
+except ImportError:
+    pass
+else:
+    class BisectingScheduleTest(StateClearingTestCase):
+        def setUp(self):
+            super(BisectingScheduleTest, self).setUp()
+            self._old_mgr = greenhouse.scheduler.state.timed_paused
+            greenhouse.scheduler.BisectingTimeoutManager.install()
+            print greenhouse.scheduler.state.timed_paused
+
+        def tearDown(self):
+            type(self._old_mgr).install()
+            super(BisectingScheduleTest, self).tearDown()
+
+    BTreeScheduleTestsWithSelect = ScheduleTestsWithSelect
+    BTreeScheduleTestsWithSelect.__name__ = "BTreeScheduleTestsWithSelect"
+    del ScheduleTestsWithSelect
+
+    class BisectingScheduleTestsWithSelect(ScheduleMixin, BisectingScheduleTest):
+        POLLER = greenhouse.poller.Select
+
+    if greenhouse.poller.Poll._POLLER:
+        BTreeScheduleTestsWithPoll = ScheduleTestsWithPoll
+        BTreeScheduleTestsWithPoll.__name__ = "BTreeScheduleTestsWithPoll"
+        del ScheduleTestsWithPoll
+
+        class BisectingScheduleTestsWithPoll(ScheduleMixin, BisectingScheduleTest):
+            POLLER = greenhouse.poller.Poll
+
+    if greenhouse.poller.Epoll._POLLER:
+        BTreeScheduleTestsWithEpoll = ScheduleTestsWithEpoll
+        BTreeScheduleTestsWithEpoll.__name__ = "BTreeScheduleTestsWithEpoll"
+        del ScheduleTestsWithEpoll
+
+        class BisectingScheduleTestsWithEpoll(
+                ScheduleMixin, BisectingScheduleTest):
+            POLLER = greenhouse.poller.Epoll
+
+    if greenhouse.poller.KQueue._POLLER:
+        BTreeScheduleTestsWithKQueue = ScheduleTestsWithKQueue
+        BTreeScheduleTestsWithKQueue.__name__ = "BTreeScheduleTestsWithKQueue"
+        del ScheduleTestsWithKQueue
+
+        class BisectingScheduleTestsWithKQueue(
+                ScheduleMixin, BisectingScheduleTest):
+            POLLER = greenhouse.poller.KQueue
 
 
 if __name__ == '__main__':

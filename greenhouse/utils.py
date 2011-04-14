@@ -98,7 +98,7 @@ class Event(object):
         scheduler.state.mainloop.switch()
 
         if timeout is not None:
-            timedout = not Timer._remove_from_timedout(waketime, current)
+            timedout = not scheduler._remove_from_timedout(waketime, current)
             if timedout:
                 self._waiters.remove((current, waketime))
             return timedout
@@ -292,7 +292,7 @@ class Condition(object):
         self._lock.acquire()
 
         if timeout is not None:
-            timedout = not Timer._remove_from_timedout(waketime, current)
+            timedout = not scheduler._remove_from_timedout(waketime, current)
             if timedout:
                 self._waiters.remove((current, waketime))
             return timedout
@@ -398,88 +398,6 @@ class BoundedSemaphore(Semaphore):
             raise ValueError("BoundedSemaphore released too many times")
         return super(BoundedSemaphore, self).release()
     release.__doc__ = Semaphore.release.__doc__
-
-class Timer(object):
-    """creates a greenlet from a function and schedules it to run later
-
-    mirrors the standard library `threading.Timer` API
-
-    :param secs: how far in the future to defer running the function in seconds
-    :type secs: int or float
-    :param func: the function to run later
-    :type func: function
-    :param args: positional arguments to pass to the function
-    :type args: tuple
-    :param kwargs: keyword arguments to pass to the function
-    :type kwargs: dict
-    """
-    def __init__(self, secs, func, args=(), kwargs=None):
-        assert hasattr(func, "__call__"), "function argument must be callable"
-
-        if args or kwargs:
-            def run():
-                return func(*args, **(kwargs or {}))
-            self.run = run
-        else:
-            self.run = func
-
-        self._glet = glet = scheduler.greenlet(self.run)
-
-        self.waketime = waketime = time.time() + secs
-        self.cancelled = False
-        scheduler.schedule_at(waketime, glet)
-
-    def start(self):
-        pass
-
-    @classmethod
-    def _remove_from_timedout(cls, waketime, glet):
-        if scheduler.state.timed_paused.remove(waketime, glet):
-            return True
-
-        try:
-            scheduler.state.to_run.remove(glet)
-        except ValueError:
-            return False
-        return True
-
-    def cancel(self):
-        """attempt to prevent the timer from ever running its function
-
-        :returns:
-            ``True`` if it was successful, ``False`` if the timer had already
-            run or been cancelled
-        """
-        if self.cancelled:
-            return False
-        self.cancelled = True
-        return self._remove_from_timedout(self.waketime, self._glet)
-
-    @classmethod
-    def wrap(cls, secs, args=(), kwargs=None):
-        """a classmethod decorator to immediately turn a function into a timer
-
-        you won't find this on `threading.Timer`, it is an extension to that API
-
-        this is a function *returning a decorator*, so it is used like so:
-
-        >>> @Timer.wrap(5, args=("world",))
-        >>> def say_hi_timer(name):
-        ...     print "hello, %s" % name
-
-        :param secs:
-            how far in the future to defer running the function in seconds
-        :type secs: int or float
-        :param args: positional arguments to pass to the function
-        :type args: tuple
-        :param kwargs: keyword arguments to pass to the function
-        :type kwargs: dict
-
-        :returns: a decorator function
-        """
-        def decorator(func):
-            return cls(secs, func, args, kwargs)
-        return decorator
 
 class Local(object):
     """an object that holds greenlet-local data
@@ -702,6 +620,71 @@ def _current_thread():
     return Thread._active.get(compat.getcurrent(), _dummy_thread)
 
 
+class Timer(Thread):
+    """creates a greenlet from a function and schedules it to run later
+
+    mirrors the standard library `threading.Timer` API
+
+    :param interval: how far in the future to defer the function in seconds
+    :type interval: int or float
+    :param func: the function to run later
+    :type func: function
+    :param args: positional arguments to pass to the function
+    :type args: tuple
+    :param kwargs: keyword arguments to pass to the function
+    :type kwargs: dict
+    """
+    def __init__(self, interval, function, args=[], kwargs={}):
+        super(Timer, self).__init__()
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.finished = Event()
+
+    def cancel(self):
+        """attempt to prevent the timer from ever running its function
+
+        :returns:
+            ``True`` if it was successful, ``False`` if the timer had already
+            run or been cancelled
+        """
+        self.finished.set()
+
+    def run(self):
+        self.finished.wait(self.interval)
+        if not self.finished.is_set():
+            self.function(*self.args, **self.kwargs)
+        self.finished.set()
+
+    @classmethod
+    def wrap(cls, secs, args=(), kwargs=None):
+        """a classmethod decorator to immediately turn a function into a timer
+
+        you won't find this on `threading.Timer`, it is an extension to that API
+
+        this is a function *returning a decorator*, so it is used like so:
+
+        >>> @Timer.wrap(5, args=("world",))
+        >>> def say_hi_timer(name):
+        ...     print "hello, %s" % name
+
+        :param secs:
+            how far in the future to defer running the function in seconds
+        :type secs: int or float
+        :param args: positional arguments to pass to the function
+        :type args: tuple
+        :param kwargs: keyword arguments to pass to the function
+        :type kwargs: dict
+
+        :returns:
+            a decorator function which produces an unstarted :class:`Timer`
+        """
+        def decorator(func):
+            return cls(secs, func, args, kwargs)
+        return decorator
+
+
 class Queue(object):
     """a producer-consumer queue
 
@@ -778,7 +761,7 @@ class Queue(object):
             scheduler.state.mainloop.switch()
 
             if timeout is not None:
-                if not Timer._remove_from_timedout(waketime, current):
+                if not scheduler._remove_from_timedout(waketime, current):
                     self._waiters.remove((current, waketime))
                     raise Empty()
 
@@ -835,7 +818,7 @@ class Queue(object):
             scheduler.state.mainloop.switch()
 
             if timeout is not None:
-                if not Timer._remove_from_timedout(waketime, current):
+                if not scheduler._remove_from_timedout(waketime, current):
                     self._waiters.remove((current, waketime))
                     raise Full()
 

@@ -386,11 +386,11 @@ class TimerTestCase(StateClearingTestCase):
             l[0] = True
 
         timer = greenhouse.Timer(TESTING_TIMEOUT, f)
+        timer.start()
 
         assert not l[0]
 
-        time.sleep(TESTING_TIMEOUT)
-        greenhouse.pause()
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
         assert l[0]
 
     def test_cancels(self):
@@ -400,13 +400,13 @@ class TimerTestCase(StateClearingTestCase):
             l[0] = True
 
         timer = greenhouse.Timer(TESTING_TIMEOUT, f)
+        timer.start()
 
         assert not l[0]
 
         timer.cancel()
 
-        time.sleep(TESTING_TIMEOUT)
-        greenhouse.pause()
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
         assert not l[0]
 
     def test_args(self):
@@ -416,11 +416,11 @@ class TimerTestCase(StateClearingTestCase):
             l[0] = (x, y)
 
         timer = greenhouse.Timer(TESTING_TIMEOUT, f, args=(3, 76))
+        timer.start()
 
         assert not l[0]
 
-        time.sleep(TESTING_TIMEOUT)
-        greenhouse.pause()
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
         self.assertEqual(l[0], (3, 76))
 
     def test_kwargs(self):
@@ -430,11 +430,11 @@ class TimerTestCase(StateClearingTestCase):
             l[0] = kwargs
 
         timer = greenhouse.Timer(TESTING_TIMEOUT, f, kwargs={'a': 1, 'b': 2})
+        timer.start()
 
         assert not l[0]
 
-        time.sleep(TESTING_TIMEOUT)
-        greenhouse.pause()
+        greenhouse.pause_for(TESTING_TIMEOUT * 2)
         self.assertEqual(l[0], {'a': 1, 'b': 2})
 
 class LocalTestCase(StateClearingTestCase):

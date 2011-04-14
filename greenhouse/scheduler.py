@@ -455,6 +455,17 @@ def _schedule_to_top(target=None, args=(), kwargs=None):
     state.to_run.appendleft(glet)
     return target
 
+def _remove_from_timedout(waketime, glet):
+    if state.timed_paused.remove(waketime, glet):
+        return True
+
+    try:
+        state.to_run.remove(glet)
+    except ValueError:
+        return False
+    return True
+
+
 def _interruption_check():
     _check_events()
     _check_paused()

@@ -143,7 +143,6 @@ def patch(*module_names):
     for module_name in module_names:
         module = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
         for attr, patch in _patchers[module_name].items():
-            print "patching %s.%s" % (module_name, attr)
             setattr(module, attr, patch)
 
 
@@ -173,27 +172,28 @@ def unpatch(*module_names):
 
 
 from . import select
-_patchers['select'] = select._select_patchers
+_patchers['select'] = select.patchers
 
 from . import socket
-_patchers['socket'] = socket._socket_patchers
+_patchers['socket'] = socket.patchers
 
 from . import threading
-_patchers['thread'] = threading._thread_patchers
-_patchers['threading'] = threading._threading_patchers
+_patchers['thread'] = threading.thread_patchers
+_patchers['threading'] = threading.threading_patchers
 
 from . import os
+_patchers['os'] = os.patchers
 # implementing child process-related
 # things in the os module in terms of this
-os._green_subprocess = patched('subprocess')
+os.green_subprocess = patched('subprocess')
 
 from . import zmq
-if zmq._zmq_patchers:
-    _patchers['zmq'] = zmq._zmq_patchers
-    _patchers['zmq.core'] = zmq._zmq_core_patchers
-    _patchers['zmq.core.context'] = zmq._zmq_core_context_patchers
-    _patchers['zmq.core.socket'] = zmq._zmq_core_socket_patchers
-    _patchers['zmq.core.poll'] = zmq._zmq_core_poll_patchers
+if zmq.patchers:
+    _patchers['zmq'] = zmq.patchers
+    _patchers['zmq.core'] = zmq.core_patchers
+    _patchers['zmq.core.context'] = zmq.core_context_patchers
+    _patchers['zmq.core.socket'] = zmq.core_socket_patchers
+    _patchers['zmq.core.poll'] = zmq.core_poll_patchers
 
 try:
     dns_exception = patched("dns.exception")
@@ -208,7 +208,7 @@ try:
     dns.dns_rdatatype = dns_rdatatype
     dns.dns_reversename = dns_reversename
 
-    _patchers['socket'].update(dns._dns_socket_patchers)
+    _patchers['socket'].update(dns.socket_patchers)
 
 except ImportError:
     pass

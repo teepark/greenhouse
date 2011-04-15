@@ -49,7 +49,7 @@ class PatchSocketTest(MonkeyPatchBase, StateClearingTestCase):
 
     PATCHES = [
         ('socket', socket.socket, io.Socket, lambda: socket.socket),
-        ('socketpair', socket.socketpair, emulation._green_socketpair,
+        ('socketpair', socket.socketpair, emulation.socket.green_socketpair,
             lambda: socket.socketpair),
         ('fromfd', socket.fromfd, io.sockets.socket_fromfd,
             lambda: socket.fromfd),
@@ -63,10 +63,10 @@ class PatchThreadTest(MonkeyPatchBase, StateClearingTestCase):
         ('allocate', thread.allocate, utils.Lock, lambda: thread.allocate),
         ('allocate_lock', thread.allocate_lock, utils.Lock,
             lambda: thread.allocate_lock),
-        ('start_new', thread.start_new, emulation._green_start,
+        ('start_new', thread.start_new, emulation.threading.green_start,
             lambda: thread.start_new),
-        ('start_new_thread', thread.start_new_thread, emulation._green_start,
-            lambda: thread.start_new_thread),
+        ('start_new_thread', thread.start_new_thread,
+            emulation.threading.green_start, lambda: thread.start_new_thread),
     ]
 
 
@@ -120,7 +120,7 @@ class PatchedModules(StateClearingTestCase):
 
         green = emulation.patched("httplib")
         assert green.socket.socket is io.Socket
-        assert green.socket.socketpair is emulation._green_socketpair
+        assert green.socket.socketpair is emulation.socket.green_socketpair
         assert green.socket.fromfd is io.sockets.socket_fromfd
 
         import socket, httplib
@@ -135,7 +135,7 @@ class PatchedModules(StateClearingTestCase):
 
         green = emulation.patched("urllib")
         assert green.socket.socket is io.Socket
-        assert green.socket.socketpair is emulation._green_socketpair
+        assert green.socket.socketpair is emulation.socket.green_socketpair
         assert green.socket.fromfd is io.sockets.socket_fromfd
 
         import socket, urllib
@@ -152,8 +152,8 @@ class PatchedModules(StateClearingTestCase):
         green = emulation.patched("logging")
         assert green.thread.allocate_lock is utils.Lock
         assert green.thread.allocate is utils.Lock
-        assert green.thread.start_new_thread is emulation._green_start
-        assert green.thread.start_new is emulation._green_start
+        assert green.thread.start_new_thread is emulation.threading.green_start
+        assert green.thread.start_new is emulation.threading.green_start
         assert green.threading.Event is utils.Event
         assert green.threading.Lock is utils.Lock
         assert green.threading.RLock is utils.RLock
@@ -209,13 +209,13 @@ class PatchedModules(StateClearingTestCase):
 
     def test_socketserver(self):
         green = emulation.patched("asyncore")
-        assert green.select.select is emulation._green_select
-        assert getattr(green.select, "poll", emulation._green_poll) is \
-                emulation._green_poll
-        assert getattr(green.select, "epoll", emulation._green_epoll) is \
-                emulation._green_epoll
-        assert getattr(green.select, "kqueue", emulation._green_kqueue) is \
-                emulation._green_kqueue
+        assert green.select.select is emulation.select.green_select
+        assert getattr(green.select, "poll", emulation.select.green_poll) is \
+                emulation.select.green_poll
+        assert getattr(green.select, "epoll",
+                emulation.select.green_epoll) is emulation.select.green_epoll
+        assert getattr(green.select, "kqueue", emulation.select.green_kqueue) \
+                is emulation.select.green_kqueue
 
 
 class GreenSelectMixin(object):
@@ -225,7 +225,7 @@ class GreenSelectMixin(object):
 
     def test_select(self):
         with self.socketpair() as (client, server):
-            rlist, wlist, xlist = emulation._green_select(
+            rlist, wlist, xlist = emulation.select.green_select(
                     [client, server], [client, server], [], 0)
             assert client not in rlist
             assert client in wlist
@@ -234,7 +234,7 @@ class GreenSelectMixin(object):
 
             client.send("hello")
 
-            rlist, wlist, xlist = emulation._green_select(
+            rlist, wlist, xlist = emulation.select.green_select(
                     [client, server], [client, server], [], 0)
             assert client not in rlist
             assert client in wlist
@@ -244,7 +244,7 @@ class GreenSelectMixin(object):
     if hasattr(select, "poll"):
         def test_poll(self):
             with self.socketpair() as (client, server):
-                p = emulation._green_poll()
+                p = emulation.select.green_poll()
                 p.register(client, select.POLLIN | select.POLLOUT)
                 p.register(server, select.POLLIN | select.POLLOUT)
                 events = dict(p.poll(0))
@@ -264,7 +264,7 @@ class GreenSelectMixin(object):
     if hasattr(select, "epoll"):
         def test_epoll(self):
             with self.socketpair() as (client, server):
-                ep = emulation._green_epoll()
+                ep = emulation.select.green_epoll()
                 ep.register(client, select.EPOLLIN | select.EPOLLOUT)
                 ep.register(server, select.EPOLLIN | select.EPOLLOUT)
                 events = dict(ep.poll(0))
@@ -284,7 +284,7 @@ class GreenSelectMixin(object):
     if hasattr(select, "kqueue"):
         def test_kqueue(self):
             with self.socketpair() as (client, server):
-                kq = emulation._green_kqueue()
+                kq = emulation.select.green_kqueue()
                 events = [
                         select.kevent(client.fileno(), select.KQ_FILTER_READ,
                             select.KQ_EV_ADD),

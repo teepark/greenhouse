@@ -10,15 +10,15 @@ except ImportError:
 
 
 if zmq:
-    _zmq_context = zmq.Context
-    _zmq_socket = zmq.Socket
-    _zmq_poller = zmq.Poller
+    original_context = zmq.Context
+    original_socket = zmq.Socket
+    original_poller = zmq.Poller
 
-    class ZMQContext(_zmq_context):
+    class ZMQContext(original_context):
         def socket(self, sock_type):
             return ZMQSocket(self, sock_type)
 
-    class ZMQSocket(_zmq_socket):
+    class ZMQSocket(original_socket):
         def send(self, msg, flags=0):
             if flags & zmq.NOBLOCK:
                 return super(ZMQSocket, self).send(msg, flags)
@@ -62,19 +62,19 @@ if zmq:
                     inmask=zmq.POLLIN, outmask=zmq.POLLOUT, timeout=timeout)
 
 
-_zmq_patchers = {}
-_zmq_core_patchers = {}
-_zmq_core_context_patchers = {}
-_zmq_core_socket_patchers = {}
-_zmq_core_poll_patchers = {}
+patchers = {}
+core_patchers = {}
+core_context_patchers = {}
+core_socket_patchers = {}
+core_poll_patchers = {}
 
 if zmq:
-    _zmq_patchers.update({
+    patchers.update({
         'Context': ZMQContext,
         'Socket': ZMQSocket,
         'Poller': ZMQPoller,
     })
-    _zmq_core_patchers.update(_zmq_patchers)
-    _zmq_core_context_patchers['Context'] = ZMQContext
-    _zmq_core_socket_patchers['Socket'] = ZMQSocket
-    _zmq_core_poll_patchers['Poller'] = ZMQPoller
+    core_patchers.update(patchers)
+    core_context_patchers['Context'] = ZMQContext
+    core_socket_patchers['Socket'] = ZMQSocket
+    core_poll_patchers['Poller'] = ZMQPoller

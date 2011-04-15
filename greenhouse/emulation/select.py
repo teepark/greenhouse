@@ -6,7 +6,7 @@ import weakref
 from .. import io, scheduler, utils
 
 
-def _green_select(rlist, wlist, xlist, timeout=None):
+def green_select(rlist, wlist, xlist, timeout=None):
     robjs = {}
     wobjs = {}
     fds = {}
@@ -36,7 +36,7 @@ def _green_select(rlist, wlist, xlist, timeout=None):
     return rlist_out, wlist_out, []
 
 
-class _green_poll(object):
+class green_poll(object):
     def __init__(self):
         self._registry = {}
 
@@ -61,14 +61,14 @@ class _green_poll(object):
         del self._registry[fd]
 
 
-class _green_epoll(object):
+class green_epoll(object):
     def __init__(self, from_ep=None):
         self._readable = utils.Event()
         self._writable = utils.Event()
         if from_ep:
             self._epoll = from_ep
         else:
-            self._epoll = _original_epoll()
+            self._epoll = original_epoll()
         scheduler.state.descriptormap[self._epoll.fileno()].append(
                 weakref.ref(self))
 
@@ -106,7 +106,7 @@ class _green_epoll(object):
         self._epoll.unregister(fd)
 
 
-class _green_kqueue(object):
+class green_kqueue(object):
     def __init__(self, from_kq=None):
         self._readable = utils.Event()
         self._writable = utils.Event()
@@ -145,14 +145,14 @@ class _green_kqueue(object):
         return cls(from_kq=select.kqueue.fromfd(fd))
 
 
-_select_patchers = {'select': _green_select}
+patchers = {'select': green_select}
 
 if hasattr(select, "poll"):
-    _select_patchers['poll'] = _green_poll
+    patchers['poll'] = green_poll
 
 if hasattr(select, "epoll"):
-    _select_patchers['epoll'] = _green_epoll
-    _original_epoll = select.epoll
+    patchers['epoll'] = green_epoll
+    original_epoll = select.epoll
 
 if hasattr(select, "kqueue"):
-    _select_patchers['kqueue'] = _green_kqueue
+    patchers['kqueue'] = green_kqueue

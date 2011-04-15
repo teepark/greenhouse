@@ -3,21 +3,21 @@ from __future__ import absolute_import
 from .. import scheduler, utils
 
 
-def _green_start(function, args, kwargs=None):
+def green_start(function, args, kwargs=None):
     glet = scheduler.greenlet(function, args, kwargs)
     scheduler.schedule(glet)
     return id(glet)
 
 
-_thread_patchers = {
+thread_patchers = {
     'allocate_lock': utils.Lock,
     'allocate': utils.Lock,
-    'start_new_thread': _green_start,
-    'start_new': _green_start,
+    'start_new_thread': green_start,
+    'start_new': green_start,
 }
 
 
-_threading_patchers = {
+threading_patchers = {
     'Event': utils.Event,
     'Lock': utils.Lock,
     'RLock': utils.RLock,

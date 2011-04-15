@@ -5,7 +5,7 @@ import socket
 DNS_CACHE_SIZE = 512
 
 
-class _LRU(object):
+class LRU(object):
     def __init__(self, size):
         self._keyed = {}
         self._head = None
@@ -43,7 +43,7 @@ class _LRU(object):
         if old_item:
             self._remove_item(old_item)
 
-        item = _LRUItem(key, value)
+        item = LRUItem(key, value)
         self._set_item_head(item)
         self._keyed[key] = item
         self._purge()
@@ -99,7 +99,7 @@ class _LRU(object):
         return list(self.iteritems())
 
 
-class _LRUItem(object):
+class LRUItem(object):
     __slots__ = ["key", "value", "next", "prev"]
 
     def __init__(self, key, value):
@@ -107,17 +107,9 @@ class _LRUItem(object):
         self.value = value
 
 
-class _CachedAnswer(list):
-    expiration = 0
-
-class _CachedRecord(object):
-    def __init__(self, address):
-        self.address = address
-
-
 etc_hosts_loaded = False
 etc_hosts = {}
-cache = _LRU(DNS_CACHE_SIZE)
+cache = LRU(DNS_CACHE_SIZE)
 resolver = None
 
 def build_resolver(filename="/etc/resolv.conf"):
@@ -249,7 +241,7 @@ def getnameinfo(address, flags):
     return host, port
 
 
-_dns_socket_patchers = {
+socket_patchers = {
     'getaddrinfo': getaddrinfo,
     'gethostbyname': gethostbyname,
     'gethostbyname_ex': gethostbyname_ex,

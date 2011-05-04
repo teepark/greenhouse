@@ -20,7 +20,7 @@ class BackdoorTests(StateClearingTestCase):
                 sock.recv(8192),
                 '\n'.join((backdoor.PREAMBLE, backdoor.PS1)))
 
-        sock.sendall("print 'hello'\n")
+        sock.sendall("sys.stdout.write('hello\\n')\n")
 
         self.assertEqual(sock.recv(8192), 'hello\n' + backdoor.PS1)
 

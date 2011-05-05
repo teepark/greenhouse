@@ -35,13 +35,13 @@ class MonkeyPatchBase(object):
             assert val is standard, (name, val)
 
 
-class PatchBuiltinsTest(MonkeyPatchBase, StateClearingTestCase):
-    PATCH_NAME = "__builtin__"
-
-    PATCHES = [
-        ('file', file, io.File, lambda: file),
-        ('open', open, io.File, lambda: open),
-    ]
+#class PatchBuiltinsTest(MonkeyPatchBase, StateClearingTestCase):
+#    PATCH_NAME = "__builtin__"
+#
+#    PATCHES = [
+#        ('file', file, io.File, lambda: file),
+#        ('open', open, io.File, lambda: open),
+#    ]
 
 
 class PatchSocketTest(MonkeyPatchBase, StateClearingTestCase):
@@ -145,6 +145,7 @@ class PatchedModules(StateClearingTestCase):
         assert urllib.socket.socket is urllib1.socket.socket
 
     def test_logging(self):
+        print emulation._standard['thread']
         import thread as thread1, threading as threading1, logging as logging1
         assert logging1.thread is thread1
         assert logging1.threading is threading1

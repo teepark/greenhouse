@@ -502,19 +502,17 @@ class WaitFDsMixin(object):
         super(WaitFDsMixin, self).setUp()
         greenhouse.poller.set(self.POLLER())
 
-    def test_stdio(self):
-        # stdin, stdout, stderr should all come up as writable but not readable
-        evs = greenhouse.wait_fds([(0, 3), (1, 3), (2, 3)])
-        self.assertEqual(sorted(evs), [(0, 2), (1, 2), (2, 2)])
+    def test_pipes(self):
+        reader1, writer1 = greenhouse.pipe()
+        reader2, writer2 = greenhouse.pipe()
+        writer1.write("x")
 
-    def test_stdio_with_alternative_masks(self):
-        evs = greenhouse.wait_fds([(0, 12), (1, 12), (2, 12)],
-                inmask=4, outmask=8)
-        self.assertEqual(sorted(evs), [(0, 8), (1, 8), (2, 8)])
+        evs = greenhouse.wait_fds([
+            (reader1.fileno(), 3), (writer1.fileno(), 3),
+            (reader2.fileno(), 3), (writer2.fileno(), 3)])
 
-    def test_with_partial_return(self):
-        evs = greenhouse.wait_fds([(0, 1), (1, 3), (2, 1)])
-        self.assertEqual(evs, [(1, 2)])
+        self.assertEqual(sorted(evs), sorted([(reader1.fileno(), 1),
+            (writer1.fileno(), 2), (writer2.fileno(), 2)]))
 
     def test_sockets(self):
         with self.socketpair() as (client, server):

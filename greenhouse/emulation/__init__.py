@@ -54,15 +54,16 @@ def patched(module_name):
         saved.append((name, sys.modules.pop(name)))
         sys.modules[name] = new_mod
 
-    # import the requested module with patches in place
-    result = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
-
-    # put all the original modules back as they were
-    for name, old_mod in saved:
-        if old_mod is None:
-            sys.modules.pop(name)
-        else:
-            sys.modules[name] = old_mod
+    try:
+        # import the requested module with patches in place
+        result = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
+    finally:
+        # put all the original modules back as they were
+        for name, old_mod in saved:
+            if old_mod is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = old_mod
 
     return result
 
@@ -141,7 +142,11 @@ def patch(*module_names):
             raise ValueError("'%s' is not greenhouse-patchable" % module_name)
 
     for module_name in module_names:
-        module = __import__(module_name, {}, {}, module_name.rsplit(".", 1)[0])
+        if module_name in sys.modules:
+            module = sys.modules[module_name]
+        else:
+            module = __import__(
+                    module_name, {}, {}, module_name.rsplit(".", 1)[0])
         for attr, patch in _patchers[module_name].items():
             setattr(module, attr, patch)
 

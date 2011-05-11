@@ -1042,13 +1042,16 @@ class Counter(object):
     def acquire(self):
         "increment the counter"
         self._count += 1
+        scheduler.state.awoken_from_events.update(
+                self._waiters.pop(self._count, []))
+
     __enter__ = acquire
 
     def release(self):
         "decrement the counter, potentially waking blocked waiters"
         self._count = max(self._count - 1, 0)
-        for waiter in self._waiters.pop(self._count, []):
-            scheduler.schedule(waiter)
+        scheduler.state.awoken_from_events.update(
+                self._waiters.pop(self._count, []))
 
     def __exit__(self, etype, exc, tb):
         self.release()
@@ -1058,21 +1061,20 @@ class Counter(object):
         "the current integer value of the counter"
         return self._count
 
-    def wait_for(self, num):
-        """block until the count is <= a particular number
+    def wait(self, until=0):
+        """wait until the count has reached a particular number
 
         .. note:: this method can block the current greenlet
 
-        :param num: the number to wait for the count to get down to
-        :type num: int
+        :param until:
+            the number to wait for the count to get down (or up) to. default 0
+        :type until: int
+
+        :raises: ValueError for negative values of ``until``
         """
-        if self._count > num:
+        if until < 0:
+            raise ValueError("until must be non-negative")
+
+        if self._count != until:
             self._waiters.setdefault(num, []).append(compat.getcurrent())
             scheduler.state.mainloop.switch()
-
-    def wait(self):
-        """wait until the count has reached 0
-
-        .. note:: this method can block the current greenlet
-        """
-        self.wait_for(0)

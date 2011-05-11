@@ -3,6 +3,7 @@ from __future__ import with_statement
 import contextlib
 import errno
 import socket
+import sys
 import weakref
 
 import greenhouse
@@ -443,6 +444,7 @@ class _InnerSocket(object):
                 except socket.error, err:
                     if self._blocking and err[0] in (
                             errno.EAGAIN, errno.EWOULDBLOCK):
+                        sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -463,6 +465,7 @@ class _InnerSocket(object):
                 err = self.connect_ex(address)
                 if self._blocking and err in (
                         errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
+                    sys.exc_clear()
                     if self._writable.wait(self.gettimeout()):
                         raise socket.timeout("timed out")
                     continue
@@ -507,6 +510,7 @@ class _InnerSocket(object):
                 except socket.error, e:
                     if self._blocking and e[0] in (
                             errno.EWOULDBLOCK, errno.EAGAIN):
+                        sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -525,6 +529,7 @@ class _InnerSocket(object):
                 except socket.error, e:
                     if self._blocking and e[0] in (
                             errno.EWOULDBLOCK, errno.EAGAIN):
+                        sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -543,6 +548,7 @@ class _InnerSocket(object):
                 except socket.error, e:
                     if self._blocking and e[0] in (
                             errno.EWOULDBLOCK, errno.EAGAIN):
+                        sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue
@@ -561,6 +567,7 @@ class _InnerSocket(object):
                 except socket.error, e:
                     if self._blocking and e[0] in (
                             errno.EWOULDBLOCK, errno.EAGAIN):
+                        sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
                         continue

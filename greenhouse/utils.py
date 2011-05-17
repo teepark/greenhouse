@@ -60,8 +60,8 @@ class Event(object):
         :meth:`clear` has been called
         """
         self._is_set = True
-        scheduler.state.awoken_from_events.update(x[0] for x in self._waiters)
-        self._waiters = []
+        scheduler.state.awoken_from_events.update(self._waiters)
+        del self._waiters[:]
 
     def clear(self):
         """clear the event from being triggered
@@ -94,13 +94,13 @@ class Event(object):
         if timeout is not None:
             scheduler.schedule_at(waketime, current)
 
-        self._waiters.append((current, waketime))
+        self._waiters.append(current)
         scheduler.state.mainloop.switch()
 
         if timeout is not None:
             timedout = not scheduler._remove_from_timedout(waketime, current)
             if timedout:
-                self._waiters.remove((current, waketime))
+                self._waiters.remove(current)
             return timedout
 
         return False

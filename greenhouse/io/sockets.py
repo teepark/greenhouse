@@ -7,8 +7,8 @@ import sys
 import weakref
 
 import greenhouse
+from greenhouse import scheduler
 from greenhouse.io.files import FileBase
-from greenhouse.scheduler import state
 
 
 __all__ = ["Socket"]
@@ -405,11 +405,20 @@ class _InnerSocket(object):
         self._writable = greenhouse.Event()
 
         # allow for lookup by fileno
-        state.descriptormap[self._fileno].append(weakref.ref(self))
+        scheduler._register_fd(
+                self._fileno, self._on_readable, self._on_writable)
+
+    def _on_readable(self):
+        self._readable.set()
+        self._readable.clear()
+
+    def _on_writable(self):
+        self._writable.set()
+        self._writable.clear()
 
     @contextlib.contextmanager
     def _registered(self, events=None):
-        poller = state.poller
+        poller = scheduler.state.poller
         mask = None
         if events:
             mask = 0

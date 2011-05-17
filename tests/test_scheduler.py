@@ -177,8 +177,8 @@ class ScheduleMixin(object):
         temp = greenhouse.Socket()
         temps_fileno = temp.fileno()
 
-        one_good = [x() for x in dmap[temps_fileno]]
-        assert all(one_good), one_good
+        one_good = filter(lambda (r, w): r and w, dmap[temps_fileno])
+        self.assertEqual(len(one_good), 1, one_good)
 
         del temp
         del one_good
@@ -196,8 +196,8 @@ class ScheduleMixin(object):
 
         greenhouse.pause_for(TESTING_TIMEOUT)
 
-        gone = [x for x in dmap[temps_fileno]]
-        assert all(x() is None for x in gone), gone
+        gone = filter(lambda (r, w): r and w, dmap[temps_fileno])
+        self.assertEqual(len(gone), 0, gone)
 
     def test_socketpolling(self):
         client = greenhouse.Socket()
@@ -449,7 +449,6 @@ else:
             super(BisectingScheduleTest, self).setUp()
             self._old_mgr = greenhouse.scheduler.state.timed_paused
             greenhouse.scheduler.BisectingTimeoutManager.install()
-            print greenhouse.scheduler.state.timed_paused
 
         def tearDown(self):
             type(self._old_mgr).install()

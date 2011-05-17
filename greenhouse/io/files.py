@@ -212,11 +212,19 @@ class File(FileBase):
             self._waiter = "_wait_event"
             self._readable = utils.Event()
             self._writable = utils.Event()
-            scheduler.state.descriptormap[self._fileno].append(
-                    weakref.ref(self))
+            scheduler._register_fd(
+                    self._fileno, self._on_readable, self._on_writable)
         finally:
             if counter is not None:
                 scheduler.state.poller.unregister(self, counter)
+
+    def _on_readable(self):
+        self._readable.set()
+        self._readable.clear()
+
+    def _on_writable(self):
+        self._writable.set()
+        self._writable.clear()
 
     def _wait_event(self, reading):
         "wait on our events"

@@ -127,29 +127,67 @@ def _hit_poller(timeout, interruption=None):
             timeout = until - time.time()
 
     for fd, eventmap in events:
-        socks = []
-        objs = state.descriptormap.get(fd, [])
+        readables = []
+        writables = []
         removals = []
-        for index, weak in enumerate(objs):
-            sock = weak()
-            if sock is None or sock._closed:
+        callbackpairs = state.descriptormap.get(fd, [])
+        for index, (readable, writable) in enumerate(callbackpairs):
+            if not readable and not writable:
                 removals.append(index)
             else:
-                socks.append(sock)
+                if readable:
+                    readables.append(readable)
+                if writable:
+                    writables.append(writable)
 
-        map(objs.pop, removals[::-1])
-        if not objs:
-            state.descriptormap.pop(fd, None)
+        map(callbackpairs.pop, removals[::-1])
+        if not callbackpairs:
+            state.descriptormap.pop(fd)
 
         if eventmap & (state.poller.INMASK | state.poller.ERRMASK):
-            for sock in socks:
-                sock._readable.set()
-                sock._readable.clear()
+            for readable in readables:
+                readable()
         if eventmap & (state.poller.OUTMASK | state.poller.ERRMASK):
-            for sock in socks:
-                sock._writable.set()
-                sock._writable.clear()
+            for writable in writables:
+                writable()
+
     _check_events()
+
+
+class _WeakMethodRef(object):
+    def __init__(self, method):
+        if getattr(method, "im_self", None):
+            self.obj = weakref.ref(method.im_self)
+        elif getattr(method, "im_class", None):
+            self.obj = weakref.ref(method.im_class)
+        else:
+            self.obj = None
+
+        if getattr(method, "im_func", None):
+            method = method.im_func
+        self.func = weakref.ref(method)
+
+    def __nonzero__(self):
+        if self.obj is not None and not self.obj():
+            return False
+        return self.func() is not None
+
+    def __call__(self, *args, **kwargs):
+        if not self:
+            raise Exception("weakrefs broken")
+        if self.obj is not None:
+            args = (self.obj(),) + args
+        return self.func()(*args, **kwargs)
+
+
+def _register_fd(fd, readable, writable):
+    # accepts callback functions for readable and writable events
+    if readable is not None:
+        readable = _WeakMethodRef(readable)
+    if writable is not None:
+        writable = _WeakMethodRef(writable)
+    state.descriptormap[fd].append((readable, writable))
+
 
 def _check_events():
     state.to_run.extend(state.awoken_from_events)

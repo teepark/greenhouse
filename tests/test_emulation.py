@@ -145,7 +145,6 @@ class PatchedModules(StateClearingTestCase):
         assert urllib.socket.socket is urllib1.socket.socket
 
     def test_logging(self):
-        print emulation._standard['thread']
         import thread as thread1, threading as threading1, logging as logging1
         assert logging1.thread is thread1
         assert logging1.threading is threading1

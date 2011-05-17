@@ -69,8 +69,16 @@ class green_epoll(object):
             self._epoll = from_ep
         else:
             self._epoll = original_epoll()
-        scheduler.state.descriptormap[self._epoll.fileno()].append(
-                weakref.ref(self))
+        scheduler._register_fd(
+                self._epoll.fileno(), self._on_readable, self._on_writable)
+
+    def _on_readable(self):
+        self._readable.set()
+        self._readable.clear()
+
+    def _on_writable(self):
+        self._writable.set()
+        self._writable.clear()
 
     def close(self):
         self._epoll.close()
@@ -114,8 +122,16 @@ class green_kqueue(object):
             self._kqueue = from_kq
         else:
             self._kqueue = select.kqueue()
-        scheduler.state.descriptormap[self._kqueue.fileno()].append(
-                weakref.ref(self))
+        scheduler._register_fd(
+                self._kqueue.fileno(), self._on_readable, self._on_writable)
+
+    def _on_readable(self):
+        self._readable.set()
+        self._readable.clear()
+
+    def _on_writable(self):
+        self._writable.set()
+        self._writable.clear()
 
     def close(self):
         self._kqueue.close()

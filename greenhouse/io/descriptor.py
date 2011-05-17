@@ -35,9 +35,9 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
     """
     current = compat.getcurrent()
     poller = scheduler.state.poller
-    dmap = scheduler.state.descriptormap
     activated = {}
-    fakesocks = {}
+    poll_regs = {}
+    callback_refs = {}
 
     def activate(fd, event):
         if not activated and timeout != 0:
@@ -54,23 +54,21 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
         activated.setdefault(fd, 0)
         activated[fd] |= event
 
-    registrations = {}
     for fd, events in fd_events:
-        fakesock = _FakeSocket()
-        fakesocks[fd] = fakesock
         poller_events = 0
+        readable = None
+        writable = None
 
         if events & inmask:
-            fakesock._readable.set = functools.partial(activate, fd, inmask)
             poller_events |= poller.INMASK
-
+            readable = functools.partial(activate, fd, inmask)
         if events & outmask:
-            fakesock._writable.set = functools.partial(activate, fd, outmask)
             poller_events |= poller.OUTMASK
+            writable = functools.partial(activate, fd, outmask)
 
-        dmap[fd].append(weakref.ref(fakesock))
-
-        registrations[fd] = poller.register(fd, poller_events)
+        poll_regs[fd] = poller.register(fd, poller_events)
+        callback_refs[fd] = (readable, writable)
+        scheduler._register_fd(fd, readable, writable)
 
     if timeout:
         # real timeout value, schedule ourself `timeout` seconds in the future
@@ -83,22 +81,7 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
         # timeout is None, it's up to _hit_poller->activate to bring us back
         scheduler.state.mainloop.switch()
 
-    for fd, reg in registrations.iteritems():
+    for fd, reg in poll_regs.iteritems():
         poller.unregister(fd, reg)
 
     return activated.items()
-
-
-class _FakeSocket(object):
-    _closed = False
-
-    def __init__(self):
-        self._readable = _FakeEvent()
-        self._writable = _FakeEvent()
-
-class _FakeEvent(object):
-    def set(self):
-        pass
-
-    def clear(self):
-        pass

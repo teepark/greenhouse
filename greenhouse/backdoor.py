@@ -11,7 +11,7 @@ runtime.
     locally. If you must connect to it from another machine, at least make sure
     it is behind a firewall that will block the backdoor port.
 """
-from __future__ import with_statement
+from __future__ import absolute_import, with_statement
 
 import code
 import contextlib
@@ -23,7 +23,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from greenhouse import io, scheduler
+from . import io, scheduler
 
 
 __all__ = ["run_backdoor", "backdoor_handler"]

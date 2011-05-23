@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 import collections
 import errno
 import operator
 import select
 import sys
 
-from greenhouse import scheduler
+from . import scheduler
 
 
 class Poll(object):

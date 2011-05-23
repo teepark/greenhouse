@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+
 import os
 
-from greenhouse.io.files import File
+from .files import File
 
 
 __all__ = ["pipe"]

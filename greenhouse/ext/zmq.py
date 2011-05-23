@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import time
 
-from greenhouse import poller, scheduler
-from greenhouse.io import descriptor
+from .. import poller, scheduler
+from ..io import descriptor
 import zmq.core
 
 

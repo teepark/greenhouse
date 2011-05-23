@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+
 import psycopg2
 from psycopg2 import extensions
 
-from greenhouse.io import descriptor
+from ..io import descriptor
 
 
 __all__ = ["wait_callback"]

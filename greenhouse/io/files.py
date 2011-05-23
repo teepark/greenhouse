@@ -1,4 +1,4 @@
-from __future__ import with_statement
+from __future__ import absolute_import, with_statement
 
 import errno
 import fcntl
@@ -11,7 +11,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from greenhouse import scheduler, utils
+from .. import scheduler, utils
 
 
 __all__ = ["File", "stdin", "stdout", "stderr"]

@@ -1,4 +1,6 @@
-from greenhouse.io import descriptor, files, ipc, sockets
+from __future__ import absolute_import
+
+from . import descriptor, files, ipc, sockets
 
 
 __all__ = ["Socket", "File", "pipe", "stdin", "stdout", "stderr", "wait_fds"]

@@ -1,4 +1,4 @@
-from __future__ import with_statement
+from __future__ import absolute_import, with_statement
 
 import contextlib
 import errno
@@ -6,9 +6,8 @@ import socket
 import sys
 import weakref
 
-import greenhouse
-from greenhouse import scheduler
-from greenhouse.io.files import FileBase
+from .. import scheduler, utils
+from . import files
 
 
 __all__ = ["Socket"]
@@ -401,8 +400,8 @@ class _InnerSocket(object):
         self._blocking = True
 
         # create events
-        self._readable = greenhouse.Event()
-        self._writable = greenhouse.Event()
+        self._readable = utils.Event()
+        self._writable = utils.Event()
 
         # allow for lookup by fileno
         scheduler._register_fd(
@@ -624,7 +623,7 @@ class _InnerSocket(object):
         self._timeout = timeout
 
 
-class SocketFile(FileBase):
+class SocketFile(files.FileBase):
     def __init__(self, sock, mode='b', bufsize=-1):
         super(SocketFile, self).__init__()
         self._sock = sock

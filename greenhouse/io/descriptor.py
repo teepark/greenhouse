@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import functools
 import time
 import weakref
 
-from greenhouse import compat, scheduler, utils
+from .. import compat, scheduler, utils
 
 
 __all__ = ["wait_fds"]

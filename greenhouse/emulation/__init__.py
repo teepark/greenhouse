@@ -176,6 +176,9 @@ def unpatch(*module_names):
             setattr(module, attr, value)
 
 
+from . import signal
+_patchers['signal'] = signal.patchers
+
 from . import select
 _patchers['select'] = select.patchers
 

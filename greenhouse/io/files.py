@@ -82,8 +82,11 @@ class FileBase(object):
             return rc[:size]
         return rc
 
-    def readline(self):
+    def readline(self, max_len=-1):
         """read from the file until a newline is encountered
+
+        :param max_len: stop reading a single line after this many bytes
+        :type max_len: int
 
         :returns:
             a string of the line it read from the file, including the newline
@@ -94,8 +97,20 @@ class FileBase(object):
         buf.seek(0)
 
         text = buf.read()
+        if len(text) >= max_len >= 0:
+            buf.seek(0)
+            buf.truncate()
+            buf.write(text[max_len:])
+            return text[:max_len]
+
         while text.find(newline) < 0:
             text = self._read_chunk(chunksize)
+            if buf.tell() + len(text) >= max_len >= 0:
+                text = buf.getvalue() + text
+                buf.seek(0)
+                buf.truncate()
+                buf.write(text[max_len:])
+                return text[:max_len]
             if text is None:
                 text = ''
                 continue

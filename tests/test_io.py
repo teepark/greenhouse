@@ -330,6 +330,21 @@ test
         finally:
             gfp.close()
 
+    def test_readline_limit(self):
+        open(self.fname, 'w').close()
+
+        with open(self.fname, 'w') as stdfp:
+            stdfp.write("""this is a test of a limited readline
+And this is a second line""")
+
+        gfp = greenhouse.File(self.fname)
+
+        try:
+            self.assertEqual(gfp.readline(9), "this is a")
+            self.assertEqual(gfp.readline(), " test of a limited readline\n")
+        finally:
+            gfp.close()
+
     def test_as_context_manager(self):
         with open(self.fname, 'w') as stdfp:
             stdfp.write("foo bar spam eggs")

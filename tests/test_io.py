@@ -245,8 +245,12 @@ class SocketPollerMixin(object):
                 assert 0
 
     def test_fd_poller_cleanup_with_exception(self):
+        if sys.version_info[:2] >= (2, 7):
+            errclass = OverflowError
+        else:
+            errclass = socket.error
         sock = greenhouse.Socket()
-        self.assertRaises(socket.error, sock.connect, ("", 893748))
+        self.assertRaises(errclass, sock.connect, ("", 893748))
         assert sock.fileno() not in greenhouse.scheduler.state.poller._registry
 
 

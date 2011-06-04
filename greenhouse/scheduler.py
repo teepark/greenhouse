@@ -515,7 +515,7 @@ def _interruption_check():
 @compat.greenlet
 def mainloop():
     while 1:
-        if not sys:
+        if not (sys and state): # python shutdown
             break
         try:
             if not state.to_run:
@@ -539,11 +539,13 @@ def mainloop():
                 target.throw(exc)
             else:
                 target.switch()
-        except Exception:
-            if sys:
-                klass, exc, tb = sys.exc_info()
-                handle_exception(klass, exc, tb, coro=target)
-                del klass, exc, tb
+        except Exception, exc:
+            if not (sys and state): # python shutdown
+                break
+            klass, exc, tb = sys.exc_info()
+            handle_exception(klass, exc, tb, coro=target)
+            del klass, exc, tb
+
 state.mainloop = mainloop
 
 def handle_exception(klass, exc, tb, coro=None):

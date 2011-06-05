@@ -435,7 +435,7 @@ class ScheduleMixin(object):
         def handler(klass, exc, tb):
             l.append(klass)
 
-        greenhouse.add_global_exception_handler(handler)
+        greenhouse.global_exception_handler(handler)
 
         greenhouse.pause()
 
@@ -464,12 +464,98 @@ class ScheduleMixin(object):
         def g2():
             raise CustomError2()
 
-        greenhouse.add_local_exception_handler(handler, g2)
+        greenhouse.local_exception_handler(handler, g2)
 
         greenhouse.pause()
 
         self.assertEqual(len(l), 1)
         self.assertEqual(l[0], CustomError2)
+
+    def test_global_trace_hook(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            pass
+
+        l = []
+
+        @greenhouse.global_trace_hook
+        def hook(coming_from, going_to):
+            l.append((coming_from, going_to))
+
+        greenhouse.pause()
+
+        main = greenhouse.main_greenlet
+
+        self.assertEqual(len([pair for pair in l if pair[0] is g]), 1)
+        self.assertEqual(len([pair for pair in l if pair[1] is g]), 1)
+        self.assertEqual(len(l), 2)
+
+    def test_local_incoming_trace_hook(self):
+        lock1 = greenhouse.Lock()
+        lock2 = greenhouse.Lock()
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g1():
+            with lock1:
+                for i in xrange(3):
+                    greenhouse.pause()
+
+        l1 = [0]
+        l2 = [0]
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g2():
+            with lock2:
+                for i in xrange(5):
+                    greenhouse.pause()
+
+        @greenhouse.local_incoming_trace_hook(coro=g1)
+        def handler1(direction, coroutine):
+            l1[0] += 1
+
+        @greenhouse.local_incoming_trace_hook(coro=g2)
+        def handler2(direction, coroutine):
+            l2[0] += 1
+
+        greenhouse.pause()
+        lock1.acquire()
+        lock2.acquire()
+
+        self.assertEqual(l1, [4])
+        self.assertEqual(l2, [6])
+
+    def test_local_outgoing_trace_hook(self):
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g():
+            for i in xrange(4):
+                greenhouse.pause()
+            raise AttributeError("BWAHAHA")
+
+        l = [0]
+
+        @greenhouse.local_outgoing_trace_hook(coro=g)
+        def hook(direction, coro):
+            l[0] += 1
+
+        m = [0]
+
+        @greenhouse.local_exception_handler(coro=g)
+        def handler(klass, exc, tb):\
+            m[0] += 1
+
+        for i in xrange(4):
+            greenhouse.pause()
+            self.assertEqual(l[0], i + 1)
+
+        greenhouse.pause()
+
+        # g exits via exception, outgoing hook still runs
+        self.assertEqual(m[0], 1)
+        self.assertEqual(l[0], 5)
 
 
 class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):

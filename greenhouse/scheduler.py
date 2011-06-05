@@ -12,8 +12,9 @@ from greenhouse import compat
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_in", "schedule_recurring", "schedule_exception",
         "schedule_exception_at", "schedule_exception_in", "end",
-        "add_global_exception_handler", "add_local_exception_handler",
-        "handle_exception", "greenlet"]
+        "global_exception_handler", "local_exception_handler",
+        "handle_exception", "greenlet", "global_trace_hook",
+        "local_incoming_trace_hook", "local_outgoing_trace_hook"]
 
 POLL_TIMEOUT = 1.0
 DEFAULT_BTREE_ORDER = 64
@@ -39,6 +40,11 @@ state.to_raise = weakref.WeakKeyDictionary()
 # exception handlers, global and local
 state.global_exception_handlers = []
 state.local_exception_handlers = weakref.WeakKeyDictionary()
+
+# trace hook callbacks
+state.global_trace_hooks = []
+state.local_to_trace_hooks = weakref.WeakKeyDictionary()
+state.local_from_trace_hooks = weakref.WeakKeyDictionary()
 
 class TimeoutManager(object):
     def __nonzero__(self):
@@ -514,39 +520,95 @@ def _interruption_check():
 
 @compat.greenlet
 def mainloop():
+    target = None
     while 1:
-        if not (sys and state): # python shutdown
+        # python shutdown
+        if not (sys and state):
             break
+
+        if not state.to_run:
+            _hit_poller(0)
+            _check_paused()
+
+            while not state.to_run:
+                # if there are timed-paused greenlets, we can
+                # just wait until the first of them wakes up
+                if state.timed_paused:
+                    until = state.timed_paused.first()[0] + 0.001
+                    _hit_poller(until - time.time(), _interruption_check)
+                    _check_paused()
+                else:
+                    _hit_poller(POLL_TIMEOUT, _interruption_check)
+                    _check_paused()
+
+        prev = target
+        target = state.to_run.popleft()
+
+        # global trace hooks
+        if state.global_trace_hooks:
+            _run_global_trace_hooks(prev, target)
+
+        # local trace incoming hooks
+        if state.local_to_trace_hooks.get(target):
+            _run_local_trace_hooks(
+                    target, state.local_to_trace_hooks[target], True)
+
         try:
-            if not state.to_run:
-                _hit_poller(0)
-                _check_paused()
-
-                while not state.to_run:
-                    # if there are timed-paused greenlets, we can
-                    # just wait until the first of them wakes up
-                    if state.timed_paused:
-                        until = state.timed_paused.first()[0] + 0.001
-                        _hit_poller(until - time.time(), _interruption_check)
-                        _check_paused()
-                    else:
-                        _hit_poller(POLL_TIMEOUT, _interruption_check)
-                        _check_paused()
-
-            target = state.to_run.popleft()
+            # pick up any exception we are supposed to throw in
             exc = state.to_raise.pop(target, None)
             if exc is not None:
                 target.throw(exc)
             else:
                 target.switch()
-        except Exception, exc:
-            if not (sys and state): # python shutdown
+        except Exception:
+            # python shutdown
+            if not (sys and state):
                 break
             klass, exc, tb = sys.exc_info()
             handle_exception(klass, exc, tb, coro=target)
             del klass, exc, tb
 
+        # local trace outgoing hooks
+        if state.local_from_trace_hooks.get(target):
+            _run_local_trace_hooks(
+                    target, state.local_from_trace_hooks[target], False)
+
 state.mainloop = mainloop
+
+
+def _run_local_trace_hooks(target, hooks, incoming):
+    replacement_hooks = []
+    direction = 1 if incoming else 2
+    for weak in hooks:
+        func = weak()
+        if func is None:
+            continue
+
+        try:
+            func(direction, target)
+        except Exception:
+            continue
+
+        replacement_hooks.append(weak)
+
+    hooks[:] = replacement_hooks
+
+def _run_global_trace_hooks(coming_from, going_to):
+    replacement_hooks = []
+    for weak in state.global_trace_hooks:
+        func = weak()
+        if func is None:
+            continue
+
+        try:
+            func(coming_from, going_to)
+        except Exception:
+            continue
+
+        replacement_hooks.append(weak)
+
+    state.global_trace_hooks[:] = replacement_hooks
+
 
 def handle_exception(klass, exc, tb, coro=None):
     """run all the registered exception handlers
@@ -599,7 +661,7 @@ def handle_exception(klass, exc, tb, coro=None):
 
     state.global_exception_handlers[:] = replacement
 
-def add_global_exception_handler(handler):
+def global_exception_handler(handler):
     """add a callback for when an exception goes uncaught in any greenlet
 
     :param handler:
@@ -613,13 +675,16 @@ def add_global_exception_handler(handler):
     """
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
+
     state.global_exception_handlers.append(weakref.ref(handler))
 
-def add_local_exception_handler(handler, coro=None):
+    return handler
+
+def local_exception_handler(handler=None, coro=None):
     """add a callback for when an exception occurs in a particular greenlet
 
     :param handler:
-        the callbackfunction, must be a function taking 3 arguments: the
+        the callback function, must be a function taking 3 arguments: the
         exception class, the exception instance, and the traceback object
     :type handler: function
     :param coro:
@@ -627,9 +692,86 @@ def add_local_exception_handler(handler, coro=None):
         current coroutine)
     :type coro: greenlet
     """
+    if handler is None:
+        return lambda h: local_exception_handler(h, coro)
+
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
+
     if coro is None:
         coro = compat.getcurrent()
+
     state.local_exception_handlers.setdefault(coro, []).append(
             weakref.ref(handler))
+
+    return handler
+
+def global_trace_hook(handler):
+    """add a callback to run in every switch between coroutines
+
+    :param handler:
+        the callback function, must be a function taking 2 arguments: the
+        greenlet being switched from, and the greenlet being switched to. be
+        aware that only a weak reference to this function will be held.
+    :type handler: function
+    """
+    if not hasattr(handler, "__call__"):
+        raise TypeError("trace hooks must be callable")
+
+    state.global_trace_hooks.append(weakref.ref(handler))
+
+    return handler
+
+def local_incoming_trace_hook(handler=None, coro=None):
+    """add a callback to run every time a greenlet is about to be switched to
+
+    :param handler:
+        the callback function, must be a function taking 2 arguments: an
+        integer indicating whether it is being called as an incoming (1) hook
+        or as an outgoing (2) hook. in this case it will always be 1. be aware
+        that only a weak reference to this function will be held.
+    :type handler: function
+    :param coro:
+        the coroutine for which to apply the trace hook (defaults to current)
+    :type coro: greenlet
+    """
+    if handler is None:
+        return lambda h: local_incoming_trace_hook(h, coro)
+
+    if not hasattr(handler, "__call__"):
+        raise TypeError("trace hooks must be callable")
+
+    if coro is None:
+        coro = compat.getcurrent()
+
+    state.local_to_trace_hooks.setdefault(coro, []).append(
+            weakref.ref(handler))
+
+    return handler
+
+def local_outgoing_trace_hook(handler=None, coro=None):
+    """add a callback to run every time a greenlet is switched away from
+
+    :param handler:
+        the callback function, must be a function taking 2 arguments: an
+        integer indicating whether it is being called as an incoming (1) hook
+        or as an outgoing (2) hook. in this case it will always be 2. be aware
+        that only a weak reference to this function will be held.
+    :type handler: function
+    :param coro:
+        the coroutine for which to apply the trace hook (defaults to current)
+    :type coro: greenlet
+    """
+    if handler is None:
+        return lambda h: local_outgoing_trace_hook(h, coro)
+
+    if not hasattr(handler, "__call__"):
+        raise TypeError("trace hooks must be callable")
+
+    if coro is None:
+        coro = compat.getcurrent()
+
+    state.local_from_trace_hooks.setdefault(coro, []).append(
+            weakref.ref(handler))
+
+    return handler

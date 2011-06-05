@@ -12,9 +12,8 @@ from greenhouse import compat
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_in", "schedule_recurring", "schedule_exception",
         "schedule_exception_at", "schedule_exception_in", "end",
-        "add_exception_handler", "handle_exception", "greenlet"]
-
-_exception_handlers = []
+        "add_global_exception_handler", "add_local_exception_handler",
+        "handle_exception", "greenlet"]
 
 POLL_TIMEOUT = 1.0
 DEFAULT_BTREE_ORDER = 64
@@ -36,6 +35,10 @@ state.to_run = collections.deque()
 
 # exceptions queued up for scheduled coros
 state.to_raise = weakref.WeakKeyDictionary()
+
+# exception handlers, global and local
+state.global_exception_handlers = []
+state.local_exception_handlers = weakref.WeakKeyDictionary()
 
 class TimeoutManager(object):
     def __nonzero__(self):
@@ -536,15 +539,18 @@ def mainloop():
                 target.throw(exc)
             else:
                 target.switch()
-        except Exception, exc:
+        except Exception:
             if sys:
-                handle_exception(*sys.exc_info())
+                klass, exc, tb = sys.exc_info()
+                handle_exception(klass, exc, tb, coro=target)
+                del klass, exc, tb
 state.mainloop = mainloop
 
-def handle_exception(klass, exc, tb):
+def handle_exception(klass, exc, tb, coro=None):
     """run all the registered exception handlers
 
-    the arguments to this function match the output of ``sys.exc_info()``
+    the first 3 arguments to this function match the output of
+    ``sys.exc_info()``
 
     :param klass: the exception klass
     :type klass: type
@@ -552,27 +558,47 @@ def handle_exception(klass, exc, tb):
     :type exc: Exception
     :param tb: the traceback object
     :type tb: Traceback
+    :param coro:
+        behave as though the exception occurred in this coroutine (defaults to
+        the current coroutine)
+    :type coro: greenlet
     """
-    global _exception_handlers
+    if coro is None:
+        coro = compat.getcurrent()
 
     replacement = []
-    for weak in _exception_handlers:
+    for weak in state.local_exception_handlers.get(coro, ()):
         func = weak()
         if func is None:
             continue
+
         try:
             func(klass, exc, tb)
         except Exception:
-            # exceptions from within exception handlers get squashed so as not
-            # to create an infinite loop, but we won't be using this handler
-            # any more
             continue
+
         replacement.append(weak)
 
-    _exception_handlers = replacement
+    if replacement:
+        state.local_exception_handlers[coro][:] = replacement
 
-def add_exception_handler(handler):
-    """add a callback for when an exception goes uncaught in a greenlet
+    replacement = []
+    for weak in state.global_exception_handlers:
+        func = weak()
+        if func is None:
+            continue
+
+        try:
+            func(klass, exc, tb)
+        except Exception:
+            continue
+
+        replacement.append(weak)
+
+    state.global_exception_handlers[:] = replacement
+
+def add_global_exception_handler(handler):
+    """add a callback for when an exception goes uncaught in any greenlet
 
     :param handler:
         the callback function. must be a function taking 3 arguments: ``klass``
@@ -585,4 +611,23 @@ def add_exception_handler(handler):
     """
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
-    _exception_handlers.append(weakref.ref(handler))
+    state.global_exception_handlers.append(weakref.ref(handler))
+
+def add_local_exception_handler(handler, coro=None):
+    """add a callback for when an exception occurs in a particular greenlet
+
+    :param handler:
+        the callbackfunction, must be a function taking 3 arguments: the
+        exception class, the exception instance, and the traceback object
+    :type handler: function
+    :param coro:
+        the coroutine for which to apply the exception handler (defaults to the
+        current coroutine)
+    :type coro: greenlet
+    """
+    if not hasattr(handler, "__call__"):
+        raise TypeError("exception handlers must be callable")
+    if coro is None:
+        coro = compat.getcurrent()
+    state.local_exception_handlers.setdefault(coro, []).append(
+            weakref.ref(handler))

@@ -422,6 +422,55 @@ class ScheduleMixin(object):
         # no assert, just make sure we don't raise
         greenhouse.end(g)
 
+    def test_global_exception_handlers(self):
+        class CustomError(Exception):
+            pass
+
+        @greenhouse.schedule
+        def f():
+            raise CustomError()
+
+        l = []
+
+        def handler(klass, exc, tb):
+            l.append(klass)
+
+        greenhouse.add_global_exception_handler(handler)
+
+        greenhouse.pause()
+
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0], CustomError)
+
+    def test_local_exception_handlers(self):
+        class CustomError1(Exception):
+            pass
+
+        class CustomError2(Exception):
+            pass
+
+        l = []
+
+        def handler(klass, exc, tb):
+            l.append(klass)
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g1():
+            raise CustomError1()
+
+        @greenhouse.schedule
+        @greenhouse.greenlet
+        def g2():
+            raise CustomError2()
+
+        greenhouse.add_local_exception_handler(handler, g2)
+
+        greenhouse.pause()
+
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0], CustomError2)
+
 
 class ScheduleTestsWithSelect(ScheduleMixin, StateClearingTestCase):
     POLLER = greenhouse.poller.Select

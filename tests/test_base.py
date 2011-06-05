@@ -27,6 +27,8 @@ class StateClearingTestCase(unittest.TestCase):
         state.paused[:] = []
         state.descriptormap.clear()
         state.to_run.clear()
+        del state.global_exception_handlers[:]
+        state.local_exception_handlers.clear()
 
         greenhouse.poller.set()
 

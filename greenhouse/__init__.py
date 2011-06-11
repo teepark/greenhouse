@@ -1,17 +1,17 @@
 from __future__ import absolute_import
 
-from .compat import *
-from .scheduler import *
-from .utils import *
-from .pool import *
+from greenhouse.compat import *
+from greenhouse.scheduler import *
+from greenhouse.utils import *
+from greenhouse.pool import *
 
 # scheduler.state.poller needs to be in place before the io import
-from . import poller
+from greenhouse import poller
 poller.set()
 
-from .io import *
-from .emulation import *
-from .backdoor import *
+from greenhouse.io import *
+from greenhouse.emulation import *
+from greenhouse.backdoor import *
 
 
 VERSION = (1, 0, 0, 'dev')

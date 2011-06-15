@@ -1035,26 +1035,28 @@ class Channel(object):
 
 class Counter(object):
     "a counter object that can block"
-    def __init__(self):
-        self._count = 0
+    def __init__(self, initial=0):
+        self._count = initial
         self._waiters = {}
 
-    def acquire(self):
-        "increment the counter"
+    def increment(self):
+        "increment the counter, and wake anyone waiting for the new value"
         self._count += 1
-        scheduler.state.awoken_from_events.update(
-                self._waiters.pop(self._count, []))
+        waiters = self._waiters.pop(self._count, [])
+        if waiters:
+            scheduler.state.awoken_from_events.update(waiters)
 
-    __enter__ = acquire
+    __enter__ = increment
 
-    def release(self):
-        "decrement the counter, potentially waking blocked waiters"
-        self._count = max(self._count - 1, 0)
-        scheduler.state.awoken_from_events.update(
-                self._waiters.pop(self._count, []))
+    def decrement(self):
+        "decrement the counter and wake anyone waiting for the new value"
+        self._count -= 1
+        waiters = self._waiters.pop(self._count, [])
+        if waiters:
+            scheduler.state.awoken_from_events.update(waiters)
 
     def __exit__(self, etype, exc, tb):
-        self.release()
+        self.decrement()
 
     @property
     def count(self):
@@ -1069,12 +1071,7 @@ class Counter(object):
         :param until:
             the number to wait for the count to get down (or up) to. default 0
         :type until: int
-
-        :raises: ValueError for negative values of ``until``
         """
-        if until < 0:
-            raise ValueError("until must be non-negative")
-
         if self._count != until:
-            self._waiters.setdefault(num, []).append(compat.getcurrent())
+            self._waiters.setdefault(until, []).append(compat.getcurrent())
             scheduler.state.mainloop.switch()

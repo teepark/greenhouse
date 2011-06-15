@@ -868,5 +868,77 @@ class ChannelTestCase(StateClearingTestCase):
         self.assertEqual(l, [2, 1])
 
 
+class CounterTestCase(StateClearingTestCase):
+    def test_counts(self):
+        c = utils.Counter()
+
+        self.assertEqual(c.count, 0)
+
+        c.increment()
+        c.increment()
+        c.increment()
+
+        self.assertEqual(c.count, 3)
+
+        c.decrement()
+        c.decrement()
+
+        self.assertEqual(c.count, 1)
+
+    def test_blocks(self):
+        c = utils.Counter()
+        c.increment()
+
+        l = [0]
+
+        @greenhouse.schedule
+        def f():
+            c.wait()
+            l[0] += 1
+
+        greenhouse.pause()
+
+        self.assertEqual(l[0], 0)
+
+    def test_releases(self):
+        c = utils.Counter()
+        c.increment()
+
+        l = [0]
+
+        @greenhouse.schedule
+        def f():
+            c.wait()
+            l[0] += 1
+
+        greenhouse.pause()
+
+        self.assertEqual(l[0], 0)
+
+        c.decrement()
+        greenhouse.pause()
+
+        self.assertEqual(l[0], 1)
+
+    def test_releases_up(self):
+        c = utils.Counter()
+
+        l = [0]
+
+        @greenhouse.schedule
+        def f():
+            c.wait(4)
+            l[0] += 1
+
+        greenhouse.pause()
+
+        for i in xrange(4):
+            self.assertEqual(l[0], 0)
+            c.increment()
+            greenhouse.pause()
+
+        self.assertEqual(l[0], 1)
+
+
 if __name__ == '__main__':
     unittest.main()

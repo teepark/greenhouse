@@ -125,9 +125,9 @@ def load_etc_hosts(filename="/etc/hosts"):
             except StopIteration:
                 continue
 
-        parts = line.split()
-        for part in parts[1:]:
-            etc_hosts.setdefault(part, []).append(parts[0])
+            parts = line.split()
+            for part in parts[1:]:
+                etc_hosts.setdefault(part, []).append(parts[0])
     globals()['etc_hosts_loaded'] = True
 
 def is_ipv4(name):

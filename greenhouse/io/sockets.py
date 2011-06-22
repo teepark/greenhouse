@@ -460,14 +460,15 @@ class _InnerSocket(object):
                         raise
                 return type(self)(fromsock=client), addr
 
-    def bind(self, *args, **kwargs):
-        return self._sock.bind(*args, **kwargs)
+    def bind(self, address):
+        return self._sock.bind(address)
 
     def close(self):
         self._closed = True
         self._sock.close()
 
     def connect(self, address):
+        address = _dns_resolve(self, address)
         with self._registered('we'):
             while True:
                 err = self.connect_ex(address)
@@ -482,7 +483,7 @@ class _InnerSocket(object):
                 return
 
     def connect_ex(self, address):
-        return self._sock.connect_ex(address)
+        return self._sock.connect_ex(_dns_resolve(self, address))
 
     def dup(self):
         return type(self)(fromsock=self._sock.dup())
@@ -649,3 +650,24 @@ class SocketFile(files.FileBase):
 
     def _write_chunk(self, data):
         return self._sock.send(data)
+
+
+def _dns_resolve(sock, address):
+    if not (sock.proto == socket.IPPROTO_IP and
+            isinstance(address, tuple) and
+            len(address) == 2 and
+            address[0]):
+        return address
+
+    host, port = address
+    pieces = host.split(".")
+    if len(pieces) == 4 and all(
+            x.isdigit() and 0 <= int(x) <= 255 for x in pieces):
+        return address
+
+    try:
+        from ..ext import dns
+    except ImportError:
+        return address
+
+    return dns.resolve(host)[0], port

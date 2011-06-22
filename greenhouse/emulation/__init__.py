@@ -204,18 +204,7 @@ if zmq.patchers:
     _patchers['zmq.core.poll'] = zmq.core_poll_patchers
 
 try:
-    dns_exception = patched("dns.exception")
-    dns_resolver = patched("dns.resolver")
-    dns_rdatatype = patched("dns.rdatatype")
-    dns_reversename = patched("dns.reversename")
-
     from . import dns
-
-    dns.dns_exception = dns_exception
-    dns.dns_resolver = dns_resolver
-    dns.dns_rdatatype = dns_rdatatype
-    dns.dns_reversename = dns_reversename
-
     _patchers['socket'].update(dns.socket_patchers)
 
 except ImportError:

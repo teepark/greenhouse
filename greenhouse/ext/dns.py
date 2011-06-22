@@ -18,7 +18,7 @@ class LRU(object):
         self._head = None
         self.size = size
 
-    def _set_item_head(self, item):
+    def _set_head(self, item):
         head = self._head
         self._head = item
         if head:
@@ -45,66 +45,21 @@ class LRU(object):
     def __contains__(self, key):
         return key in self._keyed
 
+    def __getitem__(self, key):
+        item = self._keyed[key]
+        self._remove_item(item, from_keyed=False)
+        self._set_head(item)
+        return item.value
+
     def __setitem__(self, key, value):
         old_item = self._keyed.get(key, None)
         if old_item:
             self._remove_item(old_item)
 
         item = LRUItem(key, value)
-        self._set_item_head(item)
+        self._set_head(item)
         self._keyed[key] = item
         self._purge()
-
-    def __getitem__(self, key):
-        item = self._keyed[key]
-        self._remove_item(item, from_keyed=False)
-        self._set_item_head(item)
-        return item.value
-
-    def get(self, key, default=None):
-        if key not in self._keyed:
-            return default
-        return self[key]
-
-    def __delitem__(self, key):
-        item = self._keyed.get(item)
-
-        if item is None:
-            raise KeyError(key)
-
-        self._remove_item(item)
-
-    def __repr__(self):
-        if not self._keyed:
-            return "<>"
-
-        return "<%s>" % ", ".join(str(key) for key in self.iterkeys())
-
-    def iterkeys(self):
-        return (key for key, value in self.iteritems())
-
-    def itervalues(self):
-        return (value for key, value in self.iteritems())
-
-    def iteritems(self):
-        memo, item = set(), self._head
-        if item is None:
-            return
-
-        while item is not None and item not in memo:
-            memo.add(item)
-            yield (item.key, item.value)
-            item = item.next
-
-    def keys(self):
-        return list(self.iterkeys())
-
-    def values(self):
-        return list(self.itervalues())
-
-    def items(self):
-        return list(self.iteritems())
-
 
 class LRUItem(object):
     __slots__ = ["key", "value", "next", "prev"]

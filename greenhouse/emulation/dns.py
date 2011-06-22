@@ -209,11 +209,11 @@ def getnameinfo(address, flags):
                         "sockaddr resolved to multiple addresses")
 
             host = results[0].target.to_text(omit_final_dot=True)
-
         except dns_exception.Timeout, exc:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(socket.EAI_AGAIN, 'Lookup timed out')
-
+        except dns_resolver.NXDOMAIN:
+            return (host, str(port))
         except dns_exception.DNSException, exc:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(
@@ -222,16 +222,15 @@ def getnameinfo(address, flags):
     else:
         try:
             ips = resolve(host)
+
             if len(ips) > 1:
                 raise socket.error('sockaddr resolved to multiple addresses')
 
             if flags & socket.NI_NUMERICHOST:
                 host = ips[0].to_text()
-
         except dns_exception.Timeout, exc:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(socket.EAI_AGAIN, 'Lookup timed out')
-
         except dns_exception.DNSException, exc:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(

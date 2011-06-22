@@ -1,5 +1,6 @@
 from __future__ import absolute_import, with_statement
 
+import functools
 import socket
 
 DNS_CACHE_SIZE = 512
@@ -158,15 +159,18 @@ def resolve(name):
     cache[name] = results[:]
     return results
 
+@functools.wraps(socket.getaddrinfo)
 def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     socktype = socktype or socket.SOCK_STREAM
     addrs = resolve(host)
     return [(socket.AF_INET, socktype, proto, '', (addr, port))
             for addr in addrs]
 
+@functools.wraps(socket.gethostbyname)
 def gethostbyname(hostname):
     return resolve(hostname)[0]
 
+@functools.wraps(socket.gethostbyname_ex)
 def gethostbyname_ex(hostname):
     results = resolve(hostname)
     try:
@@ -178,6 +182,7 @@ def gethostbyname_ex(hostname):
 
     return canon, aliases, results
 
+@functools.wraps(socket.getnameinfo)
 def getnameinfo(address, flags):
     build_resolver()
     try:

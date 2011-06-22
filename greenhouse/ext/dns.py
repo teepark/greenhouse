@@ -133,6 +133,9 @@ def load_etc_hosts(filename="/etc/hosts"):
                 continue
 
             parts = line.split()
+            if '::' in parts[0]:
+                # not handling ipv6 yet
+                continue
             for part in parts[1:]:
                 etc_hosts.setdefault(part, []).append(parts[0])
     globals()['etc_hosts_loaded'] = True

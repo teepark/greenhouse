@@ -219,3 +219,11 @@ for mod_name, patchers in _patchers.items():
     for attr_name, patcher in patchers.items():
         _standard[mod_name][attr_name] = getattr(module, attr_name, None)
 del mod_name, patchers, module, attr_name, patcher
+
+
+# pypy uses python code to build the interactive interpreter,
+# so we need to eagerly patch os.read and os.write for it
+import os
+if sys.subversion[0].lower() == 'pypy':
+    os.read = _patchers['os']['read']
+    os.write = _patchers['os']['write']

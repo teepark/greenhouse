@@ -17,7 +17,7 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "local_incoming_trace_hook", "local_outgoing_trace_hook"]
 
 POLL_TIMEOUT = 1.0
-DEFAULT_BTREE_ORDER = 64
+BTREE_ORDER = 64
 
 
 state = type('GreenhouseState', (), {})()
@@ -87,7 +87,7 @@ class BisectingTimeoutManager(TimeoutManager):
         return self.data
 
 class BTreeTimeoutManager(TimeoutManager):
-    def __init__(self, data=None, order=DEFAULT_BTREE_ORDER):
+    def __init__(self, data=None, order=BTREE_ORDER):
         self.data = btree.sorted_btree.bulkload(data or [], order)
 
     def clear(self):
@@ -228,12 +228,12 @@ def greenlet(func, args=(), kwargs=None):
             return func(*args, **(kwargs or {}))
     else:
         target = func
-    return compat.greenlet(target, mainloop)
+    return compat.greenlet(target, state.mainloop)
 
 def pause():
     "pause and reschedule the current greenlet and switch to the next"
     schedule(compat.getcurrent())
-    mainloop.switch()
+    state.mainloop.switch()
 
 def pause_until(unixtime):
     """pause and reschedule the current greenlet until a set time
@@ -242,7 +242,7 @@ def pause_until(unixtime):
     :type unixtime: int or float
     """
     schedule_at(unixtime, compat.getcurrent())
-    mainloop.switch()
+    state.mainloop.switch()
 
 def pause_for(secs):
     """pause and reschedule the current greenlet for a set number of seconds
@@ -284,7 +284,7 @@ def schedule(target=None, args=(), kwargs=None):
         def decorator(target):
             return schedule(target, args=args, kwargs=kwargs)
         return decorator
-    if isinstance(target, compat.greenlet):
+    if isinstance(target, compat.greenlet) or target is compat.main_greenlet:
         glet = target
     else:
         glet = greenlet(target, args, kwargs)
@@ -549,15 +549,14 @@ def mainloop():
             _run_global_trace_hooks(prev, target)
 
         # local trace incoming hooks
-        if state.local_to_trace_hooks.get(target):
+        if target in state.local_to_trace_hooks:
             _run_local_trace_hooks(
                     target, state.local_to_trace_hooks[target], True)
 
         try:
             # pick up any exception we are supposed to throw in
-            exc = state.to_raise.pop(target, None)
-            if exc is not None:
-                target.throw(exc)
+            if target in state.to_raise:
+                target.throw(state.to_raise[target])
             else:
                 target.switch()
         except Exception:
@@ -569,7 +568,7 @@ def mainloop():
             del klass, exc, tb
 
         # local trace outgoing hooks
-        if state.local_from_trace_hooks.get(target):
+        if target in state.local_from_trace_hooks:
             _run_local_trace_hooks(
                     target, state.local_from_trace_hooks[target], False)
 

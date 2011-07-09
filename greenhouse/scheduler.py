@@ -493,22 +493,6 @@ def end(target):
         schedule(target)
         state.to_raise[target] = compat.GreenletExit()
 
-def _schedule_to_top(target=None, args=(), kwargs=None):
-    if target is None:
-        def decorator(target):
-            return _schedule_to_top(target, args, kwargs)
-        return decorator
-    if isinstance(target, compat.greenlet) or target is compat.main_greenlet:
-        glet = target
-    else:
-        if args or kwargs:
-            inner_target = target
-            def target():
-                inner_target(*args, **(kwargs or {}))
-        glet = compat.greenlet(target, state.mainloop)
-    state.to_run.appendleft(glet)
-    return target
-
 def _remove_from_timedout(waketime, glet):
     if state.timed_paused.remove(waketime, glet):
         return True

@@ -36,6 +36,7 @@ class StateClearingTestCase(unittest.TestCase):
         del state.global_trace_hooks[:]
         state.local_to_trace_hooks.clear()
         state.local_from_trace_hooks.clear()
+        state.raise_in_main = None
 
         greenhouse.poller.set()
 

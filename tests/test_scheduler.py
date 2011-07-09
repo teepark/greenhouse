@@ -1,5 +1,6 @@
 from __future__ import with_statement
 
+import gc
 import os
 import socket
 import time
@@ -198,6 +199,7 @@ class ScheduleMixin(object):
 
         greenhouse.pause_for(TESTING_TIMEOUT)
 
+        gc.collect()
         gone = filter(lambda (r, w): r and w, dmap[temps_fileno])
         self.assertEqual(len(gone), 0, gone)
 

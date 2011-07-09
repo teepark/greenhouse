@@ -36,6 +36,7 @@ state.to_run = collections.deque()
 
 # exceptions queued up for scheduled coros
 state.to_raise = weakref.WeakKeyDictionary()
+state.raise_in_main = None
 
 # exception handlers, global and local
 state.global_exception_handlers = []
@@ -183,7 +184,7 @@ class _WeakMethodRef(object):
 
     def __call__(self, *args, **kwargs):
         if not self:
-            raise Exception("weakrefs broken")
+            return None
         if self.obj is not None:
             args = (self.obj(),) + args
         return self.func()(*args, **kwargs)
@@ -327,7 +328,7 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
         def decorator(target):
             return schedule_at(unixtime, target, args=args, kwargs=kwargs)
         return decorator
-    if isinstance(target, compat.greenlet):
+    if isinstance(target, compat.greenlet) or target is compat.main_greenlet:
         glet = target
     else:
         glet = greenlet(target, args, kwargs)
@@ -411,7 +412,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
         return decorator
 
     func = target
-    if isinstance(target, compat.greenlet):
+    if isinstance(target, compat.greenlet) or target is compat.main_greenlet:
         if target.dead:
             raise TypeError("can't schedule a dead greenlet")
         func = target.run
@@ -438,7 +439,9 @@ def schedule_exception(exception, target):
     :param target: the greenlet that should receive the exception
     :type target: greenlet
     """
-    if not isinstance(target, compat.greenlet):
+    if target is compat.main_greenlet:
+        state.raise_in_main = exception
+    elif not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
         raise ValueError("can't send exceptions to a dead greenlet")
@@ -455,6 +458,8 @@ def schedule_exception_at(unixtime, exception, target):
     :param target: the greenlet that should receive the exception
     :type target: greenlet
     """
+    if target is compat.main_greenlet:
+        state.raise_in_main = exception
     if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
@@ -480,6 +485,8 @@ def end(target):
     :param target: the greenlet to end
     :type target: greenlet
     """
+    if target is compat.main_greenlet:
+        state.raise_in_main = compat.GreenletExit()
     if not isinstance(target, compat.greenlet):
         raise TypeError("argument must be a greenlet")
     if not target.dead:
@@ -491,7 +498,7 @@ def _schedule_to_top(target=None, args=(), kwargs=None):
         def decorator(target):
             return _schedule_to_top(target, args, kwargs)
         return decorator
-    if isinstance(target, compat.greenlet):
+    if isinstance(target, compat.greenlet) or target is compat.main_greenlet:
         glet = target
     else:
         if args or kwargs:
@@ -530,16 +537,16 @@ def mainloop():
             _hit_poller(0)
             _check_paused()
 
-            while not state.to_run:
-                # if there are timed-paused greenlets, we can
-                # just wait until the first of them wakes up
-                if state.timed_paused:
-                    until = state.timed_paused.first()[0] + 0.001
-                    _hit_poller(until - time.time(), _interruption_check)
-                    _check_paused()
-                else:
-                    _hit_poller(POLL_TIMEOUT, _interruption_check)
-                    _check_paused()
+        while not state.to_run:
+            # if there are timed-paused greenlets, we can
+            # just wait until the first of them wakes up
+            if state.timed_paused:
+                until = state.timed_paused.first()[0] + 0.001
+                _hit_poller(until - time.time(), _interruption_check)
+                _check_paused()
+            else:
+                _hit_poller(POLL_TIMEOUT, _interruption_check)
+                _check_paused()
 
         prev = target
         target = state.to_run.popleft()
@@ -556,7 +563,12 @@ def mainloop():
         try:
             # pick up any exception we are supposed to throw in
             if target in state.to_raise:
-                target.throw(state.to_raise[target])
+                target.throw(state.to_raise.pop(target))
+            elif (target is compat.main_greenlet
+                    and state.raise_in_main is not None):
+                exc = state.raise_in_main
+                state.raise_in_main = None
+                target.throw(exc)
             else:
                 target.switch()
         except Exception:
@@ -573,7 +585,6 @@ def mainloop():
                     target, state.local_from_trace_hooks[target], False)
 
 state.mainloop = mainloop
-
 
 def _run_local_trace_hooks(target, hooks, incoming):
     replacement_hooks = []

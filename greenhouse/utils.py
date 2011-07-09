@@ -86,7 +86,7 @@ class Event(object):
             ``True`` if a timeout was provided and was hit, otherwise ``False``
         """
         if self._is_set:
-            return
+            return False
 
         current = compat.getcurrent() # the waiting greenlet
 
@@ -407,17 +407,25 @@ class Local(object):
     to use, simply create an instance with no arguments, and any attribute gets
     and sets will be specific to that greenlet
     """
+    _main_standin = type('', (), {})()
+
     def __init__(self):
         object.__setattr__(self, "_local_data", weakref.WeakKeyDictionary())
 
     def __getattr__(self, name):
-        local = self._local_data.setdefault(compat.getcurrent(), {})
+        current = compat.getcurrent()
+        if current is compat.main_greenlet:
+            current = self._main_standin
+        local = self._local_data.setdefault(current, {})
         if name not in local:
             raise AttributeError, "Local object has no attribute %s" % name
         return local[name]
 
     def __setattr__(self, name, value):
-        self._local_data.setdefault(compat.getcurrent(), {})[name] = value
+        current = compat.getcurrent()
+        if current is compat.main_greenlet:
+            current = self._main_standin
+        self._local_data.setdefault(current, {})[name] = value
 
 class Thread(object):
     """a standin class for threads, but powered by greenlets
@@ -1000,8 +1008,8 @@ class Channel(object):
             item = self._dataqueue.popleft()
             sender = self._waiters.popleft()
             if self.preference is 1:
-                scheduler.schedule(compat.getcurrent())
-                sender.switch()
+                scheduler._schedule_to_top(sender)
+                scheduler.pause()
             else:
                 scheduler.schedule(sender)
             return item
@@ -1023,8 +1031,8 @@ class Channel(object):
         if self._waiters and not self._dataqueue:
             self._dataqueue.append(item)
             if self.preference is -1:
-                scheduler.schedule(compat.getcurrent())
-                self._waiters.popleft().switch()
+                scheduler._schedule_to_top(self._waiters.popleft())
+                scheduler.pause()
             else:
                 scheduler.schedule(self._waiters.popleft())
         else:

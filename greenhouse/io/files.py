@@ -105,15 +105,15 @@ class FileBase(object):
 
         while text.find(newline) < 0:
             text = self._read_chunk(chunksize)
+            if text is None:
+                text = ''
+                continue
             if buf.tell() + len(text) >= max_len >= 0:
                 text = buf.getvalue() + text
                 buf.seek(0)
                 buf.truncate()
                 buf.write(text[max_len:])
                 return text[:max_len]
-            if text is None:
-                text = ''
-                continue
             if not text:
                 break
             buf.write(text)

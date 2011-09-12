@@ -11,7 +11,7 @@ from greenhouse import compat, scheduler
 
 __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
            "BoundedSemaphore", "Timer", "Local", "Thread", "Queue",
-           "LifoQueue", "PriorityQueue", "Channel", "Counter"]
+           "LifoQueue", "PriorityQueue", "Counter"]
 
 def _debugger(cls):
     import types
@@ -86,7 +86,7 @@ class Event(object):
             ``True`` if a timeout was provided and was hit, otherwise ``False``
         """
         if self._is_set:
-            return
+            return False
 
         current = compat.getcurrent() # the waiting greenlet
 
@@ -407,17 +407,25 @@ class Local(object):
     to use, simply create an instance with no arguments, and any attribute gets
     and sets will be specific to that greenlet
     """
+    _main_standin = type('', (), {})()
+
     def __init__(self):
         object.__setattr__(self, "_local_data", weakref.WeakKeyDictionary())
 
     def __getattr__(self, name):
-        local = self._local_data.setdefault(compat.getcurrent(), {})
+        current = compat.getcurrent()
+        if current is compat.main_greenlet:
+            current = self._main_standin
+        local = self._local_data.setdefault(current, {})
         if name not in local:
             raise AttributeError, "Local object has no attribute %s" % name
         return local[name]
 
     def __setattr__(self, name, value):
-        self._local_data.setdefault(compat.getcurrent(), {})[name] = value
+        current = compat.getcurrent()
+        if current is compat.main_greenlet:
+            current = self._main_standin
+        self._local_data.setdefault(current, {})[name] = value
 
 class Thread(object):
     """a standin class for threads, but powered by greenlets
@@ -919,118 +927,6 @@ class PriorityQueue(Queue):
 
     def _put(self, item):
         heapq.heappush(self._data, item)
-
-
-class Channel(object):
-    """a pipe for inter-coroutine messaging
-
-    mirrors Stackless Python's `stackless.channel` API
-    """
-    def __init__(self):
-        self._dataqueue = collections.deque()
-        self._waiters = collections.deque()
-        self._balance = 0
-        self._preference = -1
-        self._closing = False
-
-    def __iter__(self):
-        return self
-
-    @property
-    def balance(self):
-        "indicates the # of senders (positive) or waiters (negative) blocked"
-        return len(self._dataqueue) or -len(self._waiters)
-
-    def close(self):
-        "close the channel, ending new communications"
-        self._closing = True
-
-    @property
-    def closed(self):
-        "the channel has been closed, and all data received (read-only)"
-        return self._closing and not self._dataqueue
-
-    @property
-    def closing(self):
-        "the channel has been closed (read-only)"
-        return self._closing
-
-    def open(self):
-        "allow communications again on a previously closed channel"
-        self._closing = False
-
-    def _get_preference(self):
-        return self._preference
-
-    def _set_preference(self, val):
-        if val > 0:
-            self._preference = 1
-        elif val < 0:
-            self._preference = -1
-        else:
-            self._preference = 0
-
-    preference = property(_get_preference, _set_preference, doc='''
-        prefer senders (positive) or receivers (negative, default)
-
-        if receivers are preferred, then on a channel with blocked receivers,
-        a send() call will jump straight to the awoken receiver bypassing the
-        scheduler entirely.
-
-        similarly if senders are preferred, then with blocked senders receive()
-        calls bypass the scheduler and jump straight to the awoken sender.
-
-        a 0 preference always re-schedules awoken coroutines on both sides.
-        '''.strip())
-
-    @property
-    def queue(self):
-        'the first coroutine waiting on the channel, or None'
-        return self._waiters[0] if self._waiters else None
-
-    def receive(self):
-        '''receive data on the channel.
-
-        if there is a waiting sender, then re-schedule it and return its sent
-        item now, otherwise block until another coroutine sends something.
-        '''
-        if self._closing and not self._dataqueue:
-            raise StopIteration()
-        if self._dataqueue:
-            item = self._dataqueue.popleft()
-            sender = self._waiters.popleft()
-            if self.preference is 1:
-                scheduler.schedule(compat.getcurrent())
-                sender.switch()
-            else:
-                scheduler.schedule(sender)
-            return item
-        else:
-            self._waiters.append(compat.getcurrent())
-            scheduler.state.mainloop.switch()
-            return self._dataqueue.pop()
-
-    next = receive
-
-    def send(self, item):
-        '''send data over the channel.
-
-        if there is a waiting receiver, re-schedule it and return immediately,
-        otherwise block until there is a receiver to accept the item.
-        '''
-        if self._closing:
-            raise RuntimeError("cannot send over a closing channel")
-        if self._waiters and not self._dataqueue:
-            self._dataqueue.append(item)
-            if self.preference is -1:
-                scheduler.schedule(compat.getcurrent())
-                self._waiters.popleft().switch()
-            else:
-                scheduler.schedule(self._waiters.popleft())
-        else:
-            self._dataqueue.append(item)
-            self._waiters.append(compat.getcurrent())
-            scheduler.state.mainloop.switch()
 
 
 class Counter(object):

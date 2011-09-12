@@ -1,6 +1,7 @@
 from __future__ import with_statement
 
 import array
+import gc
 import os
 import socket
 import stat
@@ -151,8 +152,9 @@ class SocketPollerMixin(object):
             assert not results
 
             client.close()
+            gc.collect()
             greenhouse.pause()
-            assert results[0] == "this is a test"
+            assert results and results[0] == "this is a test", results
 
     def test_socket_timeout(self):
         with self.socketpair() as (client, handler):
@@ -245,12 +247,10 @@ class SocketPollerMixin(object):
                 assert 0
 
     def test_fd_poller_cleanup_with_exception(self):
-        if sys.version_info[:2] >= (2, 7):
-            errclass = OverflowError
-        else:
-            errclass = socket.error
         sock = greenhouse.Socket()
-        self.assertRaises(errclass, sock.connect, ("", 893748))
+        self.assertRaises(
+                (socket.error, OverflowError, ValueError),
+                sock.connect, ("", 893748))
         assert sock.fileno() not in greenhouse.scheduler.state.poller._registry
 
 
@@ -492,9 +492,8 @@ class PipePollerMixin(object):
             assert not l
 
             wfp.write("heyo")
-            time.sleep(TESTING_TIMEOUT)
-            greenhouse.pause()
-            assert l and l[0] == "heyo"
+            greenhouse.pause_for(TESTING_TIMEOUT)
+            assert l and l[0] == "heyo", l
 
         finally:
             rfp.close()

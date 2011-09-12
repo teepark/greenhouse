@@ -4,6 +4,7 @@ import errno
 import fcntl
 import functools
 import os
+import sys
 
 from .. import io, scheduler
 
@@ -72,6 +73,26 @@ def green_write(fd, data):
     finally:
         if not nonblocking:
             fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+
+def blocking_read(fd, buffsize):
+    nonblocking, flags = nonblocking_fd(fd)
+    while 1:
+        try:
+            return original_os_read(fd, buffsize)
+        except EnvironmentError, exc:
+            if exc.args[0] != errno.EAGAIN:
+                raise
+            io.wait_fds([(fd, 1)])
+
+def blocking_write(fd, data):
+    nonblocking, flags = nonblocking_fd(fd)
+    while 1:
+        try:
+            return original_os_write(fd, data)
+        except EnvironmentError, exc:
+            if exc.args[0] != errno.EAGAIN:
+                raise
+            io.wait_fds([(fd, 2)])
 
 def polling_green_version(func, retry_test, opt_arg_num, arg_count, timeout):
     @functools.wraps(func)
@@ -173,11 +194,12 @@ green_spawnve = green_spawner(original_os_spawnve)
 green_spawnvp = green_spawner(original_os_spawnvp)
 green_spawnvpe = green_spawner(original_os_spawnvpe)
 
+is_pypy = sys.subversion[0].lower() == 'pypy'
 
 patchers = {
     'fdopen': io.File.fromfd,
-    'read': green_read,
-    'write': green_write,
+    'read': is_pypy and blocking_read or green_read,
+    'write': is_pypy and blocking_write or green_write,
     'waitpid': green_waitpid,
     'wait': green_wait,
     'wait3': green_wait3,

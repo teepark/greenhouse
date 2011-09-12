@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import socket
+import traceback
 
 import greenhouse
+
+greenhouse.global_exception_handler(traceback.print_exception)
 
 
 PORT = 9000
@@ -31,7 +34,7 @@ def start():
 def broadcast(msg, skip=None):
     for recip in CONNECTED:
         sock = CONNECTED.get(recip)
-        if sock and not sock._closed and skip != recip:
+        if sock and not sock._sock._closed and skip != recip:
             sock.sendall(msg)
 
 def connection_handler(clientsock):

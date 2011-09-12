@@ -1,7 +1,11 @@
 import contextlib
+import errno
+import gc
 import os
+import random
 import socket
 import sys
+import traceback
 import unittest
 try:
     from cStringIO import StringIO
@@ -32,21 +36,31 @@ class StateClearingTestCase(unittest.TestCase):
         del state.global_trace_hooks[:]
         state.local_to_trace_hooks.clear()
         state.local_from_trace_hooks.clear()
+        state.raise_in_main = None
 
         greenhouse.poller.set()
 
     def tearDown(self):
+        gc.collect()
         GTL.release()
 
     @contextlib.contextmanager
     def socketpair(self):
         server = greenhouse.Socket()
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind(("", port()))
+        while 1:
+            try:
+                port = random.randrange(1025, 65536)
+                server.bind(("", port))
+            except socket.error, exc:
+                if exc.args[0] != errno.EADDRINUSE:
+                    raise
+            else:
+                break
         server.listen(5)
 
         client = greenhouse.Socket()
-        client.connect(("", port()))
+        client.connect(("", port))
 
         handler, addr = server.accept()
         server.close()

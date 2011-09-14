@@ -14,10 +14,9 @@ OS_TIMEOUT = 0.001
 
 def nonblocking_fd(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-    if flags & os.O_NONBLOCK:
-        return True, flags
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-    return False, flags
+    if not flags & os.O_NONBLOCK:
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    return flags
 
 
 original_os_read = os.read
@@ -41,8 +40,8 @@ original_os_spawnvp = os.spawnvp
 original_os_spawnvpe = os.spawnvpe
 
 def green_read(fd, buffsize):
-    nonblocking, flags = nonblocking_fd(fd)
-    if nonblocking:
+    flags = nonblocking_fd(fd)
+    if flags & os.O_NONBLOCK:
         return original_os_read(fd, buffsize)
 
     try:
@@ -54,12 +53,12 @@ def green_read(fd, buffsize):
                     raise
                 io.wait_fds([(fd, 1)])
     finally:
-        if not nonblocking:
+        if not flags & os.O_NONBLOCK:
             fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
 def green_write(fd, data):
-    nonblocking, flags = nonblocking_fd(fd)
-    if nonblocking:
+    flags = nonblocking_fd(fd)
+    if flags & os.O_NONBLOCK:
         return original_os_write(fd, data)
 
     try:
@@ -71,11 +70,11 @@ def green_write(fd, data):
                     raise
                 io.wait_fds([(fd, 2)])
     finally:
-        if not nonblocking:
+        if not flags & os.O_NONBLOCK:
             fcntl.fcntl(fd, fcntl.F_SETFL, flags)
 
 def blocking_read(fd, buffsize):
-    nonblocking, flags = nonblocking_fd(fd)
+    nonblocking_fd(fd)
     while 1:
         try:
             return original_os_read(fd, buffsize)
@@ -85,7 +84,7 @@ def blocking_read(fd, buffsize):
             io.wait_fds([(fd, 1)])
 
 def blocking_write(fd, data):
-    nonblocking, flags = nonblocking_fd(fd)
+    nonblocking_fd(fd)
     while 1:
         try:
             return original_os_write(fd, data)

@@ -258,6 +258,9 @@ class File(FileBase):
         finally:
             scheduler.state.poller.unregister(self, counter)
 
+        if scheduler.state.interrupted:
+            raise IOError(errno.EINTR, "interrupted system call")
+
     def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"
         scheduler.pause()
@@ -390,6 +393,9 @@ class _StdIOFile(FileBase):
         finally:
             scheduler.state.poller.unregister(self, counter)
 
+        if scheduler.state.interrupted:
+            raise IOError(errno.EINTR, "interrupted system call")
+
         return os.read(self._fileno, size)
 
     def _write_chunk(self, data):
@@ -399,6 +405,9 @@ class _StdIOFile(FileBase):
             self._writable.wait()
         finally:
             scheduler.state.poller.unregister(counter)
+
+        if scheduler.state.interrupted:
+            raise IOError(errno.EINTR, "interrupted system call")
 
         return os.write(self._fileno, data)
 

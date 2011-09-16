@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import errno
 import functools
 import time
 import weakref
@@ -85,5 +86,8 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
 
     for fd, reg in poll_regs.iteritems():
         poller.unregister(fd, reg)
+
+    if scheduler.state.interrupted:
+        raise IOError(errno.EINTR, "interrupted system call")
 
     return activated.items()

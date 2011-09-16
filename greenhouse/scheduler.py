@@ -47,6 +47,10 @@ state.global_trace_hooks = []
 state.local_to_trace_hooks = weakref.WeakKeyDictionary()
 state.local_from_trace_hooks = weakref.WeakKeyDictionary()
 
+# tracks interrupts
+state.interrupted = False
+
+
 class TimeoutManager(object):
     def __nonzero__(self):
         return bool(self.data)
@@ -120,8 +124,7 @@ except ImportError:
     state.timed_paused = BisectingTimeoutManager()
 
 
-def _hit_poller(timeout, interruption=None):
-    interruption = interruption or (lambda: False)
+def _hit_poller(timeout, keepgoing):
     until = time.time() + timeout
     events = []
     while 1:
@@ -132,9 +135,11 @@ def _hit_poller(timeout, interruption=None):
             if exc.args[0] != errno.EINTR:
                 raise
             # interrupted by a signal
-            if not interruption():
-                break
-            timeout = until - time.time()
+            # wake them all up and let them know there was an interruption
+            state.interrupted = True
+            events = [(fd, state.poller.ERRMASK)
+                    for fd in state.poller._registry.keys()]
+            break
 
     for fd, eventmap in events:
         readables = []
@@ -162,6 +167,7 @@ def _hit_poller(timeout, interruption=None):
                 writable()
 
     _check_events()
+    _check_paused()
 
 
 class _WeakMethodRef(object):
@@ -517,9 +523,10 @@ def mainloop():
         if not (sys and state):
             break
 
+        state.interrupted = False
+
         if not state.to_run:
-            _hit_poller(0)
-            _check_paused()
+            _hit_poller(0, lambda: False)
 
         while not state.to_run:
             # if there are timed-paused greenlets, we can
@@ -527,10 +534,8 @@ def mainloop():
             if state.timed_paused:
                 until = state.timed_paused.first()[0] + 0.001
                 _hit_poller(until - time.time(), _interruption_check)
-                _check_paused()
             else:
                 _hit_poller(POLL_TIMEOUT, _interruption_check)
-                _check_paused()
 
         prev = target
         target = state.to_run.popleft()

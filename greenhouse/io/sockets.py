@@ -455,6 +455,9 @@ class _InnerSocket(object):
                         sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
+                        if scheduler.state.interrupted:
+                            raise IOError(errno.EINTR,
+                                    "interrupted system call")
                         continue
                     else:
                         raise
@@ -477,6 +480,9 @@ class _InnerSocket(object):
                     sys.exc_clear()
                     if self._writable.wait(self.gettimeout()):
                         raise socket.timeout("timed out")
+                    if scheduler.state.interrupted:
+                        raise IOError(errno.EINTR,
+                                "interrupted system call")
                     continue
                 if err not in (0, errno.EISCONN):
                     raise socket.error(err, errno.errorcode[err])
@@ -522,6 +528,9 @@ class _InnerSocket(object):
                         sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
+                        if scheduler.state.interrupted:
+                            raise IOError(errno.EINTR,
+                                    "interrupted system call")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -541,6 +550,9 @@ class _InnerSocket(object):
                         sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
+                        if scheduler.state.interrupted:
+                            raise IOError(errno.EINTR,
+                                    "interrupted system call")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -560,6 +572,9 @@ class _InnerSocket(object):
                         sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
+                        if scheduler.state.interrupted:
+                            raise IOError(errno.EINTR,
+                                    "interrupted system call")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -579,6 +594,9 @@ class _InnerSocket(object):
                         sys.exc_clear()
                         if self._readable.wait(self.gettimeout()):
                             raise socket.timeout("timed out")
+                        if scheduler.state.interrupted:
+                            raise IOError(errno.EINTR,
+                                    "interrupted system call")
                         continue
                     if e[0] in SOCKET_CLOSED:
                         self._closed = True
@@ -597,8 +615,12 @@ class _InnerSocket(object):
         with self._registered('we'):
             sent = self.send(data, flags)
             while sent < len(data):
-                if self._blocking and self._writable.wait(self.gettimeout()):
-                    raise socket.timeout("timed out")
+                if self._blocking:
+                    if self._writable.wait(self.gettimeout()):
+                        raise socket.timeout("timed out")
+                    if scheduler.state.interrupted:
+                        raise IOError(errno.EINTR,
+                                "interrupted system call")
                 sent += self.send(data[sent:], flags)
 
     def sendto(self, *args):

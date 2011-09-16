@@ -221,7 +221,9 @@ class File(FileBase):
         counter = None
         try:
             counter = scheduler.state.poller.register(self)
-        except EnvironmentError:
+        except EnvironmentError, exc:
+            if exc.args[0] != errno.EPERM:
+                raise
             self._waiter = "_wait_yield"
         else:
             self._waiter = "_wait_event"

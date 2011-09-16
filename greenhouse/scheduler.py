@@ -124,7 +124,7 @@ except ImportError:
     state.timed_paused = BisectingTimeoutManager()
 
 
-def _hit_poller(timeout, keepgoing):
+def _hit_poller(timeout):
     until = time.time() + timeout
     events = []
     while 1:
@@ -510,11 +510,6 @@ def _remove_from_timedout(waketime, glet):
     return True
 
 
-def _interruption_check():
-    _check_events()
-    _check_paused()
-    return not state.to_run
-
 @compat.greenlet
 def mainloop():
     target = None
@@ -526,16 +521,16 @@ def mainloop():
         state.interrupted = False
 
         if not state.to_run:
-            _hit_poller(0, lambda: False)
+            _hit_poller(0)
 
         while not state.to_run:
             # if there are timed-paused greenlets, we can
             # just wait until the first of them wakes up
             if state.timed_paused:
                 until = state.timed_paused.first()[0] + 0.001
-                _hit_poller(until - time.time(), _interruption_check)
+                _hit_poller(until - time.time())
             else:
-                _hit_poller(POLL_TIMEOUT, _interruption_check)
+                _hit_poller(POLL_TIMEOUT)
 
         prev = target
         target = state.to_run.popleft()

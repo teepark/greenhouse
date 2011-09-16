@@ -370,11 +370,69 @@ class File(FileBase):
             return fp.tell()
 
 
-stdin = File.fromfd(getattr(sys.stdin, "fileno", lambda: 0)())
+class _StdIOFile(FileBase):
+    def __init__(self, fd):
+        super(_StdIOFile, self).__init__()
+        self._fileno = fd
+        self._readable = utils.Event()
+        self._writable = utils.Event()
+        scheduler._register_fd(fd, self._on_readable, self._on_writable)
+
+    def _on_readable(self):
+        self._readable.set()
+        self._readable.clear()
+
+    def _on_writable(self):
+        self._writable.set()
+        self._writable.clear()
+
+    def _read_chunk(self, size):
+        counter = scheduler.state.poller.register(self,
+                scheduler.state.poller.INMASK)
+        try:
+            self._readable.wait()
+        finally:
+            scheduler.state.poller.unregister(self, counter)
+
+        return os.read(self._fileno, size)
+
+    def _write_chunk(self, data):
+        counter = scheduler.state.poller.register(self,
+                scheduler.state.poller.OUTMASK)
+        try:
+            self._writable.wait()
+        finally:
+            scheduler.state.poller.unregister(counter)
+
+        return os.write(self._fileno, data)
+
+    def close(self):
+        os.close(self._fileno)
+
+    def fileno(self):
+        return self._fileno
+
+    def flush(self):
+        return None
+
+    def isatty(self):
+        try:
+            return os.isatty(self._fileno)
+        except OSError, exc:
+            raise IOError(*exc.args)
+
+    def seek(self, position, modifier=0):
+        raise IOError(errno.ESPIPE, "Illegal seek")
+
+    def tell(self):
+        raise IOError(errno.ESPIPE, "Illegal seek")
+
+
+stdin = _StdIOFile(getattr(sys.stdin, "fileno", lambda: 0)())
 "a non-blocking file object for cooperative stdin reading"
 
-stdout = File.fromfd(getattr(sys.stdout, "fileno", lambda: 1)())
+stdout = _StdIOFile(getattr(sys.stdout, "fileno", lambda: 0)())
 "a non-blocking file object for cooperative stdout writing"
 
-stderr = File.fromfd(getattr(sys.stderr, "fileno", lambda: 2)())
+stderr = _StdIOFile(getattr(sys.stderr, "fileno", lambda: 0)())
 "a non-blocking file object for cooperative stderr writing"

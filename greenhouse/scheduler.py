@@ -138,7 +138,7 @@ def _hit_poller(timeout):
             # wake them all up and let them know there was an interruption
             state.interrupted = True
             events = [(fd, state.poller.ERRMASK)
-                    for fd in state.poller._registry.keys()]
+                    for fd in state.poller._registry.iterkeys()]
             break
 
     for fd, eventmap in events:

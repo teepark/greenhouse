@@ -44,3 +44,26 @@
       coroutine (using the registered handlers)
     - utils.Queue uses the Empty and Full exception classes from the
       stdlib Queue module, and the emulation doesn't patch them any more
+
+1.0.0 (9/16/2011)
+    - refactored and much more complete emulation
+    - cooperative dns lookups with dnspython installed, and the ability to
+      use that in monkey-patching the socket module
+    - greenhouse.ext.zmq with a wait_socks that works like wait_fds but also
+      accepts pyzmq sockets
+    - cooperative pyzmq emulation
+    - greenhouse.ext.psycopg2.wait_callback, for psycopg2.set_wait_callback to
+      make psycopg2 behave cooperatively
+    - every public interface has a thorough docstring
+    - scheduler trace hooks
+    - global/local exception handlers
+    - scheduler.handle_exception to run the handlers manually
+    - signals interrupt emulated system calls
+    - optional dependency on python-btree substitutes a more efficient timer
+      mechanism
+    - utils module renamed to util
+    - util.Channel is gone
+    - util.Counter added
+    - util.LifoQueue and PriorityQueue added. feature-parity with stdlib Queue
+    - util.Timer re-written to be a Thread subclass, behave more like stdilb
+      threading.Timer

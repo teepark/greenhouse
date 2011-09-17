@@ -25,7 +25,8 @@ tests pass on all supported platforms.
    "version"
 6. run paver minilib to re-generate paver-minilib.zip with the new metadata
 7. commit the changes to release-
-8. tag the vX.Y.Z release from the release branch and push to github
+8. tag the vX.Y.Z release from the release branch and push to github. be sure
+   to make it a signed tag with the gpg key in teepark-gpg-key.
 
 9. build the docs in the release branch
 10. recursive-copy docs/build/html outside of the git repo

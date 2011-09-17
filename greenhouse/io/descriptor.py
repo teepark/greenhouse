@@ -5,7 +5,7 @@ import functools
 import time
 import weakref
 
-from .. import compat, scheduler, utils
+from .. import compat, scheduler
 
 
 __all__ = ["wait_fds"]

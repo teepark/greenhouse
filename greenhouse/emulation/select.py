@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import select
 import weakref
 
-from .. import io, scheduler, utils
+from .. import io, scheduler, util
 
 
 def green_select(rlist, wlist, xlist, timeout=None):
@@ -63,8 +63,8 @@ class green_poll(object):
 
 class green_epoll(object):
     def __init__(self, from_ep=None):
-        self._readable = utils.Event()
-        self._writable = utils.Event()
+        self._readable = util.Event()
+        self._writable = util.Event()
         if from_ep:
             self._epoll = from_ep
         else:
@@ -116,8 +116,8 @@ class green_epoll(object):
 
 class green_kqueue(object):
     def __init__(self, from_kq=None):
-        self._readable = utils.Event()
-        self._writable = utils.Event()
+        self._readable = util.Event()
+        self._writable = util.Event()
         if from_kq:
             self._kqueue = from_kq
         else:

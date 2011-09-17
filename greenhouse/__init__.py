@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from greenhouse.compat import *
 from greenhouse.scheduler import *
-from greenhouse.utils import *
+from greenhouse.util import *
 from greenhouse.pool import *
 
 # scheduler.state.poller needs to be in place before the io import

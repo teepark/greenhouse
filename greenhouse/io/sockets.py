@@ -6,7 +6,7 @@ import socket
 import sys
 import weakref
 
-from .. import scheduler, utils
+from .. import scheduler, util
 from . import files
 
 
@@ -400,8 +400,8 @@ class _InnerSocket(object):
         self._blocking = True
 
         # create events
-        self._readable = utils.Event()
-        self._writable = utils.Event()
+        self._readable = util.Event()
+        self._writable = util.Event()
 
         # allow for lookup by fileno
         scheduler._register_fd(

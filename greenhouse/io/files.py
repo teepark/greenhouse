@@ -11,7 +11,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from .. import scheduler, utils
+from .. import scheduler, util
 
 
 __all__ = ["File", "stdin", "stdout", "stderr"]
@@ -227,8 +227,8 @@ class File(FileBase):
             self._waiter = "_wait_yield"
         else:
             self._waiter = "_wait_event"
-            self._readable = utils.Event()
-            self._writable = utils.Event()
+            self._readable = util.Event()
+            self._writable = util.Event()
             scheduler._register_fd(
                     self._fileno, self._on_readable, self._on_writable)
         finally:
@@ -373,8 +373,8 @@ class _StdIOFile(FileBase):
     def __init__(self, fd):
         super(_StdIOFile, self).__init__()
         self._fileno = fd
-        self._readable = utils.Event()
-        self._writable = utils.Event()
+        self._readable = util.Event()
+        self._writable = util.Event()
         scheduler._register_fd(fd, self._on_readable, self._on_writable)
 
     def _on_readable(self):

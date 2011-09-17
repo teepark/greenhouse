@@ -1,6 +1,6 @@
 """monkey-patching facilities for greenhouse's  cooperative stdlib replacements
 
-many of the apis in greenhouse (particularly in the :mod:`greenhouse.utils`
+many of the apis in greenhouse (particularly in the :mod:`greenhouse.util`
 module) have been explicitly made to match the signatures and behavior of I/O
 and threading related apis from the python standard library.
 
@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import sys
 import types
 
-from .. import io, scheduler, utils
+from .. import io, scheduler, util
 
 
 __all__ = ["patch", "unpatch", "patched"]
@@ -85,9 +85,9 @@ _patchers = {
     },
 
     'Queue': {
-        'Queue': utils.Queue,
-        'LifoQueue': utils.LifoQueue,
-        'PriorityQueue': utils.PriorityQueue,
+        'Queue': util.Queue,
+        'LifoQueue': util.LifoQueue,
+        'PriorityQueue': util.PriorityQueue,
     },
 
     'sys': {

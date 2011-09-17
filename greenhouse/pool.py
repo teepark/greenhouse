@@ -2,7 +2,7 @@ from __future__ import with_statement
 
 import sys
 
-from greenhouse import compat, scheduler, utils
+from greenhouse import compat, scheduler, util
 
 
 __all__ = ["OneWayPool", "Pool", "OrderedPool", "map", "PoolClosed"]
@@ -30,7 +30,7 @@ class OneWayPool(object):
     def __init__(self, func, size=10):
         self.func = func
         self.size = size
-        self.inq = utils.Queue()
+        self.inq = util.Queue()
         self._closing = False
 
     def start(self):
@@ -112,7 +112,7 @@ class Pool(OneWayPool):
     """
     def __init__(self, *args, **kwargs):
         super(Pool, self).__init__(*args, **kwargs)
-        self.outq = utils.Queue()
+        self.outq = util.Queue()
 
     def __iter__(self):
         while True:

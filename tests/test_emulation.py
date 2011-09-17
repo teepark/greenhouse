@@ -8,7 +8,7 @@ import thread
 import threading
 import unittest
 
-from greenhouse import io, emulation, poller, scheduler, utils
+from greenhouse import io, emulation, poller, scheduler, util
 
 from test_base import StateClearingTestCase, TESTING_TIMEOUT
 
@@ -60,8 +60,8 @@ class PatchThreadTest(MonkeyPatchBase, StateClearingTestCase):
     PATCH_NAME = "thread"
 
     PATCHES = [
-        ('allocate', thread.allocate, utils.Lock, lambda: thread.allocate),
-        ('allocate_lock', thread.allocate_lock, utils.Lock,
+        ('allocate', thread.allocate, util.Lock, lambda: thread.allocate),
+        ('allocate_lock', thread.allocate_lock, util.Lock,
             lambda: thread.allocate_lock),
         ('start_new', thread.start_new, emulation.threading.green_start,
             lambda: thread.start_new),
@@ -74,24 +74,24 @@ class PatchThreadingTest(MonkeyPatchBase, StateClearingTestCase):
     PATCH_NAME = "threading"
 
     PATCHES = [
-        ('Event', threading.Event, utils.Event, lambda: threading.Event),
-        ('Lock', threading.Lock, utils.Lock, lambda: threading.Lock),
-        ('RLock', threading.RLock, utils.RLock, lambda: threading.RLock),
-        ('Condition', threading.Condition, utils.Condition,
+        ('Event', threading.Event, util.Event, lambda: threading.Event),
+        ('Lock', threading.Lock, util.Lock, lambda: threading.Lock),
+        ('RLock', threading.RLock, util.RLock, lambda: threading.RLock),
+        ('Condition', threading.Condition, util.Condition,
             lambda: threading.Condition),
-        ('Semaphore', threading.Semaphore, utils.Semaphore,
+        ('Semaphore', threading.Semaphore, util.Semaphore,
             lambda: threading.Semaphore),
         ('BoundedSemaphore', threading.BoundedSemaphore,
-            utils.BoundedSemaphore, lambda: threading.BoundedSemaphore),
-        ('Timer', threading.Timer, utils.Timer, lambda: threading.Timer),
-        ('Thread', threading.Thread, utils.Thread, lambda: threading.Thread),
-        ('local', threading.local, utils.Local, lambda: threading.local),
-        ('currentThread', threading.currentThread, utils._current_thread,
+            util.BoundedSemaphore, lambda: threading.BoundedSemaphore),
+        ('Timer', threading.Timer, util.Timer, lambda: threading.Timer),
+        ('Thread', threading.Thread, util.Thread, lambda: threading.Thread),
+        ('local', threading.local, util.Local, lambda: threading.local),
+        ('currentThread', threading.currentThread, util._current_thread,
             lambda: threading.currentThread),
     ]
 
     if hasattr(threading, "current_thread"):
-        PATCHES.append(('current_thread', threading.current_thread, utils._current_thread,
+        PATCHES.append(('current_thread', threading.current_thread, util._current_thread,
             lambda: threading.current_thread))
 
 
@@ -99,7 +99,7 @@ class PatchQueueTest(MonkeyPatchBase, StateClearingTestCase):
     PATCH_NAME = "Queue"
 
     PATCHES = [
-        ('Queue', Queue.Queue, utils.Queue, lambda: Queue.Queue),
+        ('Queue', Queue.Queue, util.Queue, lambda: Queue.Queue),
     ]
 
 
@@ -150,24 +150,24 @@ class PatchedModules(StateClearingTestCase):
         assert logging1.threading is threading1
 
         green = emulation.patched("logging")
-        assert green.thread.allocate_lock is utils.Lock
-        assert green.thread.allocate is utils.Lock
+        assert green.thread.allocate_lock is util.Lock
+        assert green.thread.allocate is util.Lock
         assert green.thread.start_new_thread is emulation.threading.green_start
         assert green.thread.start_new is emulation.threading.green_start
-        assert green.threading.Event is utils.Event
-        assert green.threading.Lock is utils.Lock
-        assert green.threading.RLock is utils.RLock
-        assert green.threading.Condition is utils.Condition
-        assert green.threading.Semaphore is utils.Semaphore
-        assert green.threading.BoundedSemaphore is utils.BoundedSemaphore
-        assert green.threading.Timer is utils.Timer
-        assert green.threading.Thread is utils.Thread
-        assert green.threading.local is utils.Local
-        assert green.threading.enumerate is utils._enumerate_threads
-        assert green.threading.active_count is utils._active_thread_count
-        assert green.threading.activeCount is utils._active_thread_count
-        assert green.threading.current_thread is utils._current_thread
-        assert green.threading.currentThread is utils._current_thread
+        assert green.threading.Event is util.Event
+        assert green.threading.Lock is util.Lock
+        assert green.threading.RLock is util.RLock
+        assert green.threading.Condition is util.Condition
+        assert green.threading.Semaphore is util.Semaphore
+        assert green.threading.BoundedSemaphore is util.BoundedSemaphore
+        assert green.threading.Timer is util.Timer
+        assert green.threading.Thread is util.Thread
+        assert green.threading.local is util.Local
+        assert green.threading.enumerate is util._enumerate_threads
+        assert green.threading.active_count is util._active_thread_count
+        assert green.threading.activeCount is util._active_thread_count
+        assert green.threading.current_thread is util._current_thread
+        assert green.threading.currentThread is util._current_thread
 
         import thread, threading, logging
         assert logging.thread.allocate_lock is thread1.allocate_lock

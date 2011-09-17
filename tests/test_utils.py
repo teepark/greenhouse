@@ -6,7 +6,7 @@ import unittest
 
 import greenhouse
 import greenhouse.poller
-from greenhouse import utils
+from greenhouse import util
 
 from test_base import TESTING_TIMEOUT, StateClearingTestCase
 
@@ -497,23 +497,23 @@ class QueueTestCase(StateClearingTestCase):
 
     def test_nonblocking_raises_empty(self):
         q = self.klass()
-        self.assertRaises(utils.Empty, q.get_nowait)
-        self.assertRaises(utils.Empty, q.get, blocking=False)
+        self.assertRaises(util.Empty, q.get_nowait)
+        self.assertRaises(util.Empty, q.get, blocking=False)
 
     def test_nonblocking_raises_full(self):
         q = self.klass(2)
         q.put(1)
         q.put(2)
 
-        self.assertRaises(utils.Full, q.put_nowait, 3)
-        self.assertRaises(utils.Full, q.put, 3, blocking=False)
+        self.assertRaises(util.Full, q.put_nowait, 3)
+        self.assertRaises(util.Full, q.put, 3, blocking=False)
 
     def test_put_sized_nonblocking(self):
         q = self.klass(3)
         q.put(4)
         q.put(5)
         q.put(6)
-        self.assertRaises(utils.Full, q.put, 7, blocking=False)
+        self.assertRaises(util.Full, q.put, 7, blocking=False)
 
     def test_put_sized_blocking(self):
         l = [False]
@@ -537,7 +537,7 @@ class QueueTestCase(StateClearingTestCase):
 
     def test_timeout(self):
         q = self.klass()
-        self.assertRaises(utils.Empty, q.get, timeout=TESTING_TIMEOUT)
+        self.assertRaises(util.Empty, q.get, timeout=TESTING_TIMEOUT)
 
     def test_joins(self):
         l = [False]
@@ -641,11 +641,11 @@ class ThreadTestCase(StateClearingTestCase):
     def test_order(self):
         l = []
 
-        class T(greenhouse.utils.Thread):
+        class T(greenhouse.util.Thread):
             def run(self):
                 l.append(1)
 
-        class T2(greenhouse.utils.Thread):
+        class T2(greenhouse.util.Thread):
             def run(self):
                 l.append(2)
 
@@ -662,7 +662,7 @@ class ThreadTestCase(StateClearingTestCase):
     def test_args(self):
         s = set()
 
-        class WithArgs(greenhouse.utils.Thread):
+        class WithArgs(greenhouse.util.Thread):
             def run(self, num):
                 s.add(num)
 
@@ -676,7 +676,7 @@ class ThreadTestCase(StateClearingTestCase):
     def test_kwargs(self):
         d = {}
 
-        class WithKwargs(greenhouse.utils.Thread):
+        class WithKwargs(greenhouse.util.Thread):
             def run(self, **kwargs):
                 d.update(kwargs)
 
@@ -692,7 +692,7 @@ class ThreadTestCase(StateClearingTestCase):
     def test_args_and_kwargs(self):
         s = set()
 
-        class WithArgs(greenhouse.utils.Thread):
+        class WithArgs(greenhouse.util.Thread):
             def run(self, num):
                 s.add(num)
 
@@ -704,7 +704,7 @@ class ThreadTestCase(StateClearingTestCase):
         a2.start()
         a3.start()
 
-        class WithKwargs(greenhouse.utils.Thread):
+        class WithKwargs(greenhouse.util.Thread):
             def run(self, **kwargs):
                 s.update(kwargs.keys())
 
@@ -721,9 +721,9 @@ class ThreadTestCase(StateClearingTestCase):
         self.assertEqual(s, set([1, 2, 3, 'foo', 'bar']))
 
     def test_join(self):
-        ev = greenhouse.utils.Event()
+        ev = greenhouse.util.Event()
 
-        class T(greenhouse.utils.Thread):
+        class T(greenhouse.util.Thread):
             def run(self):
                 ev.wait()
 
@@ -750,7 +750,7 @@ class ThreadTestCase(StateClearingTestCase):
 
 class CounterTestCase(StateClearingTestCase):
     def test_counts(self):
-        c = utils.Counter()
+        c = util.Counter()
 
         self.assertEqual(c.count, 0)
 
@@ -766,7 +766,7 @@ class CounterTestCase(StateClearingTestCase):
         self.assertEqual(c.count, 1)
 
     def test_blocks(self):
-        c = utils.Counter()
+        c = util.Counter()
         c.increment()
 
         l = [0]
@@ -781,7 +781,7 @@ class CounterTestCase(StateClearingTestCase):
         self.assertEqual(l[0], 0)
 
     def test_releases(self):
-        c = utils.Counter()
+        c = util.Counter()
         c.increment()
 
         l = [0]
@@ -801,7 +801,7 @@ class CounterTestCase(StateClearingTestCase):
         self.assertEqual(l[0], 1)
 
     def test_releases_up(self):
-        c = utils.Counter()
+        c = util.Counter()
 
         l = [0]
 

@@ -14,7 +14,8 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_exception_at", "schedule_exception_in", "end",
         "global_exception_handler", "local_exception_handler",
         "handle_exception", "greenlet", "global_trace_hook",
-        "local_incoming_trace_hook", "local_outgoing_trace_hook"]
+        "local_incoming_trace_hook", "local_outgoing_trace_hook",
+        "set_ignore_eintr"]
 
 POLL_TIMEOUT = 1.0
 BTREE_ORDER = 64
@@ -49,6 +50,7 @@ state.local_from_trace_hooks = weakref.WeakKeyDictionary()
 
 # tracks interrupts
 state.interrupted = False
+state.ignore_interrupts = False
 
 
 class TimeoutManager(object):
@@ -134,11 +136,14 @@ def _hit_poller(timeout):
         except EnvironmentError, exc:
             if exc.args[0] != errno.EINTR:
                 raise
+
             # interrupted by a signal
-            # wake them all up and let them know there was an interruption
-            state.interrupted = True
-            events = [(fd, state.poller.ERRMASK)
-                    for fd in state.poller._registry.iterkeys()]
+            if state.ignore_interrupts:
+                events = []
+            else:
+                state.interrupted = True
+                events = [(fd, state.poller.ERRMASK)
+                        for fd in state.poller._registry.iterkeys()]
             break
 
     for fd, eventmap in events:
@@ -769,3 +774,17 @@ def local_outgoing_trace_hook(handler=None, coro=None):
             weakref.ref(handler))
 
     return handler
+
+def set_ignore_eintr(flag=True):
+    """turn off EINTR-raising from emulated syscalls on interruption by signals
+
+    due to the nature of greenhouse's system call emulation,
+    ``signal.siginterrupt`` can't be made to work with it. specifically,
+    greenhouse can't differentiate between different signals. so this function
+    toggles whether to restart for *ALL* or *NO* signals.
+
+    :param flag:
+        whether to turn EINTR exceptions off (``True``) or on (``False``)
+    :type flag: bool
+    """
+    state.ignore_interrupts = bool(flag)

@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenhouse.io – Cooperative I/O Drop-Ins &mdash; greenhouse v1.0.0.dev documentation</title>
+    <title>greenhouse.io – Cooperative I/O Drop-Ins &mdash; greenhouse v1.0.0 documentation</title>
     <link rel="stylesheet" href="../static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0.dev',
+        VERSION:     '1.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -21,7 +21,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="greenhouse v1.0.0.dev documentation" href="../index.html" />
+    <link rel="top" title="greenhouse v1.0.0 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.utils – Greenlet-Aware Concurrency Primitives" href="utils.html" />
     <link rel="prev" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler" href="scheduler.html" /> 
   </head>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="scheduler.html" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">greenhouse v1.0.0.dev documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse v1.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -85,12 +85,9 @@ and the address is the <tt class="docutils literal"><span class="pre">(ip_addres
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>address</strong> &#8211; the address on which the socket will operate. the format of this
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address on which the socket will operate. the format of this
 argument depends on the socket&#8217;s type; for TCP sockets, this is a
-<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</li>
-</ul>
-</td>
+<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</td>
 </tr>
 </tbody>
 </table>
@@ -115,12 +112,9 @@ of TCP sockets this includes the TCP handshake</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
 depends on the socket&#8217;s type; for TCP sockets, this is a
-<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port</span></tt>) two-tuple</li>
-</ul>
-</td>
+<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port</span></tt>) two-tuple</td>
 </tr>
 </tbody>
 </table>
@@ -134,15 +128,11 @@ depends on the socket&#8217;s type; for TCP sockets, this is a
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
 depends on the socket&#8217;s type; for TCP sockets, this is a
-<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</li>
-</ul>
-</td>
+<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the error code for the connection attempt &#8211; 0 indicates success</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the error code for the connection attempt &#8211; 0 indicates success</td>
 </tr>
 </tbody>
 </table>
@@ -256,11 +246,8 @@ before raising a <tt class="docutils literal"><span class="pre">socket.timeout</
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>backlog</strong> (<em>int</em>) &#8211; the queue length for connections that haven&#8217;t yet been
-<a class="reference internal" href="#greenhouse.io.sockets.Socket.accept" title="greenhouse.io.sockets.Socket.accept"><tt class="xref py py-meth docutils literal"><span class="pre">accept()</span></tt></a>ed</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>backlog</strong> (<em>int</em>) &#8211; the queue length for connections that haven&#8217;t yet been
+<a class="reference internal" href="#greenhouse.io.sockets.Socket.accept" title="greenhouse.io.sockets.Socket.accept"><tt class="xref py py-meth docutils literal"><span class="pre">accept()</span></tt></a>ed</td>
 </tr>
 </tbody>
 </table>
@@ -473,10 +460,7 @@ otherwise block the coroutine.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>flag</strong> (<em>bool</em>) &#8211; whether to enable or disable blocking</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag</strong> (<em>bool</em>) &#8211; whether to enable or disable blocking</td>
 </tr>
 </tbody>
 </table>
@@ -512,11 +496,8 @@ manpage <tt class="docutils literal"><span class="pre">setsockopt(2)</span></tt>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>timeout</strong> (<em>float or None</em>) &#8211; the number of seconds the socket&#8217;s blocking operations should block
-before raising a <tt class="docutils literal"><span class="pre">socket.timeout</span></tt></li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>float or None</em>) &#8211; the number of seconds the socket&#8217;s blocking operations should block
+before raising a <tt class="docutils literal"><span class="pre">socket.timeout</span></tt></td>
 </tr>
 </tbody>
 </table>
@@ -530,12 +511,9 @@ before raising a <tt class="docutils literal"><span class="pre">socket.timeout</
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>how</strong> &#8211; the end(s) of the connection to shutdown. valid values are
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>how</strong> &#8211; the end(s) of the connection to shutdown. valid values are
 <tt class="docutils literal"><span class="pre">socket.SHUT_RD</span></tt>, <tt class="docutils literal"><span class="pre">socket.SHUT_WR</span></tt>, and <tt class="docutils literal"><span class="pre">socket.SHUT_RW</span></tt>
-for shutting down the read end, the write end, or both respectively</li>
-</ul>
-</td>
+for shutting down the read end, the write end, or both respectively</td>
 </tr>
 </tbody>
 </table>
@@ -608,14 +586,10 @@ means use the system default. defaults to -1</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>size</strong> (<em>int</em>) &#8211; the maximum number of bytes to read from the file. &lt; 0 means read
-the file to the end</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<em>int</em>) &#8211; the maximum number of bytes to read from the file. &lt; 0 means read
+the file to the end</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a string of the read file contents</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a string of the read file contents</td>
 </tr>
 </tbody>
 </table>
@@ -623,12 +597,14 @@ the file to the end</li>
 
 <dl class="method">
 <dt id="greenhouse.io.files.File.readline">
-<tt class="descname">readline</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.readline" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">readline</tt><big>(</big><em>max_len=-1</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.readline" title="Permalink to this definition">¶</a></dt>
 <dd><p>read from the file until a newline is encountered</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_len</strong> (<em>int</em>) &#8211; stop reading a single line after this many bytes</td>
+</tr>
 <tr class="field"><th class="field-name">Returns:</th><td class="field-body">a string of the line it read from the file, including the newline
 at the end</td>
 </tr>
@@ -644,13 +620,9 @@ at the end</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>bufsize</strong> (<em>int</em>) &#8211; the read buffer size to use</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>bufsize</strong> (<em>int</em>) &#8211; the read buffer size to use</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a list of all the lines in the file to the end</p>
-</td>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a list of all the lines in the file to the end</td>
 </tr>
 </tbody>
 </table>
@@ -695,11 +667,8 @@ at the end</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>data</strong> (<em>str</em>) &#8211; the data to write into the file, at the descriptor&#8217;s current
-position</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>str</em>) &#8211; the data to write into the file, at the descriptor&#8217;s current
+position</td>
 </tr>
 </tbody>
 </table>
@@ -714,10 +683,7 @@ position</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>lines</strong> (<em>iterable</em>) &#8211; a sequence of strings to write to the file</li>
-</ul>
-</td>
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lines</strong> (<em>iterable</em>) &#8211; a sequence of strings to write to the file</td>
 </tr>
 </tbody>
 </table>
@@ -841,12 +807,12 @@ the pipe</td>
         <li class="right" >
           <a href="scheduler.html" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler"
              >previous</a> |</li>
-        <li><a href="../index.html">greenhouse v1.0.0.dev documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse v1.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2010, Travis J Parker.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.4.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

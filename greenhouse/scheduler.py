@@ -171,8 +171,13 @@ def _hit_poller(timeout):
             for writable in writables:
                 writable()
 
-    _check_events()
-    _check_paused()
+    state.to_run.extend(state.awoken_from_events)
+    state.awoken_from_events.clear()
+
+    state.timed_paused.check()
+
+    state.to_run.extend(state.paused)
+    state.paused = []
 
 
 class _WeakMethodRef(object):
@@ -209,16 +214,6 @@ def _register_fd(fd, readable, writable):
         writable = _WeakMethodRef(writable)
     state.descriptormap[fd].append((readable, writable))
 
-
-def _check_events():
-    state.to_run.extend(state.awoken_from_events)
-    state.awoken_from_events.clear()
-
-def _check_paused():
-    state.timed_paused.check()
-
-    state.to_run.extend(state.paused)
-    state.paused = []
 
 def greenlet(func, args=(), kwargs=None):
     """create a new greenlet from a function and arguments

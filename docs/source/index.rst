@@ -71,7 +71,7 @@ Index
 
     greenhouse/scheduler
     greenhouse/io
-    greenhouse/utils
+    greenhouse/util
     greenhouse/pool
     greenhouse/compat
     greenhouse/emulation

@@ -350,11 +350,11 @@ class File(FileBase):
         :param modifier:
             an indicator of how to find the seek location.
 
-            - ``os.SEEK_START`` means start from the beginning of the file
+            - ``os.SEEK_SET`` means start from the beginning of the file
             - ``os.SEEK_CUR`` means start wherever the cursor already is
             - ``os.SEEK_END`` means start from the end of the file
 
-            the default is ``os.SEEK_START``
+            the default is ``os.SEEK_SET``
         """
         os.lseek(self._fileno, position, modifier)
 

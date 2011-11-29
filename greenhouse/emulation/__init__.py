@@ -8,15 +8,16 @@ this module enables monkey-patching the stdlib modules to swap in the
 greenhouse versions, the idea being that you can cause a third-party library to
 use coroutines without it having to be explicitly written that way.
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, with_statement
 
+import contextlib
 import sys
 import types
 
 from .. import io, scheduler, util
 
 
-__all__ = ["patch", "unpatch", "patched"]
+__all__ = ["patch", "unpatch", "patched", "patched_context"]
 
 
 def patched(module_name):
@@ -66,6 +67,34 @@ def patched(module_name):
                 sys.modules[name] = old_mod
 
     return result
+
+
+@contextlib.contextmanager
+def patched_context(*module_names, local=False):
+    """apply emulation patches only for a specific context
+
+    :param module_names: var-args for the modules to patch, as in :func:`patch`
+    :param local:
+        if True, unpatching is done on every switch-out, and re-patching on
+        every switch-in, so that they are only applied for the one coroutine
+
+    :returns:
+        a contextmanager that patches on 	`__enter__	` and unpatches on
+        ``__exit__``
+    """
+    patch(*module_names)
+    if local:
+        @scheduler.local_incoming_hook
+        @scheduler.local_outgoing_hook
+        def hook(direction, target):
+            {1: patch, 2: unpatch}[direction](*module_names)
+
+    yield
+
+    unpatch(*module_names)
+    if local:
+        scheduler.remove_local_incoming_hook(hook)
+        scheduler.remove_local_outgoing_hook(hook)
 
 
 def _patched_copy(mod_name, patch):

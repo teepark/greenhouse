@@ -12,9 +12,11 @@ from greenhouse import compat
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "schedule_in", "schedule_recurring", "schedule_exception",
         "schedule_exception_at", "schedule_exception_in", "end",
-        "global_exception_handler", "local_exception_handler",
-        "handle_exception", "greenlet", "global_trace_hook",
-        "local_incoming_trace_hook", "local_outgoing_trace_hook",
+        "global_exception_handler", "remove_global_exception_handler",
+        "local_exception_handler", "remove_local_exception_handler",
+        "handle_exception", "greenlet", "global_hook", "remove_global_hook",
+        "local_incoming_hook", "remove_local_incoming_hook",
+        "local_outgoing_hook", "remove_local_outgoing_hook",
         "set_ignore_eintr"]
 
 POLL_TIMEOUT = 1.0
@@ -44,9 +46,9 @@ state.global_exception_handlers = []
 state.local_exception_handlers = weakref.WeakKeyDictionary()
 
 # trace hook callbacks
-state.global_trace_hooks = []
-state.local_to_trace_hooks = weakref.WeakKeyDictionary()
-state.local_from_trace_hooks = weakref.WeakKeyDictionary()
+state.global_hooks = []
+state.local_to_hooks = weakref.WeakKeyDictionary()
+state.local_from_hooks = weakref.WeakKeyDictionary()
 
 # tracks interrupts
 state.interrupted = False
@@ -536,13 +538,13 @@ def mainloop():
         target = state.to_run.popleft()
 
         # global trace hooks
-        if state.global_trace_hooks:
-            _run_global_trace_hooks(prev, target)
+        if state.global_hooks:
+            _run_global_hooks(prev, target)
 
         # local trace incoming hooks
-        if target in state.local_to_trace_hooks:
-            _run_local_trace_hooks(
-                    target, state.local_to_trace_hooks[target], True)
+        if target in state.local_to_hooks:
+            _run_local_hooks(
+                    target, state.local_to_hooks[target], True)
 
         try:
             # pick up any exception we are supposed to throw in
@@ -564,13 +566,13 @@ def mainloop():
             del klass, exc, tb
 
         # local trace outgoing hooks
-        if target in state.local_from_trace_hooks:
-            _run_local_trace_hooks(
-                    target, state.local_from_trace_hooks[target], False)
+        if target in state.local_from_hooks:
+            _run_local_hooks(
+                    target, state.local_from_hooks[target], False)
 
 state.mainloop = mainloop
 
-def _run_local_trace_hooks(target, hooks, incoming):
+def _run_local_hooks(target, hooks, incoming):
     replacement_hooks = []
     direction = 1 if incoming else 2
     for weak in hooks:
@@ -587,9 +589,9 @@ def _run_local_trace_hooks(target, hooks, incoming):
 
     hooks[:] = replacement_hooks
 
-def _run_global_trace_hooks(coming_from, going_to):
+def _run_global_hooks(coming_from, going_to):
     replacement_hooks = []
-    for weak in state.global_trace_hooks:
+    for weak in state.global_hooks:
         func = weak()
         if func is None:
             continue
@@ -601,7 +603,7 @@ def _run_global_trace_hooks(coming_from, going_to):
 
         replacement_hooks.append(weak)
 
-    state.global_trace_hooks[:] = replacement_hooks
+    state.global_hooks[:] = replacement_hooks
 
 
 def handle_exception(klass, exc, tb, coro=None):
@@ -674,6 +676,23 @@ def global_exception_handler(handler):
 
     return handler
 
+def remove_global_exception_handler(handler):
+    """remove a callback from the list of global exception handlers
+
+    :param handler:
+        the callback, previously added via :func:`global_exception_handler`,
+        to remove
+    :type handler: function
+
+    :returns: bool, whether the handler was found (and therefore removed)
+    """
+    for i, cb in enumerate(state.global_exception_handlers):
+        cb = cb()
+        if cb is not None and cb is handler:
+            state.global_exception_handlers.pop(i)
+            return True
+    return False
+
 def local_exception_handler(handler=None, coro=None):
     """add a callback for when an exception occurs in a particular greenlet
 
@@ -700,7 +719,28 @@ def local_exception_handler(handler=None, coro=None):
 
     return handler
 
-def global_trace_hook(handler):
+def remove_local_exception_handler(handler, coro=None):
+    """remove a callback from the list of exception handlers for a coroutine
+
+    :param handler: the callback to remove
+    :type handler: function
+    :param coro: the coroutine for which to remove the local handler
+    :type coro: greenlet
+
+    :returns: bool, whether the handler was found (and therefore removed)
+    """
+    if coro is None:
+        coro = compat.getcurrent()
+
+    for i, cb in enumerate(state.local_exception_handlers.get(coro, [])):
+        cb = cb()
+        if cb is not None and cb is handler:
+            state.local_exception_handlers[coro].pop(i)
+            return True
+    return False
+
+
+def global_hook(handler):
     """add a callback to run in every switch between coroutines
 
     :param handler:
@@ -712,11 +752,29 @@ def global_trace_hook(handler):
     if not hasattr(handler, "__call__"):
         raise TypeError("trace hooks must be callable")
 
-    state.global_trace_hooks.append(weakref.ref(handler))
+    state.global_hooks.append(weakref.ref(handler))
 
     return handler
 
-def local_incoming_trace_hook(handler=None, coro=None):
+def remove_global_hook(handler):
+    """remove a callback from the list of global hooks
+
+    :param handler:
+        the callback function, previously added with global_hook, to remove
+        from the list of global hooks
+    :type handler: function
+
+    :returns: bool, whether the handler was removed from the global hooks
+    """
+    for i, cb in enumerate(state.global_hooks):
+        cb = cb()
+        if cb is not None and cb is handler:
+            state.global_hooks.pop(i)
+            return True
+    return False
+
+
+def local_incoming_hook(handler=None, coro=None):
     """add a callback to run every time a greenlet is about to be switched to
 
     :param handler:
@@ -730,7 +788,7 @@ def local_incoming_trace_hook(handler=None, coro=None):
     :type coro: greenlet
     """
     if handler is None:
-        return lambda h: local_incoming_trace_hook(h, coro)
+        return lambda h: local_incoming_hook(h, coro)
 
     if not hasattr(handler, "__call__"):
         raise TypeError("trace hooks must be callable")
@@ -738,12 +796,32 @@ def local_incoming_trace_hook(handler=None, coro=None):
     if coro is None:
         coro = compat.getcurrent()
 
-    state.local_to_trace_hooks.setdefault(coro, []).append(
+    state.local_to_hooks.setdefault(coro, []).append(
             weakref.ref(handler))
 
     return handler
 
-def local_outgoing_trace_hook(handler=None, coro=None):
+def remove_local_incoming_hook(handler, coro=None):
+    """remove a callback from the incoming hooks for a particular coro
+
+    :param handler: the callback previously added via local_incoming_hook
+    :type handler: function
+    :param coro: the coroutine for which the hook should be removed
+    :type coro: greenlet
+
+    :returns: bool, whether the handler was found and removed
+    """
+    if coro is None:
+        coro = compat.getcurrent()
+
+    for i, cb in enumerate(state.local_to_hooks.get(coro, [])):
+        cb = cb()
+        if cb is not None and cb is handler:
+            state.local_to_hooks[coro].pop(i)
+            return True
+    return False
+
+def local_outgoing_hook(handler=None, coro=None):
     """add a callback to run every time a greenlet is switched away from
 
     :param handler:
@@ -757,7 +835,7 @@ def local_outgoing_trace_hook(handler=None, coro=None):
     :type coro: greenlet
     """
     if handler is None:
-        return lambda h: local_outgoing_trace_hook(h, coro)
+        return lambda h: local_outgoing_hook(h, coro)
 
     if not hasattr(handler, "__call__"):
         raise TypeError("trace hooks must be callable")
@@ -765,10 +843,30 @@ def local_outgoing_trace_hook(handler=None, coro=None):
     if coro is None:
         coro = compat.getcurrent()
 
-    state.local_from_trace_hooks.setdefault(coro, []).append(
+    state.local_from_hooks.setdefault(coro, []).append(
             weakref.ref(handler))
 
     return handler
+
+def remove_local_outgoing_hook(handler, coro=None):
+    """remove a callback from the outgoing hooks for a particular coro
+
+    :param handler: the callback previously added via local_outgoing_hook
+    :type handler: function
+    :param coro: the coroutine for which the hook should be removed
+    :type coro: greenlet
+
+    :returns: bool, whether the handler was found and removed
+    """
+    if coro is None:
+        coro = compat.getcurrent()
+
+    for i, cb in enumerate(state.local_from_hooks.get(coro, [])):
+        cb = cb()
+        if cb is not None and cb is handler:
+            state.local_from_hooks[coro].pop(i)
+            return True
+    return False
 
 def set_ignore_eintr(flag=True):
     """turn off EINTR-raising from emulated syscalls on interruption by signals

@@ -70,7 +70,7 @@ def patched(module_name):
 
 
 @contextlib.contextmanager
-def patched_context(*module_names, local=False):
+def patched_context(*module_names, **kwargs):
     """apply emulation patches only for a specific context
 
     :param module_names: var-args for the modules to patch, as in :func:`patch`
@@ -82,6 +82,11 @@ def patched_context(*module_names, local=False):
         a contextmanager that patches on 	`__enter__	` and unpatches on
         ``__exit__``
     """
+    local = kwargs.pop('local', False)
+    if kwargs:
+        raise TypeError("patched_context() got an unexpected keyword " +
+                "argument %r" % kwargs.keys()[0])
+
     patch(*module_names)
     if local:
         @scheduler.local_incoming_hook

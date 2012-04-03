@@ -79,7 +79,7 @@ def patched_context(*module_names, **kwargs):
         every switch-in, so that they are only applied for the one coroutine
 
     :returns:
-        a contextmanager that patches on 	`__enter__	` and unpatches on
+        a contextmanager that patches on ``__enter__`` and unpatches on
         ``__exit__``
     """
     local = kwargs.pop('local', False)

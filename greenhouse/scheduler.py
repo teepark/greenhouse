@@ -17,7 +17,7 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "handle_exception", "greenlet", "global_hook", "remove_global_hook",
         "local_incoming_hook", "remove_local_incoming_hook",
         "local_outgoing_hook", "remove_local_outgoing_hook",
-        "set_ignore_eintr"]
+        "set_ignore_interrupts"]
 
 POLL_TIMEOUT = 1.0
 BTREE_ORDER = 64
@@ -868,7 +868,7 @@ def remove_local_outgoing_hook(handler, coro=None):
             return True
     return False
 
-def set_ignore_eintr(flag=True):
+def set_ignore_interrupts(flag=True):
     """turn off EINTR-raising from emulated syscalls on interruption by signals
 
     due to the nature of greenhouse's system call emulation,

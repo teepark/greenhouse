@@ -475,7 +475,7 @@ class ScheduleMixin(object):
         self.assertEqual(len(l), 1)
         self.assertEqual(l[0], CustomError2)
 
-    def test_global_trace_hook(self):
+    def test_global_hook(self):
         @greenhouse.schedule
         @greenhouse.greenlet
         def g():
@@ -483,7 +483,7 @@ class ScheduleMixin(object):
 
         l = []
 
-        @greenhouse.global_trace_hook
+        @greenhouse.global_hook
         def hook(coming_from, going_to):
             l.append((coming_from, going_to))
 
@@ -495,7 +495,7 @@ class ScheduleMixin(object):
         self.assertEqual(len([pair for pair in l if pair[1] is g]), 1)
         self.assertEqual(len(l), 2)
 
-    def test_local_incoming_trace_hook(self):
+    def test_local_incoming_hook(self):
         lock1 = greenhouse.Lock()
         lock2 = greenhouse.Lock()
 
@@ -516,11 +516,11 @@ class ScheduleMixin(object):
                 for i in xrange(5):
                     greenhouse.pause()
 
-        @greenhouse.local_incoming_trace_hook(coro=g1)
+        @greenhouse.local_incoming_hook(coro=g1)
         def handler1(direction, coroutine):
             l1[0] += 1
 
-        @greenhouse.local_incoming_trace_hook(coro=g2)
+        @greenhouse.local_incoming_hook(coro=g2)
         def handler2(direction, coroutine):
             l2[0] += 1
 
@@ -531,7 +531,7 @@ class ScheduleMixin(object):
         self.assertEqual(l1, [4])
         self.assertEqual(l2, [6])
 
-    def test_local_outgoing_trace_hook(self):
+    def test_local_outgoing_hook(self):
         @greenhouse.schedule
         @greenhouse.greenlet
         def g():
@@ -541,7 +541,7 @@ class ScheduleMixin(object):
 
         l = [0]
 
-        @greenhouse.local_outgoing_trace_hook(coro=g)
+        @greenhouse.local_outgoing_hook(coro=g)
         def hook(direction, coro):
             l[0] += 1
 

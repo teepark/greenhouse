@@ -33,9 +33,9 @@ class StateClearingTestCase(unittest.TestCase):
         state.to_run.clear()
         del state.global_exception_handlers[:]
         state.local_exception_handlers.clear()
-        del state.global_trace_hooks[:]
-        state.local_to_trace_hooks.clear()
-        state.local_from_trace_hooks.clear()
+        del state.global_hooks[:]
+        state.local_to_hooks.clear()
+        state.local_from_hooks.clear()
         state.raise_in_main = None
 
         greenhouse.poller.set()

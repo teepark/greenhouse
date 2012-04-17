@@ -404,7 +404,7 @@ class _StdIOFile(FileBase):
         try:
             self._writable.wait()
         finally:
-            scheduler.state.poller.unregister(counter)
+            scheduler.state.poller.unregister(self._fileno, counter)
 
         if scheduler.state.interrupted:
             raise IOError(errno.EINTR, "interrupted system call")

@@ -258,30 +258,30 @@ if greenhouse.poller.Epoll._POLLER:
     class EpollSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         def setUp(self):
             StateClearingTestCase.setUp(self)
-            greenhouse.poller.set(greenhouse.poller.Epoll())
+            greenhouse.scheduler.reset_poller(greenhouse.poller.Epoll())
 
 if greenhouse.poller.Poll._POLLER:
     class PollSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         def setUp(self):
             StateClearingTestCase.setUp(self)
-            greenhouse.poller.set(greenhouse.poller.Poll())
+            greenhouse.scheduler.reset_poller(greenhouse.poller.Poll())
 
 if greenhouse.poller.KQueue._POLLER:
     class KQueueSocketTestCase(SocketPollerMixin, StateClearingTestCase):
         def setUp(self):
             StateClearingTestCase.setUp(self)
-            greenhouse.poller.set(greenhouse.poller.KQueue())
+            greenhouse.scheduler.reset_poller(greenhouse.poller.KQueue())
 
 class SelectSocketTestCase(SocketPollerMixin, StateClearingTestCase):
     def setUp(self):
         StateClearingTestCase.setUp(self)
-        greenhouse.poller.set(greenhouse.poller.Select())
+        greenhouse.scheduler.reset_poller(greenhouse.poller.Select())
 
 class FilePollerMixin(object):
     def setUp(self):
         super(FilePollerMixin, self).setUp()
         self.fname = tempfile.mktemp()
-        greenhouse.poller.set(self.POLLER())
+        greenhouse.scheduler.reset_poller(self.POLLER())
 
     def tearDown(self):
         super(FilePollerMixin, self).tearDown()
@@ -469,7 +469,7 @@ class FileWithSelectTestCase(FilePollerMixin, StateClearingTestCase):
 class PipePollerMixin(object):
     def setUp(self):
         super(PipePollerMixin, self).setUp()
-        greenhouse.poller.set(self.POLLER())
+        greenhouse.scheduler.reset_poller(self.POLLER())
 
     def test_basic(self):
         rfp, wfp = greenhouse.pipe()
@@ -518,7 +518,7 @@ class PipeWithSelectTestCase(PipePollerMixin, StateClearingTestCase):
 class WaitFDsMixin(object):
     def setUp(self):
         super(WaitFDsMixin, self).setUp()
-        greenhouse.poller.set(self.POLLER())
+        greenhouse.scheduler.reset_poller(self.POLLER())
 
     def test_pipes(self):
         reader1, writer1 = greenhouse.pipe()

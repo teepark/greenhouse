@@ -45,7 +45,7 @@ class PollSelectorTestCase(StateClearingTestCase):
 class PollerMixin(object):
     def setUp(self):
         StateClearingTestCase.setUp(self)
-        greenhouse.poller.set(self.POLLER())
+        greenhouse.scheduler.reset_poller(self.POLLER())
 
     def test_register_both_read_and_write(self):
         with self.socketpair() as (client, handler):

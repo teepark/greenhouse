@@ -221,7 +221,7 @@ class PatchedModules(StateClearingTestCase):
 class GreenSelectMixin(object):
     def setUp(self):
         super(GreenSelectMixin, self).setUp()
-        poller.set(self.POLLER())
+        scheduler.reset_poller(self.POLLER())
 
     def test_select(self):
         with self.socketpair() as (client, server):

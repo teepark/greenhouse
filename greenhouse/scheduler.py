@@ -6,7 +6,7 @@ import sys
 import time
 import weakref
 
-from greenhouse import compat
+from greenhouse import compat, poller
 
 
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
@@ -17,7 +17,7 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "handle_exception", "greenlet", "global_hook", "remove_global_hook",
         "local_incoming_hook", "remove_local_incoming_hook",
         "local_outgoing_hook", "remove_local_outgoing_hook",
-        "set_ignore_interrupts"]
+        "set_ignore_interrupts", "reset_poller"]
 
 POLL_TIMEOUT = 1.0
 BTREE_ORDER = 64
@@ -881,3 +881,10 @@ def set_ignore_interrupts(flag=True):
     :type flag: bool
     """
     state.ignore_interrupts = bool(flag)
+
+def reset_poller(poll=None):
+    """replace the scheduler's poller, throwing away any pre-existing state
+
+    this is only really a good idea in the new child process after a fork(2).
+    """
+    state.poller = poll or poller.best()

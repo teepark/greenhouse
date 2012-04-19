@@ -17,7 +17,7 @@ port = lambda: 8000 + os.getpid() # because i'm running multiprocess nose
 class ScheduleMixin(object):
     def setUp(self):
         super(ScheduleMixin, self).setUp()
-        greenhouse.poller.set(self.POLLER())
+        greenhouse.scheduler.reset_poller(self.POLLER())
 
     def test_schedule(self):
         l = []

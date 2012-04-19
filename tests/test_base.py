@@ -38,7 +38,7 @@ class StateClearingTestCase(unittest.TestCase):
         state.local_from_hooks.clear()
         state.raise_in_main = None
 
-        greenhouse.poller.set()
+        greenhouse.reset_poller()
 
     def tearDown(self):
         gc.collect()

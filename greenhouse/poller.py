@@ -6,8 +6,6 @@ import operator
 import select
 import sys
 
-from . import scheduler
-
 
 class Poll(object):
     "a greenhouse poller using the poll system call"
@@ -213,7 +211,3 @@ def best():
         return Poll()
 
     return Select()
-
-
-def set(poller=None):
-    scheduler.state.poller = poller or best()

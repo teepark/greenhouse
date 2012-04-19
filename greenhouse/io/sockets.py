@@ -675,6 +675,11 @@ class SocketFile(files.FileBase):
 
 
 def _dns_resolve(sock, address):
+    try:
+        from ..ext import dns
+    except ImportError:
+        return address
+
     if not (sock.proto == socket.IPPROTO_IP and
             isinstance(address, tuple) and
             len(address) == 2 and
@@ -685,11 +690,6 @@ def _dns_resolve(sock, address):
     pieces = host.split(".")
     if len(pieces) == 4 and all(
             x.isdigit() and 0 <= int(x) <= 255 for x in pieces):
-        return address
-
-    try:
-        from ..ext import dns
-    except ImportError:
         return address
 
     return dns.resolve(host)[0], port

@@ -622,6 +622,10 @@ def handle_exception(klass, exc, tb, coro=None):
         behave as though the exception occurred in this coroutine (defaults to
         the current coroutine)
     :type coro: greenlet
+
+    exception handlers run would be all those added with
+    :func:`global_exception_handler`, and any added for the relevant coroutine
+    with :func:`local_exception_handler`.
     """
     if coro is None:
         coro = compat.getcurrent()
@@ -661,9 +665,11 @@ def global_exception_handler(handler):
     """add a callback for when an exception goes uncaught in any greenlet
 
     :param handler:
-        the callback function. must be a function taking 3 arguments: ``klass``
-        the exception class, ``exc`` the exception instance, and ``tb`` the
-        traceback object
+        the callback function. must be a function taking 3 arguments:
+
+        - ``klass`` the exception class
+        - ``exc`` the exception instance
+        - ``tb`` the traceback object
     :type handler: function
 
     Note also that the callback is only held by a weakref, so if all other refs
@@ -697,8 +703,11 @@ def local_exception_handler(handler=None, coro=None):
     """add a callback for when an exception occurs in a particular greenlet
 
     :param handler:
-        the callback function, must be a function taking 3 arguments: the
-        exception class, the exception instance, and the traceback object
+        the callback function, must be a function taking 3 arguments:
+
+        - ``klass`` the exception class
+        - ``exc`` the exception instance
+        - ``tb`` the traceback object
     :type handler: function
     :param coro:
         the coroutine for which to apply the exception handler (defaults to the
@@ -744,9 +753,12 @@ def global_hook(handler):
     """add a callback to run in every switch between coroutines
 
     :param handler:
-        the callback function, must be a function taking 2 arguments: the
-        greenlet being switched from, and the greenlet being switched to. be
-        aware that only a weak reference to this function will be held.
+        the callback function, must be a function taking 2 arguments:
+
+        - the greenlet being switched from
+        - the greenlet being switched to
+
+        be aware that only a weak reference to this function will be held.
     :type handler: function
     """
     if not hasattr(handler, "__call__"):
@@ -778,10 +790,15 @@ def local_incoming_hook(handler=None, coro=None):
     """add a callback to run every time a greenlet is about to be switched to
 
     :param handler:
-        the callback function, must be a function taking 2 arguments: an
-        integer indicating whether it is being called as an incoming (1) hook
-        or as an outgoing (2) hook. in this case it will always be 1. be aware
-        that only a weak reference to this function will be held.
+        the callback function, must be a function taking 2 arguments:
+
+        - an integer indicating whether it is being called as an incoming (1)
+          hook or an outgoing (2) hook (in this case it will always receive 1).
+        - the coroutine being switched into (in this case it will always be the
+          same as the one indicated by the ``coro`` argument to
+          ``local_incoming_hook``.
+
+        Be aware that only a weak reference to this function will be held.
     :type handler: function
     :param coro:
         the coroutine for which to apply the trace hook (defaults to current)
@@ -825,10 +842,14 @@ def local_outgoing_hook(handler=None, coro=None):
     """add a callback to run every time a greenlet is switched away from
 
     :param handler:
-        the callback function, must be a function taking 2 arguments: an
-        integer indicating whether it is being called as an incoming (1) hook
-        or as an outgoing (2) hook. in this case it will always be 2. be aware
-        that only a weak reference to this function will be held.
+        the callback function, must be a function taking 2 arguments:
+
+        - an integer indicating whether it is being called as an incoming (1)
+          hook or as an outgoing (2) hook (in this case it will always be 2).
+        - the coroutine being switched from (in this case it is the one
+          indicated by the ``coro`` argument to ``local_outgoing_hook``.
+
+        Be aware that only a weak reference to this function will be held.
     :type handler: function
     :param coro:
         the coroutine for which to apply the trace hook (defaults to current)

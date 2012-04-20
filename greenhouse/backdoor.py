@@ -6,8 +6,8 @@ runtime.
 
 .. warning:: **backdoors are a gaping security hole**
 
-    Make certain that you either use ``"127.0.0.1"`` as the host on which to
-    listen for connections so that it will only accept connection requests made
+    Make certain that you use ``"127.0.0.1"`` as the host on which to listen
+    for connections so that it will only accept connection requests made
     locally. If you must connect to it from another machine, at least make sure
     it is behind a firewall that will block the backdoor port.
 """
@@ -38,6 +38,7 @@ def run_backdoor(address, namespace=None):
     """start a server that runs python interpreters on connections made to it
 
     .. note::
+
         this function blocks effectively indefinitely -- it runs the listening
         socket loop in the current greenlet. to keep the current greenlet free,
         :func:`schedule<greenhouse.scheduler.schedule>` this function.

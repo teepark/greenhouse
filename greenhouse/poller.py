@@ -88,6 +88,8 @@ class Epoll(Poll):
     _POLLER = getattr(select, "epoll", None)
 
     def poll(self, timeout):
+        if timeout is None:
+            timeout = -1
         return self._poller.poll(timeout)
 
 

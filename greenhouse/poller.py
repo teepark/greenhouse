@@ -63,7 +63,9 @@ class Poll(object):
             self._registry.pop(fd)
 
     def poll(self, timeout):
-        return self._poller.poll(timeout * 1000)
+        if timeout is not None:
+            timeout *= 1000
+        return self._poller.poll(timeout)
 
     def _update_registration(self, fd, from_mask, to_mask):
         if from_mask != to_mask:

@@ -19,7 +19,6 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
         "local_outgoing_hook", "remove_local_outgoing_hook",
         "set_ignore_interrupts", "reset_poller"]
 
-POLL_TIMEOUT = 1.0
 BTREE_ORDER = 64
 
 
@@ -129,7 +128,6 @@ except ImportError:
 
 
 def _hit_poller(timeout):
-    until = time.time() + timeout
     events = []
     while 1:
         try:
@@ -532,7 +530,7 @@ def mainloop():
                 until = state.timed_paused.first()[0] + 0.001
                 _hit_poller(until - time.time())
             else:
-                _hit_poller(POLL_TIMEOUT)
+                _hit_poller(None)
 
         prev = target
         target = state.to_run.popleft()

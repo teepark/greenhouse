@@ -38,7 +38,6 @@ state.to_run = collections.deque()
 
 # exceptions queued up for scheduled coros
 state.to_raise = weakref.WeakKeyDictionary()
-state.raise_in_main = None
 
 # exception handlers, global and local
 state.global_exception_handlers = []
@@ -445,9 +444,7 @@ def schedule_exception(exception, target):
     :param target: the greenlet that should receive the exception
     :type target: greenlet
     """
-    if target is compat.main_greenlet:
-        state.raise_in_main = exception
-    elif not isinstance(target, compat.greenlet):
+    if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
         raise ValueError("can't send exceptions to a dead greenlet")
@@ -464,8 +461,6 @@ def schedule_exception_at(unixtime, exception, target):
     :param target: the greenlet that should receive the exception
     :type target: greenlet
     """
-    if target is compat.main_greenlet:
-        state.raise_in_main = exception
     if not isinstance(target, compat.greenlet):
         raise TypeError("can only schedule exceptions for greenlets")
     if target.dead:
@@ -491,8 +486,6 @@ def end(target):
     :param target: the greenlet to end
     :type target: greenlet
     """
-    if target is compat.main_greenlet:
-        state.raise_in_main = compat.GreenletExit()
     if not isinstance(target, compat.greenlet):
         raise TypeError("argument must be a greenlet")
     if not target.dead:
@@ -548,11 +541,6 @@ def mainloop():
             # pick up any exception we are supposed to throw in
             if target in state.to_raise:
                 target.throw(state.to_raise.pop(target))
-            elif (target is compat.main_greenlet
-                    and state.raise_in_main is not None):
-                exc = state.raise_in_main
-                state.raise_in_main = None
-                target.throw(exc)
             else:
                 target.switch()
         except Exception:

@@ -132,6 +132,11 @@ def _hit_poller(timeout):
         try:
             events = state.poller.poll(timeout)
             break
+        except KeyboardInterrupt, exc:
+            # on Ctrl-C, wake up the main without killing the mainloop
+            state.to_raise[compat.main_greenlet] = exc
+            state.to_run.append(compat.main_greenlet)
+            return
         except EnvironmentError, exc:
             if exc.args[0] != errno.EINTR:
                 raise

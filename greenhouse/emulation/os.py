@@ -9,7 +9,7 @@ import sys
 from .. import io, scheduler
 
 
-OS_TIMEOUT = 0.001
+OS_TIMEOUT = 0.01
 
 
 def nonblocking_fd(fd):

@@ -67,3 +67,12 @@
     - util.LifoQueue and PriorityQueue added. feature-parity with stdlib Queue
     - util.Timer re-written to be a Thread subclass, behave more like stdilb
       threading.Timer
+
+2.0.0
+    - scheduler.set_ignore_interrupts allows globally enabling restarting of
+      emulated syscalls through signal interruptions
+    - emulation.patched_context is a new patching mechanism in the form of a
+      context manager
+    - scheduler.{local_,global_,}trace_hook functions dropped
+      "trace" from the names, they were getting long
+    - added scheduler.remove_{local_,global_,}hook functions for removing hooks

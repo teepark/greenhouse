@@ -10,7 +10,7 @@ from greenhouse.emulation import *
 from greenhouse.backdoor import *
 
 
-VERSION = (2, 0, 0, '')
+VERSION = (2, 0, 1, '')
 
 __version__ = ".".join(filter(None, (str(x) for x in VERSION)))
 

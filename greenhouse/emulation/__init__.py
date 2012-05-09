@@ -146,14 +146,17 @@ def patch(*module_names):
     valid arguments are:
 
     - __builtin__
+    - Queue
+    - fcntl
     - os
-    - sys
     - select
-    - time
+    - signal
+    - socket
+    - sys
     - thread
     - threading
-    - Queue
-    - socket
+    - time
+    - zmq
 
     with no arguments, patches everything it can in all of the above modules
 
@@ -228,6 +231,9 @@ _patchers['os'] = os.patchers
 # implementing child process-related
 # things in the os module in terms of this
 os.green_subprocess = patched('subprocess')
+
+from . import fcntl
+_patchers['fcntl'] = fcntl.patchers
 
 from . import zmq
 if zmq.patchers:

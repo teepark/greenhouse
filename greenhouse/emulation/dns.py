@@ -25,7 +25,6 @@ def gethostbyname_ex(hostname):
         canon = dns.resolver_obj.query(hostname, dns.rdatatype.CNAME)
         aliases = [hostname]
     except dns.resolver.NoAnswer:
-
         canon = hostname
         aliases = []
 

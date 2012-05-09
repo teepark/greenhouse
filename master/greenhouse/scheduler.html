@@ -2,13 +2,16 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenhouse.scheduler – Interacting With The Greenhouse Scheduler &mdash; greenhouse v1.0.0 documentation</title>
+    <title>greenhouse.scheduler – Interacting With The Greenhouse Scheduler &mdash; greenhouse 1.0.0 documentation</title>
+    
     <link rel="stylesheet" href="../static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -21,7 +24,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="greenhouse v1.0.0 documentation" href="../index.html" />
+    <link rel="top" title="greenhouse 1.0.0 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.io – Cooperative I/O Drop-Ins" href="io.html" />
     <link rel="prev" title="Tutorial" href="../tutorial/parallel-urls.html" /> 
   </head>
@@ -41,7 +44,7 @@
         <li class="right" >
           <a href="../tutorial/parallel-urls.html" title="Tutorial"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">greenhouse v1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 1.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -66,7 +69,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unixtime</strong> (<em>int or float</em>) &#8211; the unix timestamp of when to bring this greenlet back</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unixtime</strong> (<em>int or float</em>) &#8211; the unix timestamp of when to bring this greenlet back</td>
 </tr>
 </tbody>
 </table>
@@ -80,7 +83,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>secs</strong> (<em>int or float</em>) &#8211; number of seconds to pause</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>secs</strong> (<em>int or float</em>) &#8211; number of seconds to pause</td>
 </tr>
 </tbody>
 </table>
@@ -95,7 +98,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
 <li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a function)</li>
 <li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; keyword arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a
@@ -103,7 +106,7 @@ function)</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
 </td>
 </tr>
 </tbody>
@@ -131,7 +134,7 @@ and/or <tt class="docutils literal"><span class="pre">kwargs</span></tt> or not:
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>unixtime</strong> (<em>int or float</em>) &#8211; the unix timestamp at which the new greenlet should be started</li>
 <li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
 <li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a function)</li>
@@ -140,7 +143,7 @@ function)</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
 </td>
 </tr>
 </tbody>
@@ -168,7 +171,7 @@ function)</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>secs</strong> &#8211; the number of seconds to wait before running the target</li>
 <li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
 <li><strong>args</strong> (<em>tuple</em>) &#8211; arguments for the function (only used if <tt class="docutils literal"><span class="pre">target</span></tt> is a function)</li>
@@ -177,7 +180,7 @@ function)</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
 </td>
 </tr>
 </tbody>
@@ -205,7 +208,7 @@ function)</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>interval</strong> (<em>int or float</em>) &#8211; the number of seconds between invocations</li>
 <li><strong>target</strong> (<em>function or greenlet</em>) &#8211; what to schedule</li>
 <li><strong>maxtimes</strong> (<em>int</em>) &#8211; if provided, do not run more than <tt class="docutils literal"><span class="pre">maxtimes</span></tt> iterations</li>
@@ -216,7 +219,7 @@ to the time of the <tt class="docutils literal"><span class="pre">schedule_recur
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <tt class="docutils literal"><span class="pre">target</span></tt> argument</p>
 </td>
 </tr>
 </tbody>
@@ -243,7 +246,7 @@ to the time of the <tt class="docutils literal"><span class="pre">schedule_recur
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to raise in the greenlet</li>
 <li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet that should receive the exception</li>
 </ul>
@@ -261,7 +264,7 @@ to the time of the <tt class="docutils literal"><span class="pre">schedule_recur
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>unixtime</strong> (<em>int or float</em>) &#8211; when to raise the exception in the target</li>
 <li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to raise in the greenlet</li>
 <li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet that should receive the exception</li>
@@ -280,7 +283,7 @@ to the time of the <tt class="docutils literal"><span class="pre">schedule_recur
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>secs</strong> (<em>int or float</em>) &#8211; the number of seconds to wait before raising</li>
 <li><strong>exception</strong> (<em>Exception</em>) &#8211; the exception to raise in the greenlet</li>
 <li><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet that should receive the exception</li>
@@ -299,7 +302,7 @@ to the time of the <tt class="docutils literal"><span class="pre">schedule_recur
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet to end</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>target</strong> (<em>greenlet</em>) &#8211; the greenlet to end</td>
 </tr>
 </tbody>
 </table>
@@ -313,14 +316,35 @@ to the time of the <tt class="docutils literal"><span class="pre">schedule_recur
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>handler</strong> (<em>function</em>) &#8211; the callback function. must be a function taking 3 arguments: <tt class="docutils literal"><span class="pre">klass</span></tt>
-the exception class, <tt class="docutils literal"><span class="pre">exc</span></tt> the exception instance, and <tt class="docutils literal"><span class="pre">tb</span></tt> the
-traceback object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>handler</strong> (<em>function</em>) &#8211; <p>the callback function. must be a function taking 3 arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">klass</span></tt> the exception class</li>
+<li><tt class="docutils literal"><span class="pre">exc</span></tt> the exception instance</li>
+<li><tt class="docutils literal"><span class="pre">tb</span></tt> the traceback object</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
 <p>Note also that the callback is only held by a weakref, so if all other refs
 to the function are lost it will stop handling greenlets&#8217; exceptions</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.remove_global_exception_handler">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">remove_global_exception_handler</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.remove_global_exception_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove a callback from the list of global exception handlers</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>handler</strong> (<em>function</em>) &#8211; the callback, previously added via <a class="reference internal" href="#greenhouse.scheduler.global_exception_handler" title="greenhouse.scheduler.global_exception_handler"><tt class="xref py py-func docutils literal"><span class="pre">global_exception_handler()</span></tt></a>,
+to remove</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bool, whether the handler was found (and therefore removed)</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -331,12 +355,38 @@ to the function are lost it will stop handling greenlets&#8217; exceptions</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>handler</strong> (<em>function</em>) &#8211; the callback function, must be a function taking 3 arguments: the
-exception class, the exception instance, and the traceback object</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; <p>the callback function, must be a function taking 3 arguments:</p>
+<ul>
+<li><tt class="docutils literal"><span class="pre">klass</span></tt> the exception class</li>
+<li><tt class="docutils literal"><span class="pre">exc</span></tt> the exception instance</li>
+<li><tt class="docutils literal"><span class="pre">tb</span></tt> the traceback object</li>
+</ul>
+</li>
 <li><strong>coro</strong> (<em>greenlet</em>) &#8211; the coroutine for which to apply the exception handler (defaults to the
 current coroutine)</li>
 </ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.remove_local_exception_handler">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">remove_local_exception_handler</tt><big>(</big><em>handler</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.remove_local_exception_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove a callback from the list of exception handlers for a coroutine</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; the callback to remove</li>
+<li><strong>coro</strong> (<em>greenlet</em>) &#8211; the coroutine for which to remove the local handler</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bool, whether the handler was found (and therefore removed)</p>
 </td>
 </tr>
 </tbody>
@@ -353,7 +403,7 @@ current coroutine)</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>klass</strong> (<em>type</em>) &#8211; the exception klass</li>
 <li><strong>exc</strong> (<em>Exception</em>) &#8211; the exception instance</li>
 <li><strong>tb</strong> (<em>Traceback</em>) &#8211; the traceback object</li>
@@ -364,6 +414,9 @@ the current coroutine)</li>
 </tr>
 </tbody>
 </table>
+<p>exception handlers run would be all those added with
+<a class="reference internal" href="#greenhouse.scheduler.global_exception_handler" title="greenhouse.scheduler.global_exception_handler"><tt class="xref py py-func docutils literal"><span class="pre">global_exception_handler()</span></tt></a>, and any added for the relevant coroutine
+with <a class="reference internal" href="#greenhouse.scheduler.local_exception_handler" title="greenhouse.scheduler.local_exception_handler"><tt class="xref py py-func docutils literal"><span class="pre">local_exception_handler()</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="function">
@@ -374,7 +427,7 @@ the current coroutine)</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>func</strong> (<em>function</em>) &#8211; the function the new greenlet should run</li>
 <li><strong>args</strong> (<em>tuple</em>) &#8211; any positional arguments for the function</li>
 <li><strong>kwargs</strong> (<em>dict or None</em>) &#8211; any keyword arguments for the function</li>
@@ -390,34 +443,61 @@ will wind up in the greenhouse scheduler.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="greenhouse.scheduler.global_trace_hook">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">global_trace_hook</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.global_trace_hook" title="Permalink to this definition">¶</a></dt>
+<dt id="greenhouse.scheduler.global_hook">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">global_hook</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.global_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>add a callback to run in every switch between coroutines</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>handler</strong> (<em>function</em>) &#8211; the callback function, must be a function taking 2 arguments: the
-greenlet being switched from, and the greenlet being switched to. be
-aware that only a weak reference to this function will be held.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>handler</strong> (<em>function</em>) &#8211; <p>the callback function, must be a function taking 2 arguments:</p>
+<ul class="simple">
+<li>the greenlet being switched from</li>
+<li>the greenlet being switched to</li>
+</ul>
+<p>be aware that only a weak reference to this function will be held.</p>
+</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="function">
-<dt id="greenhouse.scheduler.local_incoming_trace_hook">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">local_incoming_trace_hook</tt><big>(</big><em>handler=None</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.local_incoming_trace_hook" title="Permalink to this definition">¶</a></dt>
+<dt id="greenhouse.scheduler.remove_global_hook">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">remove_global_hook</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.remove_global_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove a callback from the list of global hooks</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>handler</strong> (<em>function</em>) &#8211; the callback function, previously added with global_hook, to remove
+from the list of global hooks</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bool, whether the handler was removed from the global hooks</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.local_incoming_hook">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">local_incoming_hook</tt><big>(</big><em>handler=None</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.local_incoming_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>add a callback to run every time a greenlet is about to be switched to</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>handler</strong> (<em>function</em>) &#8211; the callback function, must be a function taking 2 arguments: an
-integer indicating whether it is being called as an incoming (1) hook
-or as an outgoing (2) hook. in this case it will always be 1. be aware
-that only a weak reference to this function will be held.</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; <p>the callback function, must be a function taking 2 arguments:</p>
+<ul>
+<li>an integer indicating whether it is being called as an incoming (1)
+hook or an outgoing (2) hook (in this case it will always receive 1).</li>
+<li>the coroutine being switched into (in this case it will always be the
+same as the one indicated by the <tt class="docutils literal"><span class="pre">coro</span></tt> argument to
+<tt class="docutils literal"><span class="pre">local_incoming_hook</span></tt>.</li>
+</ul>
+<p>Be aware that only a weak reference to this function will be held.</p>
+</li>
 <li><strong>coro</strong> (<em>greenlet</em>) &#8211; the coroutine for which to apply the trace hook (defaults to current)</li>
 </ul>
 </td>
@@ -427,18 +507,44 @@ that only a weak reference to this function will be held.</li>
 </dd></dl>
 
 <dl class="function">
-<dt id="greenhouse.scheduler.local_outgoing_trace_hook">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">local_outgoing_trace_hook</tt><big>(</big><em>handler=None</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.local_outgoing_trace_hook" title="Permalink to this definition">¶</a></dt>
+<dt id="greenhouse.scheduler.remove_local_incoming_hook">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">remove_local_incoming_hook</tt><big>(</big><em>handler</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.remove_local_incoming_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove a callback from the incoming hooks for a particular coro</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; the callback previously added via local_incoming_hook</li>
+<li><strong>coro</strong> (<em>greenlet</em>) &#8211; the coroutine for which the hook should be removed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bool, whether the handler was found and removed</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.local_outgoing_hook">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">local_outgoing_hook</tt><big>(</big><em>handler=None</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.local_outgoing_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>add a callback to run every time a greenlet is switched away from</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>handler</strong> (<em>function</em>) &#8211; the callback function, must be a function taking 2 arguments: an
-integer indicating whether it is being called as an incoming (1) hook
-or as an outgoing (2) hook. in this case it will always be 2. be aware
-that only a weak reference to this function will be held.</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; <p>the callback function, must be a function taking 2 arguments:</p>
+<ul>
+<li>an integer indicating whether it is being called as an incoming (1)
+hook or as an outgoing (2) hook (in this case it will always be 2).</li>
+<li>the coroutine being switched from (in this case it is the one
+indicated by the <tt class="docutils literal"><span class="pre">coro</span></tt> argument to <tt class="docutils literal"><span class="pre">local_outgoing_hook</span></tt>.</li>
+</ul>
+<p>Be aware that only a weak reference to this function will be held.</p>
+</li>
 <li><strong>coro</strong> (<em>greenlet</em>) &#8211; the coroutine for which to apply the trace hook (defaults to current)</li>
 </ul>
 </td>
@@ -448,8 +554,29 @@ that only a weak reference to this function will be held.</li>
 </dd></dl>
 
 <dl class="function">
-<dt id="greenhouse.scheduler.set_ignore_eintr">
-<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">set_ignore_eintr</tt><big>(</big><em>flag=True</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.set_ignore_eintr" title="Permalink to this definition">¶</a></dt>
+<dt id="greenhouse.scheduler.remove_local_outgoing_hook">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">remove_local_outgoing_hook</tt><big>(</big><em>handler</em>, <em>coro=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.remove_local_outgoing_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove a callback from the outgoing hooks for a particular coro</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>handler</strong> (<em>function</em>) &#8211; the callback previously added via local_outgoing_hook</li>
+<li><strong>coro</strong> (<em>greenlet</em>) &#8211; the coroutine for which the hook should be removed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bool, whether the handler was found and removed</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.set_ignore_interrupts">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">set_ignore_interrupts</tt><big>(</big><em>flag=True</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.set_ignore_interrupts" title="Permalink to this definition">¶</a></dt>
 <dd><p>turn off EINTR-raising from emulated syscalls on interruption by signals</p>
 <p>due to the nature of greenhouse&#8217;s system call emulation,
 <tt class="docutils literal"><span class="pre">signal.siginterrupt</span></tt> can&#8217;t be made to work with it. specifically,
@@ -459,10 +586,17 @@ toggles whether to restart for <em>ALL</em> or <em>NO</em> signals.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag</strong> (<em>bool</em>) &#8211; whether to turn EINTR exceptions off (<tt class="xref docutils literal"><span class="pre">True</span></tt>) or on (<tt class="xref docutils literal"><span class="pre">False</span></tt>)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag</strong> (<em>bool</em>) &#8211; whether to turn EINTR exceptions off (<tt class="docutils literal"><span class="pre">True</span></tt>) or on (<tt class="docutils literal"><span class="pre">False</span></tt>)</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.scheduler.reset_poller">
+<tt class="descclassname">greenhouse.scheduler.</tt><tt class="descname">reset_poller</tt><big>(</big><em>poll=None</em><big>)</big><a class="headerlink" href="#greenhouse.scheduler.reset_poller" title="Permalink to this definition">¶</a></dt>
+<dd><p>replace the scheduler&#8217;s poller, throwing away any pre-existing state</p>
+<p>this is only really a good idea in the new child process after a fork(2).</p>
 </dd></dl>
 
 </div>
@@ -487,7 +621,7 @@ toggles whether to restart for <em>ALL</em> or <em>NO</em> signals.</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -516,12 +650,12 @@ toggles whether to restart for <em>ALL</em> or <em>NO</em> signals.</p>
         <li class="right" >
           <a href="../tutorial/parallel-urls.html" title="Tutorial"
              >previous</a> |</li>
-        <li><a href="../index.html">greenhouse v1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 1.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2010, Travis J Parker.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>

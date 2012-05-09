@@ -2,13 +2,16 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenhouse.io – Cooperative I/O Drop-Ins &mdash; greenhouse v1.0.0 documentation</title>
+    <title>greenhouse.io – Cooperative I/O Drop-Ins &mdash; greenhouse 1.0.0 documentation</title>
+    
     <link rel="stylesheet" href="../static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -21,7 +24,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="greenhouse v1.0.0 documentation" href="../index.html" />
+    <link rel="top" title="greenhouse 1.0.0 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.util – Greenlet-Aware Concurrency Primitives" href="util.html" />
     <link rel="prev" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler" href="scheduler.html" /> 
   </head>
@@ -41,7 +44,7 @@
         <li class="right" >
           <a href="scheduler.html" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">greenhouse v1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 1.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -70,7 +73,7 @@ block until a connection is made</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a two-tuple of <tt class="docutils literal"><span class="pre">(socket,</span> <span class="pre">address)</span></tt> where the socket is connected,
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a two-tuple of <tt class="docutils literal"><span class="pre">(socket,</span> <span class="pre">address)</span></tt> where the socket is connected,
 and the address is the <tt class="docutils literal"><span class="pre">(ip_address,</span> <span class="pre">port)</span></tt> of the remote end</td>
 </tr>
 </tbody>
@@ -85,7 +88,7 @@ and the address is the <tt class="docutils literal"><span class="pre">(ip_addres
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address on which the socket will operate. the format of this
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address on which the socket will operate. the format of this
 argument depends on the socket&#8217;s type; for TCP sockets, this is a
 <tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</td>
 </tr>
@@ -112,7 +115,7 @@ of TCP sockets this includes the TCP handshake</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
 depends on the socket&#8217;s type; for TCP sockets, this is a
 <tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port</span></tt>) two-tuple</td>
 </tr>
@@ -128,11 +131,11 @@ depends on the socket&#8217;s type; for TCP sockets, this is a
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
 depends on the socket&#8217;s type; for TCP sockets, this is a
 <tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the error code for the connection attempt &#8211; 0 indicates success</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the error code for the connection attempt &#8211; 0 indicates success</td>
 </tr>
 </tbody>
 </table>
@@ -146,7 +149,7 @@ depends on the socket&#8217;s type; for TCP sockets, this is a
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a new <a class="reference internal" href="#greenhouse.io.sockets.Socket" title="greenhouse.io.sockets.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a></td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a new <a class="reference internal" href="#greenhouse.io.sockets.Socket" title="greenhouse.io.sockets.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a></td>
 </tr>
 </tbody>
 </table>
@@ -160,7 +163,7 @@ depends on the socket&#8217;s type; for TCP sockets, this is a
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the integer file descriptor of the socket</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the integer file descriptor of the socket</td>
 </tr>
 </tbody>
 </table>
@@ -174,7 +177,7 @@ depends on the socket&#8217;s type; for TCP sockets, this is a
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a representation of the address at the remote end of the
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a representation of the address at the remote end of the
 connection, the format depends on the socket&#8217;s type</td>
 </tr>
 </tbody>
@@ -189,7 +192,7 @@ connection, the format depends on the socket&#8217;s type</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a representation of the address at the local end of the connection,
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a representation of the address at the local end of the connection,
 the format depends on the socket&#8217;s type</td>
 </tr>
 </tbody>
@@ -207,7 +210,7 @@ manpage <tt class="docutils literal"><span class="pre">getsockopt(2)</span></tt>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>level</strong> (<em>int</em>) &#8211; the level of the requested socket option</li>
 <li><strong>optname</strong> (<em>int</em>) &#8211; the specific socket option requested</li>
 <li><strong>buflen</strong> (<em>int</em>) &#8211; the length of the buffer to use to collect the raw value of the
@@ -216,7 +219,7 @@ it is not parsed.</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a string of the socket option&#8217;s value</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a string of the socket option&#8217;s value</p>
 </td>
 </tr>
 </tbody>
@@ -231,7 +234,7 @@ it is not parsed.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the number of seconds the socket&#8217;s blocking operations should block
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the number of seconds the socket&#8217;s blocking operations should block
 before raising a <tt class="docutils literal"><span class="pre">socket.timeout</span></tt> in a float value</td>
 </tr>
 </tbody>
@@ -246,7 +249,7 @@ before raising a <tt class="docutils literal"><span class="pre">socket.timeout</
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>backlog</strong> (<em>int</em>) &#8211; the queue length for connections that haven&#8217;t yet been
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>backlog</strong> (<em>int</em>) &#8211; the queue length for connections that haven&#8217;t yet been
 <a class="reference internal" href="#greenhouse.io.sockets.Socket.accept" title="greenhouse.io.sockets.Socket.accept"><tt class="xref py py-meth docutils literal"><span class="pre">accept()</span></tt></a>ed</td>
 </tr>
 </tbody>
@@ -261,7 +264,7 @@ before raising a <tt class="docutils literal"><span class="pre">socket.timeout</
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>mode</strong> (<em>str</em>) &#8211; like the <tt class="docutils literal"><span class="pre">mode</span></tt> argument for other files, indicates read <tt class="docutils literal"><span class="pre">'r'</span></tt>,
 write <tt class="docutils literal"><span class="pre">'w'</span></tt>, or both <tt class="docutils literal"><span class="pre">'r+'</span></tt> (default <tt class="docutils literal"><span class="pre">'r'</span></tt>)</li>
 <li><strong>bufsize</strong> (<em>int</em>) &#8211; the length of the read buffer to use. 0 means unbuffered, &lt; 0 means
@@ -269,7 +272,7 @@ use the system default (default -1)</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a file-like object for which reading and writing sends and receives
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a file-like object for which reading and writing sends and receives
 data over the socket connection</p>
 </td>
 </tr>
@@ -287,7 +290,7 @@ data over the socket connection</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
 however</li>
 <li><strong>flags</strong> (<em>int</em>) &#8211; flags for the receive call. consult the unix manpage for
@@ -295,7 +298,7 @@ however</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the data it read from the socket connection</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the data it read from the socket connection</p>
 </td>
 </tr>
 </tbody>
@@ -311,7 +314,7 @@ however</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>buffer</strong> &#8211; a sized buffer object to receive the data (this is generally an
 <tt class="docutils literal"><span class="pre">array.array('c',</span> <span class="pre">...)</span></tt> instance)</li>
 <li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
@@ -321,7 +324,7 @@ however. defaults to the size available in the provided buffer.</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of bytes received and placed in the buffer</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of bytes received and placed in the buffer</p>
 </td>
 </tr>
 </tbody>
@@ -337,7 +340,7 @@ however. defaults to the size available in the provided buffer.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
 however</li>
 <li><strong>flags</strong> (<em>int</em>) &#8211; flags for the receive call. consult the unix manpage for
@@ -345,7 +348,7 @@ however</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-tuple of <tt class="docutils literal"><span class="pre">(data,</span> <span class="pre">address)</span></tt> &#8211; the string data received and
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-tuple of <tt class="docutils literal"><span class="pre">(data,</span> <span class="pre">address)</span></tt> &#8211; the string data received and
 the address from which it was received</p>
 </td>
 </tr>
@@ -362,7 +365,7 @@ the address from which it was received</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>buffer</strong> &#8211; a sized buffer object to receive the data (this is generally an
 <tt class="docutils literal"><span class="pre">array.array('c',</span> <span class="pre">...)</span></tt> instance)</li>
 <li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
@@ -372,7 +375,7 @@ however. defaults to the size available in the provided buffer.</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-tuple of <tt class="docutils literal"><span class="pre">(bytes,</span> <span class="pre">address)</span></tt> &#8211; the number of bytes received
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-tuple of <tt class="docutils literal"><span class="pre">(bytes,</span> <span class="pre">address)</span></tt> &#8211; the number of bytes received
 and placed in the buffer, and the address it was received from</p>
 </td>
 </tr>
@@ -389,14 +392,14 @@ and placed in the buffer, and the address it was received from</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<em>str</em>) &#8211; the data to send</li>
 <li><strong>flags</strong> (<em>int</em>) &#8211; flags for the send call. this has the same meaning as for
 <a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a></li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of bytes successfully sent, which may not necessarily be
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of bytes successfully sent, which may not necessarily be
 all the provided data</p>
 </td>
 </tr>
@@ -413,7 +416,7 @@ all the provided data</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>data</strong> (<em>str</em>) &#8211; the data to send</li>
 <li><strong>flags</strong> (<em>int</em>) &#8211; flags for the send call. this has the same meaning as for
 <a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a></li>
@@ -433,7 +436,7 @@ all the provided data</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>data</strong> (<em>str</em>) &#8211; the data to send</li>
 <li><strong>flags</strong> (<em>int</em>) &#8211; flags for the send call. this has the same meaning as for
 <a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a>. defaults to 0</li>
@@ -460,7 +463,7 @@ otherwise block the coroutine.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag</strong> (<em>bool</em>) &#8211; whether to enable or disable blocking</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag</strong> (<em>bool</em>) &#8211; whether to enable or disable blocking</td>
 </tr>
 </tbody>
 </table>
@@ -477,7 +480,7 @@ manpage <tt class="docutils literal"><span class="pre">setsockopt(2)</span></tt>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>level</strong> (<em>int</em>) &#8211; the level of the set socket option</li>
 <li><strong>optname</strong> (<em>int</em>) &#8211; the specific socket option to set</li>
 <li><strong>value</strong> (<em>int</em>) &#8211; the value to set for the option</li>
@@ -496,7 +499,7 @@ manpage <tt class="docutils literal"><span class="pre">setsockopt(2)</span></tt>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>float or None</em>) &#8211; the number of seconds the socket&#8217;s blocking operations should block
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>float or None</em>) &#8211; the number of seconds the socket&#8217;s blocking operations should block
 before raising a <tt class="docutils literal"><span class="pre">socket.timeout</span></tt></td>
 </tr>
 </tbody>
@@ -511,7 +514,7 @@ before raising a <tt class="docutils literal"><span class="pre">socket.timeout</
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>how</strong> &#8211; the end(s) of the connection to shutdown. valid values are
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>how</strong> &#8211; the end(s) of the connection to shutdown. valid values are
 <tt class="docutils literal"><span class="pre">socket.SHUT_RD</span></tt>, <tt class="docutils literal"><span class="pre">socket.SHUT_WR</span></tt>, and <tt class="docutils literal"><span class="pre">socket.SHUT_RW</span></tt>
 for shutting down the read end, the write end, or both respectively</td>
 </tr>
@@ -557,7 +560,7 @@ buffering itself, so it is a no-op</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>fd</strong> (<em>int</em>) &#8211; the file descriptor to wrap in a new file object</li>
 <li><strong>mode</strong> (<em>str</em>) &#8211; the file mode</li>
 <li><strong>bufsize</strong> &#8211; the size of read buffer to use. 0 indicates unbuffered, and &lt; 0
@@ -565,7 +568,7 @@ means use the system default. defaults to -1</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a new <tt class="xref py py-class docutils literal"><span class="pre">File</span></tt> object connected to the descriptor</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a new <tt class="xref py py-class docutils literal"><span class="pre">File</span></tt> object connected to the descriptor</p>
 </td>
 </tr>
 </tbody>
@@ -586,10 +589,10 @@ means use the system default. defaults to -1</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<em>int</em>) &#8211; the maximum number of bytes to read from the file. &lt; 0 means read
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<em>int</em>) &#8211; the maximum number of bytes to read from the file. &lt; 0 means read
 the file to the end</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a string of the read file contents</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a string of the read file contents</td>
 </tr>
 </tbody>
 </table>
@@ -603,9 +606,9 @@ the file to the end</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_len</strong> (<em>int</em>) &#8211; stop reading a single line after this many bytes</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_len</strong> (<em>int</em>) &#8211; stop reading a single line after this many bytes</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a string of the line it read from the file, including the newline
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a string of the line it read from the file, including the newline
 at the end</td>
 </tr>
 </tbody>
@@ -620,9 +623,9 @@ at the end</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>bufsize</strong> (<em>int</em>) &#8211; the read buffer size to use</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>bufsize</strong> (<em>int</em>) &#8211; the read buffer size to use</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a list of all the lines in the file to the end</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a list of all the lines in the file to the end</td>
 </tr>
 </tbody>
 </table>
@@ -636,15 +639,15 @@ at the end</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>position</strong> (<em>int</em>) &#8211; an integer offset from the location indicated by the modifier</li>
 <li><strong>modifier</strong> &#8211; <p>an indicator of how to find the seek location.</p>
 <ul>
-<li><tt class="docutils literal"><span class="pre">os.SEEK_START</span></tt> means start from the beginning of the file</li>
+<li><tt class="docutils literal"><span class="pre">os.SEEK_SET</span></tt> means start from the beginning of the file</li>
 <li><tt class="docutils literal"><span class="pre">os.SEEK_CUR</span></tt> means start wherever the cursor already is</li>
 <li><tt class="docutils literal"><span class="pre">os.SEEK_END</span></tt> means start from the end of the file</li>
 </ul>
-<p>the default is <tt class="docutils literal"><span class="pre">os.SEEK_START</span></tt></p>
+<p>the default is <tt class="docutils literal"><span class="pre">os.SEEK_SET</span></tt></p>
 </li>
 </ul>
 </td>
@@ -667,7 +670,7 @@ at the end</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>str</em>) &#8211; the data to write into the file, at the descriptor&#8217;s current
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>str</em>) &#8211; the data to write into the file, at the descriptor&#8217;s current
 position</td>
 </tr>
 </tbody>
@@ -683,7 +686,7 @@ position</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lines</strong> (<em>iterable</em>) &#8211; a sequence of strings to write to the file</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lines</strong> (<em>iterable</em>) &#8211; a sequence of strings to write to the file</td>
 </tr>
 </tbody>
 </table>
@@ -693,19 +696,19 @@ position</td>
 
 <span class="target" id="module-greenhouse.io.files"></span><dl class="data">
 <dt id="greenhouse.io.files.stdin">
-<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stdin</tt><a class="headerlink" href="#greenhouse.io.files.stdin" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stdin</tt><em class="property"> = &lt;greenhouse.io.files._StdIOFile object at 0x343ab10&gt;</em><a class="headerlink" href="#greenhouse.io.files.stdin" title="Permalink to this definition">¶</a></dt>
 <dd><p>a non-blocking file object for cooperative stdin reading</p>
 </dd></dl>
 
 <dl class="data">
 <dt id="greenhouse.io.files.stdout">
-<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stdout</tt><a class="headerlink" href="#greenhouse.io.files.stdout" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stdout</tt><em class="property"> = &lt;greenhouse.io.files._StdIOFile object at 0x343acd0&gt;</em><a class="headerlink" href="#greenhouse.io.files.stdout" title="Permalink to this definition">¶</a></dt>
 <dd><p>a non-blocking file object for cooperative stdout writing</p>
 </dd></dl>
 
 <dl class="data">
 <dt id="greenhouse.io.files.stderr">
-<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stderr</tt><a class="headerlink" href="#greenhouse.io.files.stderr" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stderr</tt><em class="property"> = &lt;greenhouse.io.files._StdIOFile object at 0x343ae10&gt;</em><a class="headerlink" href="#greenhouse.io.files.stderr" title="Permalink to this definition">¶</a></dt>
 <dd><p>a non-blocking file object for cooperative stderr writing</p>
 </dd></dl>
 
@@ -723,7 +726,7 @@ or the timeout expires</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>fd_events</strong> (<em>list</em>) &#8211; two-tuples, each one a file descriptor and a mask made up of the inmask
 and/or the outmask bitwise-ORd together</li>
 <li><strong>inmask</strong> (<em>int</em>) &#8211; the mask to use for readable events (default 1)</li>
@@ -732,7 +735,7 @@ and/or the outmask bitwise-ORd together</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a list of two-tuples, each is a file descriptor and an event mask (made
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a list of two-tuples, each is a file descriptor and an event mask (made
 up of inmask and/or outmask bitwise-ORd together) representing readable
 and writable events</p>
 </td>
@@ -749,7 +752,7 @@ and writable events</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a pair of <tt class="xref py py-class docutils literal"><span class="pre">File</span></tt> objects <tt class="docutils literal"><span class="pre">(read,</span> <span class="pre">write)</span></tt> for the two ends of
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a pair of <tt class="xref py py-class docutils literal"><span class="pre">File</span></tt> objects <tt class="docutils literal"><span class="pre">(read,</span> <span class="pre">write)</span></tt> for the two ends of
 the pipe</td>
 </tr>
 </tbody>
@@ -778,7 +781,7 @@ the pipe</td>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -807,12 +810,12 @@ the pipe</td>
         <li class="right" >
           <a href="scheduler.html" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler"
              >previous</a> |</li>
-        <li><a href="../index.html">greenhouse v1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 1.0.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2010, Travis J Parker.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>

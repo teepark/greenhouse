@@ -68,7 +68,7 @@
     - util.Timer re-written to be a Thread subclass, behave more like stdilb
       threading.Timer
 
-2.0.0
+2.0.0 (5/9/2012)
     - scheduler.set_ignore_interrupts allows globally enabling restarting of
       emulated syscalls through signal interruptions
     - emulation.patched_context is a new patching mechanism in the form of a
@@ -79,3 +79,6 @@
     - backdoors respond to Ctrl-D from telnet by closing the connection
     - backdoor connections no longer share a locals dict when one was passed in
       to run_backdoor
+
+2.0.1 (5/9/2012)
+    - backdoor bugfix, it was rejecting LF line endings, required CRLF

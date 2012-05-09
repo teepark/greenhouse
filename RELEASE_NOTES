@@ -76,3 +76,6 @@
     - scheduler.{local_,global_,}trace_hook functions dropped
       "trace" from the names, they were getting long
     - added scheduler.remove_{local_,global_,}hook functions for removing hooks
+    - backdoors respond to Ctrl-D from telnet by closing the connection
+    - backdoor connections no longer share a locals dict when one was passed in
+      to run_backdoor

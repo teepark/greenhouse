@@ -14,6 +14,7 @@ runtime.
 from __future__ import absolute_import, with_statement
 
 import code
+import collections
 import contextlib
 import socket
 import sys
@@ -48,10 +49,8 @@ def run_backdoor(address, namespace=None):
         a two-tuple ``(host, port)``
     :type address: tuple
     :param namespace:
-        an optional dictionary to use as the global namespace for connections.
-        if this is provided, then it will be shared among all connections made
-        to this server, unless the default value of ``None`` is used, in which
-        case a distinct dictionary is created for every connection.
+        the local namespace dict for the interpreter, or None to have each
+        connection create its own empty namespace
     :type namespace: dict or None
     """
     serversock = io.Socket()
@@ -77,14 +76,17 @@ def backdoor_handler(clientsock, namespace=None):
         function create its own empty namespace
     :type namespace: dict or None
     """
-    console = code.InteractiveConsole({} if namespace is None else namespace)
+    namespace = {} if namespace is None else namespace.copy()
+    console = code.InteractiveConsole(namespace)
     multiline_statement = []
     stdout, stderr = StringIO(), StringIO()
 
     clientsock.sendall(PREAMBLE + "\n" + PS1)
 
-    for input_line in clientsock.makefile('r'):
+    for input_line in _LineProducer(clientsock):
         input_line = input_line.rstrip()
+        if input_line:
+            input_line = '\n' + input_line
         source = '\n'.join(multiline_statement) + input_line
         response = ''
 
@@ -123,3 +125,36 @@ def _wrap_stdio(stdout, stderr):
 
     sys.stdout = real_stdout
     sys.stderr = real_stderr
+
+
+class _LineProducer(object):
+    def __init__(self, sock):
+        self.sock = sock
+        self.buf = ""
+        self.lines = collections.deque()
+
+    def readline(self):
+        if self.lines:
+            return self.lines.popleft()
+
+        while not self.lines:
+            block = self.sock.recv(8192)
+            if not block:
+                return None
+
+            if block == '\x04':
+                self.sock.close()
+                return None
+
+            self.buf += block
+            lines = self.buf.split('\r\n')
+            self.lines.extend(lines[:-1])
+            self.buf = lines[-1]
+
+        return self.lines.popleft()
+
+    def __iter__(self):
+        line = self.readline()
+        while line is not None:
+            yield line
+            line = self.readline()

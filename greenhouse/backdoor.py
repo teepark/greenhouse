@@ -147,7 +147,7 @@ class _LineProducer(object):
                 return None
 
             self.buf += block
-            lines = self.buf.split('\r\n')
+            lines = self.buf.split('\n')
             self.lines.extend(lines[:-1])
             self.buf = lines[-1]
 

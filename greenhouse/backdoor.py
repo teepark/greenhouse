@@ -78,7 +78,6 @@ def backdoor_handler(clientsock, namespace=None):
     :type namespace: dict or None
     """
     console = code.InteractiveConsole({} if namespace is None else namespace)
-    clientfile = clientsock.makefile('r')
     multiline_statement = []
     stdout, stderr = StringIO(), StringIO()
 

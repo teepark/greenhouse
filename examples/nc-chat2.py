@@ -7,7 +7,7 @@ import greenhouse
 
 SocketServer = greenhouse.patched("SocketServer")
 
-greenhouse.add_global_exception_handler(traceback.print_exception)
+greenhouse.global_exception_handler(traceback.print_exception)
 
 PORT = 9000
 connections = {}

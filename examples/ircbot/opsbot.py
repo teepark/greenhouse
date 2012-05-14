@@ -14,8 +14,7 @@ class OpsHolderBot(basebot.Bot):
     >>>         password=irc_password_for_nick,
     >>>         ops_password=password_for_giving_chanops,
     >>>         rooms=["#list", "#of", "#channels", "#to", "#serve"])
-    >>> bot.start()
-    >>> coro.event_loop()
+    >>> bot.run()
     '''
     def __init__(self, *args, **kwargs):
         self._ops_password = kwargs.pop("ops_password")

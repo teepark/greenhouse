@@ -93,7 +93,7 @@ class green_epoll(object):
 
     @classmethod
     def fromfd(cls, fd):
-        return cls(from_ep=select.epoll.fromfd(fd))
+        return cls(from_ep=original_epoll_fromfd(fd))
 
     def modify(self, fd, eventmask):
         self._epoll.modify(fd, eventmask)
@@ -158,7 +158,7 @@ class green_kqueue(object):
 
     @classmethod
     def fromfd(cls, fd):
-        return cls(from_kq=select.kqueue.fromfd(fd))
+        return cls(from_kq=original_kqueue_fromfd(fd))
 
 
 patchers = {'select': green_select}
@@ -169,6 +169,8 @@ if hasattr(select, "poll"):
 if hasattr(select, "epoll"):
     patchers['epoll'] = green_epoll
     original_epoll = select.epoll
+    original_epoll_fromfd = select.epoll.fromfd
 
 if hasattr(select, "kqueue"):
     patchers['kqueue'] = green_kqueue
+    original_kqueue_fromfd = select.kqueue.fromfd

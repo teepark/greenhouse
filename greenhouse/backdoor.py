@@ -83,7 +83,7 @@ def backdoor_handler(clientsock, namespace=None):
 
     clientsock.sendall(PREAMBLE + "\n" + PS1)
 
-    for input_line in _LineProducer(clientsock):
+    for input_line in _produce_lines(clientsock):
         input_line = input_line.rstrip()
         if input_line:
             input_line = '\n' + input_line
@@ -127,34 +127,30 @@ def _wrap_stdio(stdout, stderr):
     sys.stderr = real_stderr
 
 
-class _LineProducer(object):
-    def __init__(self, sock):
-        self.sock = sock
-        self.buf = ""
-        self.lines = collections.deque()
+# yields lines and closes connection on '\x04' (sent by telnet on Ctrl-D)
+def _produce_lines(sock):
+    lines = collections.deque()
+    buf = ""
 
-    def readline(self):
-        if self.lines:
-            return self.lines.popleft()
+    while 1:
+        if lines:
+            yield lines.popleft()
 
-        while not self.lines:
-            block = self.sock.recv(8192)
+        while not lines:
+            block = sock.recv(8192)
             if not block:
-                return None
+                if buf:
+                    yield buf
+                return
 
-            if block == '\x04':
-                self.sock.close()
-                return None
+            if block[0] == '\x04':
+                sock.close()
+                if buf:
+                    yield buf
+                return
 
-            self.buf += block
-            lines = self.buf.split('\n')
-            self.lines.extend(lines[:-1])
-            self.buf = lines[-1]
+            l = (buf + block).split("\n")
+            lines.extend(l[:-1])
+            buf = l[-1]
 
-        return self.lines.popleft()
-
-    def __iter__(self):
-        line = self.readline()
-        while line is not None:
-            yield line
-            line = self.readline()
+        yield lines.popleft()

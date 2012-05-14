@@ -110,21 +110,33 @@ def backdoor_handler(clientsock, namespace=None):
 
 @contextlib.contextmanager
 def _wrap_stdio(stdout, stderr):
+    @scheduler.local_incoming_hook
+    @scheduler.local_outgoing_hook
+    def hook(direction, coro):
+        if direction == 1:
+            # incoming
+            sys.stdout = stdout
+            sys.stderr = stderr
+        else:
+            # outgoing
+            sys.stdout = real_stdout
+            sys.stderr = real_stderr
+
+    real_stdout = sys.stdout
+    real_stderr = sys.stderr
+
     stdout.seek(0)
     stderr.seek(0)
     stdout.truncate()
     stderr.truncate()
 
-    real_stdout = sys.stdout
-    real_stderr = sys.stderr
-
-    sys.stdout = stdout
-    sys.stderr = stderr
+    hook(1, None)
 
     yield
 
-    sys.stdout = real_stdout
-    sys.stderr = real_stderr
+    hook(2, None)
+    scheduler.remove_local_incoming_hook(hook)
+    scheduler.remove_local_outgoing_hook(hook)
 
 
 # yields lines and closes connection on '\x04' (sent by telnet on Ctrl-D)

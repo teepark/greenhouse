@@ -42,6 +42,8 @@ class FileBase(object):
     def read(self, size=-1):
         """read a number of bytes from the file and return it as a string
 
+        .. note:: this method will block if there is no data already available
+
         :param size:
             the maximum number of bytes to read from the file. < 0 means read
             the file to the end
@@ -84,6 +86,11 @@ class FileBase(object):
 
     def readline(self, max_len=-1):
         """read from the file until a newline is encountered
+
+        .. note::
+
+            this method will block if there isn't already a full line available
+            from the data source
 
         :param max_len: stop reading a single line after this many bytes
         :type max_len: int
@@ -135,6 +142,8 @@ class FileBase(object):
 
     def readlines(self, bufsize=-1):
         """reads the entire file, producing the lines one at a time
+
+        .. note:: this method will block until the data source is exhausted
 
         :param bufsize: the read buffer size to use
         :type bufsize: int

@@ -14,7 +14,7 @@ __all__ = ["wait_fds"]
 def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
     """wait for the first of a number of file descriptors to have activity
 
-    .. note:: this method will block
+    .. note:: this method can block
 
         it will return once there is relevant activity on the file descriptors,
         or the timeout expires

@@ -242,12 +242,17 @@ def greenlet(func, args=(), kwargs=None):
     return compat.greenlet(target, state.mainloop)
 
 def pause():
-    "pause and reschedule the current greenlet and switch to the next"
+    """pause and reschedule the current greenlet and switch to the next
+
+    .. note:: this method blocks for a short period of time
+    """
     schedule(compat.getcurrent())
     state.mainloop.switch()
 
 def pause_until(unixtime):
     """pause and reschedule the current greenlet until a set time
+
+    .. note:: this method will block the current greenlet
 
     :param unixtime: the unix timestamp of when to bring this greenlet back
     :type unixtime: int or float
@@ -257,6 +262,8 @@ def pause_until(unixtime):
 
 def pause_for(secs):
     """pause and reschedule the current greenlet for a set number of seconds
+
+    .. note:: this method will block the current greenlet
 
     :param secs: number of seconds to pause
     :type secs: int or float

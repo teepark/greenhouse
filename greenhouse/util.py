@@ -74,8 +74,10 @@ class Event(object):
     def wait(self, timeout=None):
         """pause the current coroutine until this event is set
 
-        if :meth:`set` method has been called, this method will not block at
-        all. otherwise it will block until :meth:`set` method is called
+        .. note::
+
+            this method will block the current coroutine if :meth:`set` has not
+            been called.
 
         :param timeout:
             the maximum amount of time to block in seconds. the default of
@@ -130,6 +132,11 @@ class Lock(object):
 
     def acquire(self, blocking=True):
         """lock the lock, blocking until it becomes available
+
+        .. note::
+
+            this method will block the current coroutine if the lock is not
+            already owned.
 
         :param blocking:
             whether to block if the lock is already owned (default ``True``)
@@ -194,6 +201,11 @@ class RLock(Lock):
         if the lock is already owned by the calling greenlet, a counter simply
         gets incremented. if it is owned by a different greenlet then it will
         block until the lock becomes available.
+
+        .. note::
+
+            this method will block the current coroutine if the lock is not
+            already owned by another coroutine.
 
         :param blocking:
             whether to block if the lock is owned by a different greenlet
@@ -273,6 +285,11 @@ class Condition(object):
     def wait(self, timeout=None):
         """wait to be woken up by the condition
 
+        .. note::
+
+            this method will block the current coroutine until a :meth:`notify`
+            wakes it back up.
+
         :raises:
             `RuntimeError` if the underlying lock hasn't been
             :meth:`acquired <Lock.acquire>`
@@ -342,7 +359,12 @@ class Semaphore(object):
         self._waiters = collections.deque()
 
     def acquire(self, blocking=True):
-        """decrement the counter, blocking if it is already at 0
+        """decrement the counter, waiting if it is already at 0
+
+        .. note::
+
+            if the counter is already at 0, this method will block the current
+            coroutine until a :meth:`release` increments it again.
 
         :param blocking:
             whether or not to block if the counter is already at 0 (default
@@ -391,6 +413,11 @@ class BoundedSemaphore(Semaphore):
 
     def release(self):
         """increment the counter, waking up a waiter if there was any
+
+        .. note::
+
+            if the counter is already at 0, this method will block the current
+            coroutine until a :meth:`release` increments it again.
 
         :raises: `ValueError` if this increment would have crossed the maximum
         """
@@ -512,6 +539,11 @@ class Thread(object):
 
     def join(self, timeout=None):
         """block until this thread terminates
+
+        .. note::
+
+            this method can block the calling coroutine if the thread has not
+            yet completed.
 
         :param timeout:
             the maximum time to wait. with the default of ``None``, waits
@@ -669,7 +701,10 @@ class Timer(Thread):
     def wrap(cls, secs, args=(), kwargs=None):
         """a classmethod decorator to immediately turn a function into a timer
 
-        you won't find this on `threading.Timer`, it is an extension to that API
+        .. note::
+
+            you won't find this on `threading.Timer`, it is an extension to
+            that API
 
         this is a function *returning a decorator*, so it is used like so:
 
@@ -736,8 +771,11 @@ class Queue(object):
     def get(self, blocking=True, timeout=None):
         """get an item out of the queue
 
-        this method will block if `blocking` is ``True`` (default) and the
-        queue is :meth:`empty`
+        .. note::
+
+            if `blocking` is ``True`` (the default) and the queue is
+            :meth`empty`, this method will block the current coroutine until
+            something has been :meth:`put`.
 
         :param blocking:
             whether to block if there is no data yet available (default
@@ -793,9 +831,11 @@ class Queue(object):
     def put(self, item, blocking=True, timeout=None):
         """put an item into the queue
 
-        if the queue was instantiated with a nonzero `maxsize` and that size
-        has already been reached, this method will block until another greenlet
-        :meth:`get`\ s an item out
+        .. note::
+
+            if the queue was created with a `maxsize` and it is currently
+            :meth:`full`, this method will block the calling coroutine until
+            another coroutine :meth:`get`\ s an item.
 
         :param item: the object to put into the queue, can be any type
         :param blocking:
@@ -871,8 +911,10 @@ class Queue(object):
     def join(self, timeout=None):
         """wait for task completions
 
-        blocks until either :meth:`task_done` has been called for every
-        :meth:`put` call
+        .. note::
+
+            if :meth:`task_done` has not been called for every :meth:`put`
+            call, this method will block until it has.
 
         the queue is still usable after a :meth:`join` call. a return from
         :meth:`join` simply indicates that the queue has no jobs `currently`

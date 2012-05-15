@@ -54,8 +54,10 @@ class Socket(object):
     def accept(self):
         """accept a connection on the host/port to which the socket is bound
 
-        If there is no connection attempt already queued, this method will
-        block until a connection is made
+        .. note::
+
+            if there is no connection attempt already queued, this method will
+            block until a connection is made
 
         :returns:
             a two-tuple of ``(socket, address)`` where the socket is connected,
@@ -79,8 +81,7 @@ class Socket(object):
     def connect(self, address):
         """initiate a new connection to a remote socket bound to an address
 
-        this method will block until the connection has been made; in the case
-        of TCP sockets this includes the TCP handshake
+        .. note:: this method will block until the connection has been made
 
         :param address:
             the address to which to initiate a connection, the format of which
@@ -188,7 +189,7 @@ class Socket(object):
     def recv(self, bufsize, flags=0):
         """receive data from the connection
 
-        this method will block until data is available to be read
+        .. note:: this method will block until data is available to be read
 
         see the unix manpage for ``recv(2)`` for more information
 
@@ -208,7 +209,7 @@ class Socket(object):
     def recv_into(self, buffer, bufsize=-1, flags=0):
         """receive data from the connection and place it into a buffer
 
-        this method will block until data is available to be read
+        .. note:: this method will block until data is available to be read
 
         :param buffer:
             a sized buffer object to receive the data (this is generally an
@@ -229,7 +230,7 @@ class Socket(object):
     def recvfrom(self, bufsize, flags=0):
         """receive data on a socket that isn't necessarily a 1-1 connection
 
-        this method will block until data is available to be read
+        .. note:: this method will block until data is available to be read
 
         :param bufsize:
             the maximum number of bytes to receive. fewer may be returned,
@@ -249,7 +250,7 @@ class Socket(object):
     def recvfrom_into(self, buffer, bufsize=-1, flags=0):
         """receive data on a non-TCP socket and place it in a buffer
 
-        this method will block until data is available to be read
+        .. note:: this method will block until data is available to be read
 
         :param buffer:
             a sized buffer object to receive the data (this is generally an
@@ -272,7 +273,7 @@ class Socket(object):
     def send(self, data, flags=0):
         """send data over the socket connection
 
-        this method may block if the socket's send buffer is full
+        .. note:: this method may block if the socket's send buffer is full
 
         :param data: the data to send
         :type data: str
@@ -290,7 +291,7 @@ class Socket(object):
     def sendall(self, data, flags=0):
         """send data over the connection, and keep sending until it all goes
 
-        this method may block if the socket's send buffer is full
+        .. note:: this method may block if the socket's send buffer is full
 
         :param data: the data to send
         :type data: str
@@ -304,7 +305,7 @@ class Socket(object):
     def sendto(self, data, *args):
         """send data to a particular address
 
-        this method may block if the socket's send buffer is full
+        .. note:: this method may block if the socket's send buffer is full
 
         :param data: the data to send
         :type data: str

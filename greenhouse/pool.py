@@ -249,7 +249,7 @@ def map(func, items, pool_size=10):
     """a parallelized work-alike to the built-in ``map`` function
 
     this function works by creating an :class:`OrderedPool` and placing all
-    the arguments in :meth:`put<OrderedPool.put>` calls, and yielding items
+    the arguments in :meth:`put<OrderedPool.put>` calls, then yielding items
     produced by the pool's :meth:`get<OrderedPool.get>` method.
 
     :param func: the mapper function to use

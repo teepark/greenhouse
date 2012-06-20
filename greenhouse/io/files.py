@@ -3,9 +3,7 @@ from __future__ import absolute_import, with_statement
 import errno
 import fcntl
 import os
-import socket
 import sys
-import weakref
 try:
     from cStringIO import StringIO
 except ImportError:

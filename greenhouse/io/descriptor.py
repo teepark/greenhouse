@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import errno
 import functools
 import time
-import weakref
 
 from .. import compat, scheduler
 

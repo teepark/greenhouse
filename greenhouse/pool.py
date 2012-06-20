@@ -2,7 +2,7 @@ from __future__ import with_statement
 
 import sys
 
-from greenhouse import compat, scheduler, util
+from greenhouse import scheduler, util
 
 
 __all__ = ["OneWayPool", "Pool", "OrderedPool", "map", "PoolClosed"]

@@ -18,7 +18,6 @@ import collections
 import contextlib
 import socket
 import sys
-import traceback
 try:
     from cStringIO import StringIO
 except ImportError:

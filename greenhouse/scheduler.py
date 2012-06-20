@@ -1,7 +1,6 @@
 import bisect
 import collections
 import errno
-import operator
 import sys
 import time
 import weakref

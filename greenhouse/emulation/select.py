@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import select
-import weakref
 
 from .. import io, scheduler, util
 

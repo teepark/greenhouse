@@ -4,7 +4,6 @@ import contextlib
 import errno
 import socket
 import sys
-import weakref
 
 from .. import scheduler, util
 from . import files

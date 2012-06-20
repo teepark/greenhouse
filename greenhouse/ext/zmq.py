@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import time
 
-from .. import poller, scheduler
 from ..io import descriptor
 import zmq.core
 

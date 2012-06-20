@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import thread
+
 from .. import scheduler, util
 
 
@@ -8,10 +10,28 @@ def green_start(function, args, kwargs=None):
     scheduler.schedule(glet)
     return id(glet)
 
+def thread_exit():
+    raise SystemExit()
+
+def thread_get_ident():
+    return util._current_thread().ident
+
+def thread_stack_size(size=None):
+    if size is not None:
+        raise thread.ThreadError()
+    # doesn't really apply, but whatever
+    return thread.stack_size()
+
 
 thread_patchers = {
     'allocate_lock': util.Lock,
     'allocate': util.Lock,
+    'exit': thread_exit,
+    'exit_thread': thread_exit,
+    'get_ident': thread_get_ident,
+    '_local': util.Local,
+    'LockType': util.Lock,
+    'stack_size': thread_stack_size,
     'start_new_thread': green_start,
     'start_new': green_start,
 }
@@ -32,4 +52,13 @@ threading_patchers = {
     'activeCount': util._active_thread_count,
     'current_thread': util._current_thread,
     'currentThread': util._current_thread,
+    '_allocate_lock': util.Lock,
+    '_sleep': scheduler.pause_for,
+    '_start_new_thread': green_start,
+}
+
+threading_local_patchers = {
+    'RLock': util.RLock,
+    'current_thread': util._current_thread,
+    'local': util.Local,
 }

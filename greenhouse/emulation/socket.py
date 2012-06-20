@@ -10,6 +10,7 @@ def green_socketpair(*args, **kwargs):
 
 patchers = {
     'socket': io.Socket,
+    'SocketType': io.Socket,
     'socketpair': green_socketpair,
     'fromfd': io.sockets.socket_fromfd,
 }

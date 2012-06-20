@@ -130,6 +130,8 @@ class Lock(object):
         """
         return self._locked
 
+    locked_lock = locked
+
     def acquire(self, blocking=True):
         """lock the lock, blocking until it becomes available
 
@@ -162,6 +164,8 @@ class Lock(object):
             self._owner = current
         return True
 
+    acquire_lock = acquire
+
     def release(self):
         """open the lock back up to wake up a waiting greenlet
 
@@ -179,6 +183,8 @@ class Lock(object):
         else:
             self._locked = False
             self._owner = None
+
+    release_lock = release
 
     def __enter__(self):
         return self.acquire()
@@ -523,6 +529,9 @@ class Thread(object):
         def run():
             try:
                 self.run(*self._args, **self._kwargs)
+            except SystemExit:
+                # only shut down the thread, not the whole process
+                pass
             finally:
                 self._deactivate()
         self._glet = scheduler.greenlet(run)

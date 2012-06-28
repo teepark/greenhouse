@@ -163,5 +163,3 @@ def _produce_lines(sock):
             l = (buf + block).split("\n")
             lines.extend(l[:-1])
             buf = l[-1]
-
-        yield lines.popleft()

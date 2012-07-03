@@ -16,6 +16,7 @@ from __future__ import absolute_import, with_statement
 import code
 import collections
 import contextlib
+import logging
 import socket
 import sys
 try:
@@ -28,6 +29,8 @@ from . import io, scheduler
 
 __all__ = ["run_backdoor", "backdoor_handler"]
 
+
+log = logging.getLogger("greenhouse.backdoor")
 
 PREAMBLE = "Python %s on %s" % (sys.version, sys.platform)
 PS1 = getattr(sys, "ps1", ">>> ")
@@ -52,6 +55,7 @@ def run_backdoor(address, namespace=None):
         connection create its own empty namespace
     :type namespace: dict or None
     """
+    log.info("starting on %r" % (address,))
     serversock = io.Socket()
     serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     serversock.bind(address)
@@ -59,6 +63,7 @@ def run_backdoor(address, namespace=None):
 
     while 1:
         clientsock, address = serversock.accept()
+        log.info("connection received from %r" % (address,))
         scheduler.schedule(backdoor_handler, args=(clientsock, namespace))
 
 
@@ -152,12 +157,14 @@ def _produce_lines(sock):
             if not block:
                 if buf:
                     yield buf
+                log.info("EOF received, closing connection")
                 return
 
             if block[0] == '\x04':
                 sock.close()
                 if buf:
                     yield buf
+                log.info("Ctrl-D received, closing connection")
                 return
 
             l = (buf + block).split("\n")

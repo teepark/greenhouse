@@ -1,6 +1,7 @@
 import bisect
 import collections
 import errno
+import logging
 import sys
 import time
 import weakref
@@ -20,6 +21,8 @@ __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
 
 BTREE_ORDER = 64
 
+
+log = logging.getLogger("greenhouse.scheduler")
 
 state = type('GreenhouseState', (), {})()
 
@@ -674,6 +677,7 @@ def global_exception_handler(handler):
     """
     if not hasattr(handler, "__call__"):
         raise TypeError("exception handlers must be callable")
+    log.info("setting a new global exception handler")
 
     state.global_exception_handlers.append(weakref.ref(handler))
 
@@ -693,6 +697,7 @@ def remove_global_exception_handler(handler):
         cb = cb()
         if cb is not None and cb is handler:
             state.global_exception_handlers.pop(i)
+            log.info("removing a global exception handler")
             return True
     return False
 
@@ -720,6 +725,8 @@ def local_exception_handler(handler=None, coro=None):
     if coro is None:
         coro = compat.getcurrent()
 
+    log.info("setting a new coroutine local exception handler")
+
     state.local_exception_handlers.setdefault(coro, []).append(
             weakref.ref(handler))
 
@@ -742,6 +749,7 @@ def remove_local_exception_handler(handler, coro=None):
         cb = cb()
         if cb is not None and cb is handler:
             state.local_exception_handlers[coro].pop(i)
+            log.info("removing a coroutine local exception handler")
             return True
     return False
 
@@ -761,6 +769,7 @@ def global_hook(handler):
     if not hasattr(handler, "__call__"):
         raise TypeError("trace hooks must be callable")
 
+    log.info("setting a new global hook callback")
     state.global_hooks.append(weakref.ref(handler))
 
     return handler
@@ -779,6 +788,7 @@ def remove_global_hook(handler):
         cb = cb()
         if cb is not None and cb is handler:
             state.global_hooks.pop(i)
+            log.info("removing a global hook callback")
             return True
     return False
 
@@ -810,6 +820,8 @@ def local_incoming_hook(handler=None, coro=None):
     if coro is None:
         coro = compat.getcurrent()
 
+    log.info("setting a coroutine incoming local hook callback")
+
     state.local_to_hooks.setdefault(coro, []).append(
             weakref.ref(handler))
 
@@ -831,6 +843,7 @@ def remove_local_incoming_hook(handler, coro=None):
     for i, cb in enumerate(state.local_to_hooks.get(coro, [])):
         cb = cb()
         if cb is not None and cb is handler:
+            log.info("removing a coroutine incoming local hook callback")
             state.local_to_hooks[coro].pop(i)
             return True
     return False
@@ -861,6 +874,8 @@ def local_outgoing_hook(handler=None, coro=None):
     if coro is None:
         coro = compat.getcurrent()
 
+    log.info("setting a coroutine local outgoing hook callback")
+
     state.local_from_hooks.setdefault(coro, []).append(
             weakref.ref(handler))
 
@@ -882,6 +897,7 @@ def remove_local_outgoing_hook(handler, coro=None):
     for i, cb in enumerate(state.local_from_hooks.get(coro, [])):
         cb = cb()
         if cb is not None and cb is handler:
+            log.info("removing a coroutine outgoing local hook callback")
             state.local_from_hooks[coro].pop(i)
             return True
     return False
@@ -898,6 +914,7 @@ def set_ignore_interrupts(flag=True):
         whether to turn EINTR exceptions off (``True``) or on (``False``)
     :type flag: bool
     """
+    log.info("setting ignore_interrupts to %r" % flag)
     state.ignore_interrupts = bool(flag)
 
 def reset_poller(poll=None):
@@ -906,3 +923,4 @@ def reset_poller(poll=None):
     this is only really a good idea in the new child process after a fork(2).
     """
     state.poller = poll or poller.best()
+    log.info("resetting fd poller, using %s" % type(state.poller).__name__)

@@ -12,12 +12,15 @@ from __future__ import absolute_import, with_statement
 
 import contextlib
 import sys
+import logging
 import types
 
 from .. import io, scheduler, util
 
 
 __all__ = ["patch", "unpatch", "patched", "patched_context"]
+
+log = logging.getLogger("greenhouse.emulation")
 
 
 def patched(module_name):
@@ -174,6 +177,8 @@ def patch(*module_names):
     if not module_names:
         module_names = _patchers.keys()
 
+    log.info("monkey-patching in-place (%d modules)" % len(module_names))
+
     for module_name in module_names:
         if module_name not in _patchers:
             raise ValueError("'%s' is not greenhouse-patchable" % module_name)
@@ -202,6 +207,8 @@ def unpatch(*module_names):
     """
     if not module_names:
         module_names = _standard.keys()
+
+    log.info("undoing monkey-patches in-place (%d modules)" % len(module_names))
 
     for module_name in module_names:
         if module_name not in _standard:

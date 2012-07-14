@@ -50,7 +50,7 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
             # if there was a timeout then also have to pull
             # the coroutine from the timed_paused structure
             if timeout:
-                scheduler._remove_from_timedout(waketime, current)
+                scheduler._remove_timer(waketime, current)
 
         # in any case, set the event information
         activated.setdefault(fd, 0)

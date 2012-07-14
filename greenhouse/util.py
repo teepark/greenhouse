@@ -99,10 +99,9 @@ class Event(object):
         scheduler.state.mainloop.switch()
 
         if timeout is not None:
-            timedout = not scheduler._remove_from_timedout(waketime, current)
-            if timedout:
+            if not scheduler._remove_timer(waketime, current):
                 self._waiters.remove(current)
-            return timedout
+                return True
 
         return False
 
@@ -314,7 +313,7 @@ class Condition(object):
         self._lock.acquire()
 
         if timeout is not None:
-            timedout = not scheduler._remove_from_timedout(waketime, current)
+            timedout = not scheduler._remove_timer(waketime, current)
             if timedout:
                 self._waiters.remove((current, waketime))
             return timedout
@@ -815,7 +814,7 @@ class Queue(object):
             scheduler.state.mainloop.switch()
 
             if timeout is not None:
-                if not scheduler._remove_from_timedout(waketime, current):
+                if not scheduler._remove_timer(waketime, current):
                     self._waiters.remove((current, waketime))
                     raise Empty()
 
@@ -874,7 +873,7 @@ class Queue(object):
             scheduler.state.mainloop.switch()
 
             if timeout is not None:
-                if not scheduler._remove_from_timedout(waketime, current):
+                if not scheduler._remove_timer(waketime, current):
                     self._waiters.remove((current, waketime))
                     raise Full()
 

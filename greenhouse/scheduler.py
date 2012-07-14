@@ -506,7 +506,7 @@ def end(target):
         schedule(target)
         state.to_raise[target] = compat.GreenletExit()
 
-def _remove_from_timedout(waketime, glet):
+def _remove_timer(waketime, glet):
     if state.timed_paused.remove(waketime, glet):
         return True
 

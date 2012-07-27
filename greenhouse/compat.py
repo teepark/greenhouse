@@ -7,10 +7,6 @@ try:
             GreenletExit = greenlet.GreenletExit
         except AttributeError:
             raise error
-        else:
-            # pypy's greenlets don't allow weakrefs to them, this fixes that
-            class greenlet(greenlet):
-                pass
 except ImportError, error:
     try:
         from py.magic import greenlet

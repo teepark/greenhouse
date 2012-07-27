@@ -129,28 +129,24 @@ except ImportError:
 
 
 def _hit_poller(timeout):
-    events = []
-    while 1:
-        try:
-            events = state.poller.poll(timeout)
-            break
-        except KeyboardInterrupt, exc:
-            # on Ctrl-C, wake up the main without killing the mainloop
-            state.to_raise[compat.main_greenlet] = exc
-            state.to_run.append(compat.main_greenlet)
-            return
-        except EnvironmentError, exc:
-            if exc.args[0] != errno.EINTR:
-                raise
+    try:
+        events = state.poller.poll(timeout)
+    except KeyboardInterrupt, exc:
+        # on Ctrl-C, wake up the main without killing the mainloop
+        state.to_raise[compat.main_greenlet] = exc
+        state.to_run.append(compat.main_greenlet)
+        return
+    except EnvironmentError, exc:
+        if exc.args[0] != errno.EINTR:
+            raise
 
-            # interrupted by a signal
-            if state.ignore_interrupts:
-                events = []
-            else:
-                state.interrupted = True
-                events = [(fd, state.poller.ERRMASK)
-                        for fd in state.poller._registry.iterkeys()]
-            break
+        # interrupted by a signal
+        if state.ignore_interrupts:
+            events = []
+        else:
+            state.interrupted = True
+            events = [(fd, state.poller.ERRMASK)
+                    for fd in state.poller._registry.iterkeys()]
 
     for fd, eventmap in events:
         readables = []
@@ -166,7 +162,9 @@ def _hit_poller(timeout):
                 if writable:
                     writables.append(writable)
 
-        map(callbackpairs.pop, removals[::-1])
+        for index in removals[::-1]:
+            callbackpairs.pop(index)
+
         if not callbackpairs:
             state.descriptormap.pop(fd)
 
@@ -529,15 +527,14 @@ def mainloop():
 
         if not state.to_run:
             _hit_poller(0)
-
-        while not state.to_run:
-            # if there are timed-paused greenlets, we can
-            # just wait until the first of them wakes up
-            if state.timed_paused:
-                until = state.timed_paused.first()[0] + 0.001
-                _hit_poller(until - time.time())
-            else:
-                _hit_poller(None)
+            while not state.to_run:
+                # if there are timed-paused greenlets, we can
+                # just wait until the first of them wakes up
+                if state.timed_paused:
+                    until = state.timed_paused.first()[0] + 0.001
+                    _hit_poller(until - time.time())
+                else:
+                    _hit_poller(None)
 
         prev = target
         target = state.to_run.popleft()

@@ -967,7 +967,7 @@ class PriorityQueue(Queue):
         never block
     :type maxsize: int
 
-    mirrors the standard library `Queue.LifoQueue` API
+    mirrors the standard library `Queue.PriorityQueue` API
     """
     _data_type = list
 

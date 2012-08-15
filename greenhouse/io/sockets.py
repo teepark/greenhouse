@@ -32,6 +32,18 @@ class Socket(object):
     def __init__(self, *args, **kwargs):
         self._sock = _InnerSocket(*args, **kwargs)
 
+    @property
+    def family(self):
+        return self._sock.family
+
+    @property
+    def proto(self):
+        return self._sock.proto
+
+    @property
+    def type(self):
+        return self._sock.type
+
     def close(self):
         """close the current connection on the socket
 
@@ -380,10 +392,9 @@ class _InnerSocket(object):
     def __init__(self, *args, **kwargs):
         # wrap a basic socket or build our own
         sock = kwargs.pop('fromsock', None) or _socket(*args, **kwargs)
-        if hasattr(sock, "_sock"):
-            self._sock = sock._sock
-        else:
-            self._sock = sock
+        while hasattr(sock, "_sock"):
+            sock = sock._sock
+        self._sock = sock
 
         # copy over attributes
         self.family = self._sock.family
@@ -392,7 +403,8 @@ class _InnerSocket(object):
         self._fileno = self._sock.fileno()
 
         # some more housekeeping
-        self._timeout = sock.gettimeout()
+        tout = sock.gettimeout()
+        self._timeout = tout
         self._closed = False
 
         # make the underlying socket non-blocking
@@ -477,7 +489,6 @@ class _InnerSocket(object):
                 err = self.connect_ex(address)
                 if self._blocking and err in (
                         errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
-                    sys.exc_clear()
                     if self._writable.wait(self.gettimeout()):
                         raise socket.timeout("timed out")
                     if scheduler.state.interrupted:

@@ -9,8 +9,8 @@ from greenhouse.util import *
 from greenhouse.pool import *
 
 from greenhouse.io import *
-from greenhouse.emulation import *
 from greenhouse.backdoor import *
+from greenhouse.emulation import *
 
 
 VERSION = (2, 0, 1, '')

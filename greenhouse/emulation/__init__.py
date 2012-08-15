@@ -155,6 +155,7 @@ def patch(*module_names):
     - select
     - signal
     - socket
+    - ssl
     - sys
     - thread
     - threading
@@ -172,7 +173,7 @@ def patch(*module_names):
 
         - ``subprocess`` works cooperatively with ``os`` and ``select`` patched
         - ``httplib``, ``urllib`` and ``urllib2`` will all operate
-          cooperatively with ``socket`` patched
+          cooperatively with ``socket`` and ``ssl`` patched
     """
     if not module_names:
         module_names = _patchers.keys()
@@ -228,6 +229,9 @@ _patchers['select'] = select.patchers
 
 from . import socket
 _patchers['socket'] = socket.patchers
+
+from . import ssl
+_patchers['ssl'] = ssl.patchers
 
 from . import threading
 _patchers['thread'] = threading.thread_patchers

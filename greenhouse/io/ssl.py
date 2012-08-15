@@ -259,20 +259,6 @@ class SSLSocket(gsock.Socket):
                 raise socket.error(err, errno.errorcode[err])
             return 0
 
-    def _accept_attempt(self):
-        sock, addr = super(SSLSocket, self).accept()
-        return (SSLSocket(sock,
-                          keyfile=self.keyfile,
-                          certfile=self.certfile,
-                          server_side=True,
-                          cert_reqs=self.cert_reqs,
-                          ssl_version=self.ssl_version,
-                          ca_certs=self.ca_certs,
-                          ciphers=self.ciphers,
-                          do_handshake_on_connect=self.do_handshake_on_connect,
-                          suppress_ragged_eofs=self.suppress_ragged_eofs),
-                addr)
-
     def accept(self):
         while 1:
             try:

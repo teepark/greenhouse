@@ -244,7 +244,7 @@ class SSLSocket(gsock.Socket):
                 self.do_handshake(timeout)
         except socket.error, exc:
             return exc.args[0]
-        
+
         self._connected = True
         return 0
 

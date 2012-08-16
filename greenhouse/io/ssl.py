@@ -10,14 +10,6 @@ import time
 from greenhouse import poller, scheduler, util
 from greenhouse.io import sockets as gsock
 
-'''
-stdlib ssl.SSLSocket:
-    - subclasses socket._socketobject
-    - only stores and uses <provided sock>._sock
-        - attached as '_sock'
-    - `connect()` requires that _sock be a C sock (_socket.socket)
-
-'''
 
 class SSLSocket(gsock.Socket):
     def __init__(self, sock, keyfile=None, certfile=None,

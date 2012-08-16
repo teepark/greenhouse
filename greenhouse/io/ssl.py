@@ -41,8 +41,6 @@ class SSLSocket(gsock.Socket):
             self._connected = True
             self._sslobj = _ssl.sslwrap(self._sock, server_side, keyfile,
                     certfile, cert_reqs, ssl_version, ca_certs, ciphers)
-            if do_handshake_on_connect:
-                self.do_handshake()
 
         self.keyfile = keyfile
         self.certfile = certfile
@@ -60,6 +58,30 @@ class SSLSocket(gsock.Socket):
 
         scheduler._register_fd(self.fileno(),
                 self._on_readable, self._on_writable)
+
+        if do_handshake_on_connect and self._connected:
+            self.do_handshake(self._timeout)
+
+    def _clone(self):
+        clone = object.__new__(SSLSocket)
+        clone._sock = self._sock
+        clone.keyfile = self.keyfile
+        clone.certfile = self.certfile
+        clone.cert_reqs = self.cert_reqs
+        clone.ssl_version = self.ssl_version
+        clone.ca_certs = self.ca_certs
+        clone.ciphers = self.ciphers
+        clone.do_handshake_on_connect = self.do_handshake_on_connect
+        clone.suppress_ragged_eofs = self.suppress_ragged_eofs
+        clone._timeout = self._timeout
+        clone._blocking = self._blocking
+        clone._connected = self._connected
+        clone._sslobj = self._sslobj
+        clone._readable = util.Event()
+        clone._writable = util.Event()
+        scheduler._register_fd(clone.fileno(),
+            clone._on_readable, clone._on_writable)
+        return clone
 
     def settimeout(self, timeout):
         self._timeout = timeout
@@ -273,7 +295,7 @@ class SSLSocket(gsock.Socket):
                 raise
 
     def makefile(self, mode='r', bufsize=-1):
-        return gsock.SocketFile(self, mode)
+        return gsock.SocketFile(self._clone(), mode)
 
     def _on_readable(self):
         self._readable.set()

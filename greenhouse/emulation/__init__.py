@@ -257,7 +257,6 @@ if zmq.patchers:
 try:
     from . import dns
     _patchers['socket'].update(dns.socket_patchers)
-
 except ImportError:
     pass
 

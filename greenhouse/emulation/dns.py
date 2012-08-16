@@ -9,7 +9,10 @@ from ..ext import dns
 @functools.wraps(socket.getaddrinfo)
 def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     socktype = socktype or socket.SOCK_STREAM
-    addrs = dns.resolve(host)
+    try:
+        addrs = dns.resolve(host)
+    except dns.resolver.NXDOMAIN:
+        raise socket.gaierror(-2, "Name or service not known")
     return [(socket.AF_INET, socktype, proto, '', (addr, port))
             for addr in addrs]
 

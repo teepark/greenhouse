@@ -2,9 +2,11 @@ from __future__ import absolute_import
 
 import errno
 import functools
+import _socket
 import socket
 import _ssl
 import ssl
+import sys
 import time
 
 from greenhouse import poller, scheduler, util
@@ -20,7 +22,8 @@ class SSLSocket(gsock.Socket):
         inner = sock
         while hasattr(getattr(inner, "_sock", None), "_sock"):
             inner = inner._sock
-        self._sock = inner._sock
+        self._sock = inner._sock if hasattr(inner, "_sock") else inner
+        self._sock.setblocking(False)
 
         if ciphers is None and ssl_version != ssl._SSLv2_IF_EXISTS:
             ciphers = ssl._DEFAULT_CIPHERS
@@ -51,8 +54,14 @@ class SSLSocket(gsock.Socket):
         self.do_handshake_on_connect = do_handshake_on_connect
         self.suppress_ragged_eofs = suppress_ragged_eofs
 
-        self._timeout = inner.gettimeout()
-        self._blocking = inner._blocking
+        if isinstance(inner, _socket.socket):
+            self._timeout = socket.getdefaulttimeout()
+        else:
+            self._timeout = inner.gettimeout()
+        if hasattr(inner, "_blocking"):
+            self._blocking = inner._blocking
+        else:
+            self._blocking = True
         self._readable = util.Event()
         self._writable = util.Event()
 
@@ -101,12 +110,12 @@ class SSLSocket(gsock.Socket):
     def read(self, len=1024):
         return self._with_retry(
                 functools.partial(self._read_attempt, len),
-                self.gettimeout())()
+                self.gettimeout())
 
     def write(self, data):
         return self._with_retry(
                 functools.partial(self._sslobj.write, data),
-                self.gettimeout())()
+                self.gettimeout())
 
     def getpeercert(self, binary_form=False):
         return self._sslobj.peer_certificate(binary_form)
@@ -276,23 +285,22 @@ class SSLSocket(gsock.Socket):
     def accept(self):
         while 1:
             try:
-                sock, addr = super(SSLSocket, self).accept()
-                return (SSLSocket(sock,
-                        keyfile=self.keyfile,
-                        certfile=self.certfile,
-                        server_side=True,
-                        cert_reqs=self.cert_reqs,
-                        ssl_version=self.ssl_version,
-                        ca_certs=self.ca_certs,
-                        ciphers=self.ciphers,
-                        do_handshake_on_connect=self.do_handshake_on_connect,
-                        suppress_ragged_eofs=self.suppress_ragged_eofs),
-                    addr)
+                sock, addr = self._sock.accept()
+                return (type(self)(sock,
+                    keyfile=self.keyfile,
+                    certfile=self.certfile,
+                    server_side=True,
+                    cert_reqs=self.cert_reqs,
+                    ssl_version=self.ssl_version,
+                    ca_certs=self.ca_certs,
+                    do_handshake_on_connect=self.do_handshake_on_connect,
+                    suppress_ragged_eofs=self.suppress_ragged_eofs,
+                    ciphers=self.ciphers), addr)
             except socket.error, exc:
-                if exc.args[0] in (errno.EAGAIN, errno.EWOULDBLOCK):
-                    sys.exc_clear()
-                    continue
-                raise
+                if exc.args[0] not in (errno.EAGAIN, errno.EWOULDBLOCK):
+                    raise
+                sys.exc_clear()
+                self._wait_event(self.gettimeout())
 
     def makefile(self, mode='r', bufsize=-1):
         return gsock.SocketFile(self._clone(), mode)
@@ -331,19 +339,17 @@ class SSLSocket(gsock.Socket):
         if func is None:
             return lambda f: self._with_retry(f, timeout)
 
-        def f():
-            tout = _timeout(timeout)
-            while 1:
-                try:
-                    return func()
-                except ssl.SSLError, exc:
-                    if exc.args[0] == ssl.SSL_ERROR_WANT_READ:
-                        self._wait_event(tout.now)
-                    elif exc.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                        self._wait_event(tout.now, write=False)
-                    else:
-                        raise
-        return f
+        tout = _timeout(timeout)
+        while 1:
+            try:
+                return func()
+            except ssl.SSLError, exc:
+                if exc.args[0] == ssl.SSL_ERROR_WANT_READ:
+                    self._wait_event(tout.now)
+                elif exc.args[0] == ssl.SSL_ERROR_WANT_WRITE:
+                    self._wait_event(tout.now, write=False)
+                else:
+                    raise
 
 
 class _timeout(object):

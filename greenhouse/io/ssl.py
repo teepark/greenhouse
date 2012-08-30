@@ -14,6 +14,14 @@ from greenhouse.io import sockets as gsock
 
 
 class SSLSocket(gsock.Socket):
+    """socket-like object that speaks SSL/TLS
+
+    this subclass of greenhouse.io.sockets.Socket wraps its underlying OS
+    socket in an SSL context when necessary, and provides read and write
+    methods over that channel
+
+    mirrors the standard library ssl.SSLSocket api.
+    """
     def __init__(self, sock, keyfile=None, certfile=None,
             server_side=False, cert_reqs=ssl.CERT_NONE,
             ssl_version=ssl.PROTOCOL_SSLv23, ca_certs=None,
@@ -108,16 +116,23 @@ class SSLSocket(gsock.Socket):
             raise
 
     def read(self, len=1024):
+        'read up to len bytes and return them, or empty string on EOF'
         return self._with_retry(
                 functools.partial(self._read_attempt, len),
                 self.gettimeout())
 
     def write(self, data):
+        'write data to the ssl channel and return the # of bytes transferred'
         return self._with_retry(
                 functools.partial(self._sslobj.write, data),
                 self.gettimeout())
 
     def getpeercert(self, binary_form=False):
+        """return a representation of the peer's certificate
+
+        returns None if no certificate is in use by the peer
+        returns {} if a certificate is in use, but was not validated
+        """
         return self._sslobj.peer_certificate(binary_form)
 
     def cipher(self):
@@ -230,6 +245,7 @@ class SSLSocket(gsock.Socket):
         self._sock = socket._closedsocket()
 
     def do_handshake(self, timeout):
+        'perform a SSL/TLS handshake'
         tout = _timeout(timeout)
         if not self._blocking:
             return self._sslobj.do_handshake()
@@ -250,6 +266,7 @@ class SSLSocket(gsock.Socket):
         self._sslobj.do_handshake()
 
     def connect_ex(self, address):
+        'connects to the address and wraps the connection in an SSL context'
         return self._connect(address, self.gettimeout())
 
     def _connect(self, address, timeout):
@@ -272,6 +289,7 @@ class SSLSocket(gsock.Socket):
         return 0
 
     def connect(self, address):
+        'connects to the address and wraps the connection in an SSL context'
         tout = _timeout(self.gettimeout())
         while 1:
             self._wait_event(tout.now, write=True)
@@ -283,6 +301,11 @@ class SSLSocket(gsock.Socket):
             return 0
 
     def accept(self):
+        """accept a connection attempt from a remote client
+
+        returns a two-tuple with the ssl-context-wrapped connection,
+        and the address of the remote client
+        """
         while 1:
             try:
                 sock, addr = self._sock.accept()
@@ -303,6 +326,7 @@ class SSLSocket(gsock.Socket):
                 self._wait_event(self.gettimeout())
 
     def makefile(self, mode='r', bufsize=-1):
+        'return a file-like object that operates on the ssl connection'
         return gsock.SocketFile(self._clone(), mode)
 
     def _on_readable(self):

@@ -514,10 +514,12 @@ class Thread(object):
     def _activate(self):
         self._started = True
         type(self)._active[self._glet] = self
+        type(self)._active_by_id[self.ident] = self
 
     def _deactivate(self):
         self._finished.set()
         type(self)._active.pop(self._glet)
+        type(self)._active_by_id.pop(self.ident)
 
     def start(self):
         """schedule to start the greenlet that runs this thread's function
@@ -633,6 +635,7 @@ class Thread(object):
         return "Thread-%d" % cls._counter
 
     _active = {}
+    _active_by_id = {}
 
 _main_thread = object.__new__(Thread)
 _main_thread.__dict__.update({
@@ -644,6 +647,7 @@ _main_thread.__dict__.update({
     '_finished': Event(),
     '_glet': compat.main_greenlet,
 })
+_main_thread._activate()
 
 _dummy_thread = object.__new__(Thread)
 _dummy_thread.__dict__.update({

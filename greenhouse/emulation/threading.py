@@ -1,5 +1,11 @@
 from __future__ import absolute_import
 
+# yes, this is an unused import, but stdlib threading.py checks
+# `'dummy_import' in sys.modules` when it's deleting the main thread, and
+# doesn't re-raise a KeyError in that case. so we just need to ensure that
+# dummy_threading gets imported.
+import dummy_threading
+
 import thread
 
 from .. import scheduler, util
@@ -55,6 +61,7 @@ threading_patchers = {
     '_allocate_lock': util.Lock,
     '_sleep': scheduler.pause_for,
     '_start_new_thread': green_start,
+    '_active': util.Thread._active_by_id,
 }
 
 threading_local_patchers = {

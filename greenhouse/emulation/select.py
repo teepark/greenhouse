@@ -120,7 +120,7 @@ class green_kqueue(object):
         if from_kq:
             self._kqueue = from_kq
         else:
-            self._kqueue = select.kqueue()
+            self._kqueue = original_kqueue()
         scheduler._register_fd(
                 self._kqueue.fileno(), self._on_readable, self._on_writable)
 
@@ -172,4 +172,5 @@ if hasattr(select, "epoll"):
 
 if hasattr(select, "kqueue"):
     patchers['kqueue'] = green_kqueue
+    original_kqueue = select.kqueue
     original_kqueue_fromfd = select.kqueue.fromfd

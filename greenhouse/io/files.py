@@ -202,6 +202,7 @@ class File(FileBase):
     def __init__(self, name, mode='rb'):
         super(File, self).__init__()
         self.mode = mode
+        self.name = name
         self._closed = False
 
         # translate mode into the proper open flags
@@ -328,6 +329,11 @@ class File(FileBase):
         "close the file, and its underlying descriptor"
         self._closed = True
         os.close(self._fileno)
+
+    @property
+    def closed(self):
+        "return True if the file descriptor is closed"
+        return self._closed
 
     def fileno(self):
         "get the file descriptor integer"

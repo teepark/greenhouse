@@ -145,7 +145,8 @@ def green_popen(cmd, mode='r', bufsize=-1):
     kwarg = {pipe: green_subprocess.PIPE}
 
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize, **kwarg)
-    return green_popen_pipe.fromfd(getattr(proc, pipe), mode, proc.pid)
+    return green_popen_pipe.fromfd(
+            getattr(proc, pipe).fileno(), mode, proc.pid)
 
 @functools.wraps(original_os_popen2)
 def green_popen2(cmd, mode='r', bufsize=-1):

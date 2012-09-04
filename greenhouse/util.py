@@ -501,6 +501,7 @@ class Thread(object):
         self._started = False
         self._finished = Event()
         self._glet = None
+        self._ident = None
         # verbose is ignored
 
     def __repr__(self):
@@ -537,6 +538,7 @@ class Thread(object):
             finally:
                 self._deactivate()
         self._glet = scheduler.greenlet(run)
+        self._ident = id(self._glet)
         scheduler.schedule(self._glet)
         self._activate()
 
@@ -574,7 +576,7 @@ class Thread(object):
     @property
     def ident(self):
         "unique identifier for this thread"
-        return id(self._glet) if self._glet is not None else None
+        return self._ident
 
     def is_alive(self):
         """indicates whether the thread is currently running
@@ -646,6 +648,7 @@ _main_thread.__dict__.update({
     '_started': True,
     '_finished': Event(),
     '_glet': compat.main_greenlet,
+    '_ident': id(compat.main_greenlet),
 })
 _main_thread._activate()
 
@@ -658,6 +661,7 @@ _dummy_thread.__dict__.update({
     '_started': True,
     '_finished': Event(),
     '_glet': None,
+    '_ident': id(None),
 })
 
 

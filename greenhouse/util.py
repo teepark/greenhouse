@@ -639,43 +639,6 @@ class Thread(object):
     _active = {}
     _active_by_id = {}
 
-_main_thread = object.__new__(Thread)
-_main_thread.__dict__.update({
-    'name': 'MainThread',
-    '_target': None,
-    '_args': (),
-    '_kwargs': {},
-    '_started': True,
-    '_finished': Event(),
-    '_glet': compat.main_greenlet,
-    '_ident': id(compat.main_greenlet),
-})
-_main_thread._activate()
-
-_dummy_thread = object.__new__(Thread)
-_dummy_thread.__dict__.update({
-    'name': 'GreenThread',
-    '_target': None,
-    '_args': (),
-    '_kwargs': {},
-    '_started': True,
-    '_finished': Event(),
-    '_glet': None,
-    '_ident': id(None),
-})
-
-
-def _enumerate_threads():
-    return Thread._active.values()
-
-def _active_thread_count():
-    return len(Thread._active)
-
-def _current_thread():
-    if compat.getcurrent() is compat.main_greenlet:
-        return _main_thread
-    return Thread._active.get(compat.getcurrent(), _dummy_thread)
-
 
 class Timer(Thread):
     """creates a greenlet from a function and schedules it to run later

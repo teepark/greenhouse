@@ -9,6 +9,7 @@ import threading
 import unittest
 
 from greenhouse import io, emulation, poller, scheduler, util
+from greenhouse.emulation import threading as gthreading
 
 from test_base import StateClearingTestCase, TESTING_TIMEOUT
 
@@ -86,12 +87,12 @@ class PatchThreadingTest(MonkeyPatchBase, StateClearingTestCase):
         ('Timer', threading.Timer, util.Timer, lambda: threading.Timer),
         ('Thread', threading.Thread, util.Thread, lambda: threading.Thread),
         ('local', threading.local, util.Local, lambda: threading.local),
-        ('currentThread', threading.currentThread, util._current_thread,
+        ('currentThread', threading.currentThread, gthreading.current_thread,
             lambda: threading.currentThread),
     ]
 
     if hasattr(threading, "current_thread"):
-        PATCHES.append(('current_thread', threading.current_thread, util._current_thread,
+        PATCHES.append(('current_thread', threading.current_thread, gthreading.current_thread,
             lambda: threading.current_thread))
 
 
@@ -163,11 +164,11 @@ class PatchedModules(StateClearingTestCase):
         assert green.threading.Timer is util.Timer
         assert green.threading.Thread is util.Thread
         assert green.threading.local is util.Local
-        assert green.threading.enumerate is util._enumerate_threads
-        assert green.threading.active_count is util._active_thread_count
-        assert green.threading.activeCount is util._active_thread_count
-        assert green.threading.current_thread is util._current_thread
-        assert green.threading.currentThread is util._current_thread
+        assert green.threading.enumerate is gthreading.enumerate_threads
+        assert green.threading.active_count is gthreading.active_thread_count
+        assert green.threading.activeCount is gthreading.active_thread_count
+        assert green.threading.current_thread is gthreading.current_thread
+        assert green.threading.currentThread is gthreading.current_thread
 
         import thread, threading, logging
         assert logging.thread.allocate_lock is thread1.allocate_lock

@@ -8,7 +8,7 @@ import dummy_threading
 
 import thread
 
-from .. import scheduler, util
+from .. import compat, scheduler, util
 
 
 def green_start(function, args, kwargs=None):
@@ -20,13 +20,47 @@ def thread_exit():
     raise SystemExit()
 
 def thread_get_ident():
-    return util._current_thread().ident
+    return current_thread().ident
 
 def thread_stack_size(size=None):
     if size is not None:
         raise thread.ThreadError()
     # doesn't really apply, but whatever
     return thread.stack_size()
+
+_main_thread = object.__new__(util.Thread)
+_main_thread.__dict__.update({
+    'name': 'MainThread',
+    '_target': None,
+    '_args': (),
+    '_kwargs': {},
+    '_started': True,
+    '_finished': util.Event(),
+    '_glet': compat.main_greenlet,
+    '_ident': id(compat.main_greenlet),
+})
+_main_thread._activate()
+
+_dummy_thread = object.__new__(util.Thread)
+_dummy_thread.__dict__.update({
+    'name': 'GreenThread',
+    '_target': None,
+    '_args': (),
+    '_kwargs': {},
+    '_started': True,
+    '_finished': util.Event(),
+    '_glet': None,
+    '_ident': id(None),
+})
+
+def enumerate_threads():
+    return util.Thread._active.values()
+
+def active_thread_count():
+    return len(util.Thread._active)
+
+def current_thread():
+    return util.Thread._active.get(compat.getcurrent(), _dummy_thread)
 
 
 thread_patchers = {
@@ -53,11 +87,11 @@ threading_patchers = {
     'Timer': util.Timer,
     'Thread': util.Thread,
     'local': util.Local,
-    'enumerate': util._enumerate_threads,
-    'active_count': util._active_thread_count,
-    'activeCount': util._active_thread_count,
-    'current_thread': util._current_thread,
-    'currentThread': util._current_thread,
+    'enumerate': enumerate_threads,
+    'active_count': active_thread_count,
+    'activeCount': active_thread_count,
+    'current_thread': current_thread,
+    'currentThread': current_thread,
     '_allocate_lock': util.Lock,
     '_sleep': scheduler.pause_for,
     '_start_new_thread': green_start,
@@ -66,6 +100,6 @@ threading_patchers = {
 
 threading_local_patchers = {
     'RLock': util.RLock,
-    'current_thread': util._current_thread,
+    'current_thread': current_thread,
     'local': util.Local,
 }

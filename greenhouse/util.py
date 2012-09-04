@@ -605,7 +605,7 @@ class Thread(object):
         :param daemonic: whether attempting to turn daemon mode on or off
         :type daemonic: bool
         """
-        return
+        pass
     setDaemon = set_daemon
 
     daemon = property(is_daemon, set_daemon,
@@ -632,9 +632,9 @@ class Thread(object):
     _counter = 0
 
     @classmethod
-    def _newname(cls):
+    def _newname(cls, template="Thread-%d"):
         cls._counter += 1
-        return "Thread-%d" % cls._counter
+        return template % cls._counter
 
     _active = {}
     _active_by_id = {}

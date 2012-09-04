@@ -41,6 +41,15 @@ _main_thread.__dict__.update({
 })
 _main_thread._activate()
 
+class _DummyThread(util.Thread):
+    def __init__(self):
+        super(_DummyThread, self).__init__(name=self._newname("Dummy-%d"))
+
+    def join(self, timeout=None):
+        # this is a strange way for the stdlib to raise here,
+        # but we'll just match the raised exception
+        assert False, "cannot join a dummy thread"
+
 def enumerate_threads():
     return util.Thread._active.values()
 
@@ -52,10 +61,10 @@ def current_thread():
     if glet in util.Thread._active:
         return util.Thread._active[glet]
 
-    thread = util.Thread()
+    thread = _DummyThread()
     thread._glet = glet
     thread._ident = id(glet)
-    thread._activate()
+    thread._started = True
     return thread
 
 

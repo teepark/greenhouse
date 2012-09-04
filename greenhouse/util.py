@@ -508,7 +508,7 @@ class Thread(object):
         status = "initial"
         if self._started:
             status = "started"
-        if not self._finished.is_set():
+        if self._finished.is_set():
             status = "stopped"
         return "<%s (%s, %s)>" % (type(self).__name__, self.name, status)
 

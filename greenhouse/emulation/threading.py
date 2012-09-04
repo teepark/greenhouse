@@ -41,18 +41,6 @@ _main_thread.__dict__.update({
 })
 _main_thread._activate()
 
-_dummy_thread = object.__new__(util.Thread)
-_dummy_thread.__dict__.update({
-    'name': 'GreenThread',
-    '_target': None,
-    '_args': (),
-    '_kwargs': {},
-    '_started': True,
-    '_finished': util.Event(),
-    '_glet': None,
-    '_ident': id(None),
-})
-
 def enumerate_threads():
     return util.Thread._active.values()
 
@@ -60,7 +48,15 @@ def active_thread_count():
     return len(util.Thread._active)
 
 def current_thread():
-    return util.Thread._active.get(compat.getcurrent(), _dummy_thread)
+    glet = compat.getcurrent()
+    if glet in util.Thread._active:
+        return util.Thread._active[glet]
+
+    thread = util.Thread()
+    thread._glet = glet
+    thread._ident = id(glet)
+    thread._activate()
+    return thread
 
 
 thread_patchers = {

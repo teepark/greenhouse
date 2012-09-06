@@ -184,6 +184,7 @@ def green_spawner(func):
         if details & 0xff:
             return -(details & 0xff)
         return details >> 8
+    return green_version
 
 green_spawnl = green_spawner(original_os_spawnl)
 green_spawnle = green_spawner(original_os_spawnle)

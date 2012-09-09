@@ -61,13 +61,13 @@ class green_poll(object):
 
 
 class green_epoll(object):
-    def __init__(self, from_ep=None):
+    def __init__(self, sizehint=-1, from_ep=None):
         self._readable = util.Event()
         self._writable = util.Event()
         if from_ep:
             self._epoll = from_ep
         else:
-            self._epoll = original_epoll()
+            self._epoll = original_epoll(sizehint)
         scheduler._register_fd(
                 self._epoll.fileno(), self._on_readable, self._on_writable)
 
@@ -106,7 +106,8 @@ class green_epoll(object):
         finally:
             poller.unregister(self._epoll.fileno(), reg)
 
-    def register(self, fd, eventmask):
+    def register(self, fd,
+            eventmask=select.EPOLLIN | select.EPOLLOUT | select.EPOLLPRI):
         self._epoll.register(fd, eventmask)
 
     def unregister(self, fd):

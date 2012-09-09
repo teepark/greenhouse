@@ -82,3 +82,14 @@
 
 2.0.1 (5/9/2012)
     - backdoor bugfix, it was rejecting LF line endings, required CRLF
+
+2.1.0 (9/8/2012)
+    - cleanup and simplification of backdoor code after the recent work on it
+    - epoll.fromfd and kqueue.fromfd infinite recursion fixes
+    - incoming/outgoing stdin/out/err [un]patching hooks around backdoors
+    - docstring annotations of every blocking function through the API
+    - emulation completeness and correctness improved on the threading module
+    - logging added at low priorities for important events in the scheduler,
+      backdoor, emulation
+    - match updates in pypy
+    - SSL emulation

@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenhouse.pool – Managed Greenlet Pools &mdash; greenhouse 1.0.0 documentation</title>
+    <title>greenhouse.pool – Managed Greenlet Pools &mdash; greenhouse 2.1.0 documentation</title>
     
     <link rel="stylesheet" href="../static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0.0',
+        VERSION:     '2.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="greenhouse 1.0.0 documentation" href="../index.html" />
+    <link rel="top" title="greenhouse 2.1.0 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.compat – Greenlet and Compatibility Hacks" href="compat.html" />
     <link rel="prev" title="greenhouse.util – Greenlet-Aware Concurrency Primitives" href="util.html" /> 
   </head>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="util.html" title="greenhouse.util – Greenlet-Aware Concurrency Primitives"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">greenhouse 1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 2.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -300,7 +300,7 @@ produced for thie call</td>
 <tt class="descclassname">greenhouse.pool.</tt><tt class="descname">map</tt><big>(</big><em>func</em>, <em>items</em>, <em>pool_size=10</em><big>)</big><a class="headerlink" href="#greenhouse.pool.map" title="Permalink to this definition">¶</a></dt>
 <dd><p>a parallelized work-alike to the built-in <tt class="docutils literal"><span class="pre">map</span></tt> function</p>
 <p>this function works by creating an <a class="reference internal" href="#greenhouse.pool.OrderedPool" title="greenhouse.pool.OrderedPool"><tt class="xref py py-class docutils literal"><span class="pre">OrderedPool</span></tt></a> and placing all
-the arguments in <a class="reference internal" href="#greenhouse.pool.OrderedPool.put" title="greenhouse.pool.OrderedPool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put</span></tt></a> calls, and yielding items
+the arguments in <a class="reference internal" href="#greenhouse.pool.OrderedPool.put" title="greenhouse.pool.OrderedPool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put</span></tt></a> calls, then yielding items
 produced by the pool&#8217;s <a class="reference internal" href="#greenhouse.pool.OrderedPool.get" title="greenhouse.pool.OrderedPool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get</span></tt></a> method.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -381,7 +381,7 @@ calls when a pool is <a class="reference internal" href="#greenhouse.pool.Pool.c
         <li class="right" >
           <a href="util.html" title="greenhouse.util – Greenlet-Aware Concurrency Primitives"
              >previous</a> |</li>
-        <li><a href="../index.html">greenhouse 1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 2.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -60,6 +60,11 @@ class green_poll(object):
         del self._registry[fd]
 
 
+if hasattr(select, 'epoll'):
+    all_epoll_evs = select.EPOLLIN | select.EPOLLOUT | select.EPOLLPRI
+else:
+    all_epoll_evs = 0
+
 class green_epoll(object):
     def __init__(self, sizehint=-1, from_ep=None):
         self._readable = util.Event()
@@ -106,8 +111,7 @@ class green_epoll(object):
         finally:
             poller.unregister(self._epoll.fileno(), reg)
 
-    def register(self, fd,
-            eventmask=select.EPOLLIN | select.EPOLLOUT | select.EPOLLPRI):
+    def register(self, fd, eventmask=all_epoll_evs):
         self._epoll.register(fd, eventmask)
 
     def unregister(self, fd):

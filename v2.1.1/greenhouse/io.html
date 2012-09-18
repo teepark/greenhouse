@@ -1,0 +1,860 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.io – Cooperative I/O Drop-Ins &mdash; greenhouse 2.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse 2.1.1 documentation" href="../index.html" />
+    <link rel="next" title="greenhouse.util – Greenlet-Aware Concurrency Primitives" href="util.html" />
+    <link rel="prev" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler" href="scheduler.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="util.html" title="greenhouse.util – Greenlet-Aware Concurrency Primitives"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="scheduler.html" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.io.sockets">
+<span id="greenhouse-io-cooperative-i-o-drop-ins"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins<a class="headerlink" href="#module-greenhouse.io.sockets" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="greenhouse.io.sockets.Socket">
+<em class="property">class </em><tt class="descclassname">greenhouse.io.sockets.</tt><tt class="descname">Socket</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket" title="Permalink to this definition">¶</a></dt>
+<dd><p>a replacement class for the standard library&#8217;s <tt class="docutils literal"><span class="pre">socket.socket</span></tt></p>
+<p><a class="reference internal" href="#greenhouse.io.sockets.Socket" title="greenhouse.io.sockets.Socket"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.Socket</span></tt></a>s wrap the standard library&#8217;s sockets,
+using the underlying socket in a non-blocking way and blocking the current
+coroutine where appropriate.</p>
+<p>They provide a totally matching API, however</p>
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.accept">
+<tt class="descname">accept</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.accept" title="Permalink to this definition">¶</a></dt>
+<dd><p>accept a connection on the host/port to which the socket is bound</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if there is no connection attempt already queued, this method will
+block until a connection is made</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a two-tuple of <tt class="docutils literal"><span class="pre">(socket,</span> <span class="pre">address)</span></tt> where the socket is connected,
+and the address is the <tt class="docutils literal"><span class="pre">(ip_address,</span> <span class="pre">port)</span></tt> of the remote end</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.bind">
+<tt class="descname">bind</tt><big>(</big><em>address</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.bind" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the socket to operate on an address</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address on which the socket will operate. the format of this
+argument depends on the socket&#8217;s type; for TCP sockets, this is a
+<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>close the current connection on the socket</p>
+<p>After this point all operations attempted on this socket will fail, and
+once any queued data is flushed, the remote end will not receive any
+more data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.connect">
+<tt class="descname">connect</tt><big>(</big><em>address</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>initiate a new connection to a remote socket bound to an address</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block until the connection has been made</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
+depends on the socket&#8217;s type; for TCP sockets, this is a
+<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port</span></tt>) two-tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.connect_ex">
+<tt class="descname">connect_ex</tt><big>(</big><em>address</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.connect_ex" title="Permalink to this definition">¶</a></dt>
+<dd><p>initiate a connection without blocking</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>address</strong> &#8211; the address to which to initiate a connection, the format of which
+depends on the socket&#8217;s type; for TCP sockets, this is a
+<tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt> two-tuple</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the error code for the connection attempt &#8211; 0 indicates success</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.dup">
+<tt class="descname">dup</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.dup" title="Permalink to this definition">¶</a></dt>
+<dd><p>create a new copy of the current socket on the same file descriptor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a new <a class="reference internal" href="#greenhouse.io.sockets.Socket" title="greenhouse.io.sockets.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.fileno">
+<tt class="descname">fileno</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.fileno" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the file descriptor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the integer file descriptor of the socket</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.getpeername">
+<tt class="descname">getpeername</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.getpeername" title="Permalink to this definition">¶</a></dt>
+<dd><p>address information for the remote end of a connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a representation of the address at the remote end of the
+connection, the format depends on the socket&#8217;s type</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.getsockname">
+<tt class="descname">getsockname</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.getsockname" title="Permalink to this definition">¶</a></dt>
+<dd><p>address information for the local end of a connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a representation of the address at the local end of the connection,
+the format depends on the socket&#8217;s type</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.getsockopt">
+<tt class="descname">getsockopt</tt><big>(</big><em>level</em>, <em>optname</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.getsockopt" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the value of a given socket option</p>
+<p>the values for <tt class="docutils literal"><span class="pre">level</span></tt> and <tt class="docutils literal"><span class="pre">optname</span></tt> will usually come from
+constants in the standard library <tt class="docutils literal"><span class="pre">socket</span></tt> module. consult the unix
+manpage <tt class="docutils literal"><span class="pre">getsockopt(2)</span></tt> for more information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>level</strong> (<em>int</em>) &#8211; the level of the requested socket option</li>
+<li><strong>optname</strong> (<em>int</em>) &#8211; the specific socket option requested</li>
+<li><strong>buflen</strong> (<em>int</em>) &#8211; the length of the buffer to use to collect the raw value of the
+socket option. if provided, the buffer is returned as a string and
+it is not parsed.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a string of the socket option&#8217;s value</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.gettimeout">
+<tt class="descname">gettimeout</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.gettimeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the timeout set for this specific socket</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the number of seconds the socket&#8217;s blocking operations should block
+before raising a <tt class="docutils literal"><span class="pre">socket.timeout</span></tt> in a float value</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.listen">
+<tt class="descname">listen</tt><big>(</big><em>backlog</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.listen" title="Permalink to this definition">¶</a></dt>
+<dd><p>listen for connections made to the socket</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>backlog</strong> (<em>int</em>) &#8211; the queue length for connections that haven&#8217;t yet been
+<a class="reference internal" href="#greenhouse.io.sockets.Socket.accept" title="greenhouse.io.sockets.Socket.accept"><tt class="xref py py-meth docutils literal"><span class="pre">accept()</span></tt></a>ed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.makefile">
+<tt class="descname">makefile</tt><big>(</big><em>mode='r'</em>, <em>bufsize=-1</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.makefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>create a file-like object that wraps the socket</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mode</strong> (<em>str</em>) &#8211; like the <tt class="docutils literal"><span class="pre">mode</span></tt> argument for other files, indicates read <tt class="docutils literal"><span class="pre">'r'</span></tt>,
+write <tt class="docutils literal"><span class="pre">'w'</span></tt>, or both <tt class="docutils literal"><span class="pre">'r+'</span></tt> (default <tt class="docutils literal"><span class="pre">'r'</span></tt>)</li>
+<li><strong>bufsize</strong> (<em>int</em>) &#8211; the length of the read buffer to use. 0 means unbuffered, &lt; 0 means
+use the system default (default -1)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a file-like object for which reading and writing sends and receives
+data over the socket connection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.recv">
+<tt class="descname">recv</tt><big>(</big><em>bufsize</em>, <em>flags=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.recv" title="Permalink to this definition">¶</a></dt>
+<dd><p>receive data from the connection</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block until data is available to be read</p>
+</div>
+<p>see the unix manpage for <tt class="docutils literal"><span class="pre">recv(2)</span></tt> for more information</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
+however</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the receive call. consult the unix manpage for
+<tt class="docutils literal"><span class="pre">recv(2)</span></tt> for what flags are available</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the data it read from the socket connection</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.recv_into">
+<tt class="descname">recv_into</tt><big>(</big><em>buffer</em>, <em>bufsize=-1</em>, <em>flags=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.recv_into" title="Permalink to this definition">¶</a></dt>
+<dd><p>receive data from the connection and place it into a buffer</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block until data is available to be read</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>buffer</strong> &#8211; a sized buffer object to receive the data (this is generally an
+<tt class="docutils literal"><span class="pre">array.array('c',</span> <span class="pre">...)</span></tt> instance)</li>
+<li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
+however. defaults to the size available in the provided buffer.</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the receive call. consult the unix manpage for
+<tt class="docutils literal"><span class="pre">recv(2)</span></tt> for what flags are available</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of bytes received and placed in the buffer</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.recvfrom">
+<tt class="descname">recvfrom</tt><big>(</big><em>bufsize</em>, <em>flags=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.recvfrom" title="Permalink to this definition">¶</a></dt>
+<dd><p>receive data on a socket that isn&#8217;t necessarily a 1-1 connection</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block until data is available to be read</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
+however</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the receive call. consult the unix manpage for
+<tt class="docutils literal"><span class="pre">recv(2)</span></tt> for what flags are available</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-tuple of <tt class="docutils literal"><span class="pre">(data,</span> <span class="pre">address)</span></tt> &#8211; the string data received and
+the address from which it was received</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.recvfrom_into">
+<tt class="descname">recvfrom_into</tt><big>(</big><em>buffer</em>, <em>bufsize=-1</em>, <em>flags=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.recvfrom_into" title="Permalink to this definition">¶</a></dt>
+<dd><p>receive data on a non-TCP socket and place it in a buffer</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block until data is available to be read</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>buffer</strong> &#8211; a sized buffer object to receive the data (this is generally an
+<tt class="docutils literal"><span class="pre">array.array('c',</span> <span class="pre">...)</span></tt> instance)</li>
+<li><strong>bufsize</strong> (<em>int</em>) &#8211; the maximum number of bytes to receive. fewer may be returned,
+however. defaults to the size available in the provided buffer.</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the receive call. consult the unix manpage for
+<tt class="docutils literal"><span class="pre">recv(2)</span></tt> for what flags are available</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-tuple of <tt class="docutils literal"><span class="pre">(bytes,</span> <span class="pre">address)</span></tt> &#8211; the number of bytes received
+and placed in the buffer, and the address it was received from</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.send">
+<tt class="descname">send</tt><big>(</big><em>data</em>, <em>flags=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>send data over the socket connection</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method may block if the socket&#8217;s send buffer is full</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>str</em>) &#8211; the data to send</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the send call. this has the same meaning as for
+<a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of bytes successfully sent, which may not necessarily be
+all the provided data</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.sendall">
+<tt class="descname">sendall</tt><big>(</big><em>data</em>, <em>flags=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.sendall" title="Permalink to this definition">¶</a></dt>
+<dd><p>send data over the connection, and keep sending until it all goes</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method may block if the socket&#8217;s send buffer is full</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<em>str</em>) &#8211; the data to send</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the send call. this has the same meaning as for
+<a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.sendto">
+<tt class="descname">sendto</tt><big>(</big><em>data</em>, <em>*args</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.sendto" title="Permalink to this definition">¶</a></dt>
+<dd><p>send data to a particular address</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method may block if the socket&#8217;s send buffer is full</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<em>str</em>) &#8211; the data to send</li>
+<li><strong>flags</strong> (<em>int</em>) &#8211; flags for the send call. this has the same meaning as for
+<a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a>. defaults to 0</li>
+<li><strong>address</strong> &#8211; a representation of the address to which to send the data, the
+format depends on the socket&#8217;s type</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.setblocking">
+<tt class="descname">setblocking</tt><big>(</big><em>flag</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.setblocking" title="Permalink to this definition">¶</a></dt>
+<dd><p>modify the behavior of blocking methods on the socket</p>
+<p>greenhouse sockets already <tt class="docutils literal"><span class="pre">setblocking(False)</span></tt> on the underlying
+standard python socket, but modifying this flag will affect the
+behavior of sockets either blocking the current coroutine or not.</p>
+<p>if this blocking is turned off, then blocking methods (such as
+<a class="reference internal" href="#greenhouse.io.sockets.Socket.recv" title="greenhouse.io.sockets.Socket.recv"><tt class="xref py py-meth docutils literal"><span class="pre">recv()</span></tt></a>) will raise the relevant exception when they would
+otherwise block the coroutine.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flag</strong> (<em>bool</em>) &#8211; whether to enable or disable blocking</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.setsockopt">
+<tt class="descname">setsockopt</tt><big>(</big><em>level</em>, <em>optname</em>, <em>value</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.setsockopt" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the value of a given socket option</p>
+<p>the values for <tt class="docutils literal"><span class="pre">level</span></tt> and <tt class="docutils literal"><span class="pre">optname</span></tt> will usually come from
+constants in the standard library <tt class="docutils literal"><span class="pre">socket</span></tt> module. consult the unix
+manpage <tt class="docutils literal"><span class="pre">setsockopt(2)</span></tt> for more information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>level</strong> (<em>int</em>) &#8211; the level of the set socket option</li>
+<li><strong>optname</strong> (<em>int</em>) &#8211; the specific socket option to set</li>
+<li><strong>value</strong> (<em>int</em>) &#8211; the value to set for the option</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.settimeout">
+<tt class="descname">settimeout</tt><big>(</big><em>timeout</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.settimeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the timeout for this specific socket</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>float or None</em>) &#8211; the number of seconds the socket&#8217;s blocking operations should block
+before raising a <tt class="docutils literal"><span class="pre">socket.timeout</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.sockets.Socket.shutdown">
+<tt class="descname">shutdown</tt><big>(</big><em>how</em><big>)</big><a class="headerlink" href="#greenhouse.io.sockets.Socket.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>close one or both ends of the connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>how</strong> &#8211; the end(s) of the connection to shutdown. valid values are
+<tt class="docutils literal"><span class="pre">socket.SHUT_RD</span></tt>, <tt class="docutils literal"><span class="pre">socket.SHUT_WR</span></tt>, and <tt class="docutils literal"><span class="pre">socket.SHUT_RW</span></tt>
+for shutting down the read end, the write end, or both respectively</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.io.files.File">
+<em class="property">class </em><tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">File</tt><big>(</big><em>name</em>, <em>mode='rb'</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File" title="Permalink to this definition">¶</a></dt>
+<dd><p>the greenhouse drop-in replacement for the built-in <tt class="docutils literal"><span class="pre">file</span></tt> type</p>
+<p>this class will use non-blocking file descriptors for its IO, so that
+whatever readystate information the OS and filesystem provide will be used
+to block only a single coroutine rather than the whole process.
+unfortunately filesystems tend to be very unreliable in this regard.</p>
+<dl class="method">
+<dt id="greenhouse.io.files.File.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>close the file, and its underlying descriptor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.fileno">
+<tt class="descname">fileno</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.fileno" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the file descriptor integer</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.flush">
+<tt class="descname">flush</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.flush" title="Permalink to this definition">¶</a></dt>
+<dd><p>flush buffered writes to disk immediately</p>
+<p>this is provided for compatibility &#8211; this class does no write
+buffering itself, so it is a no-op</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="greenhouse.io.files.File.fromfd">
+<em class="property">classmethod </em><tt class="descname">fromfd</tt><big>(</big><em>fd</em>, <em>mode='rb'</em>, <em>bufsize=-1</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.fromfd" title="Permalink to this definition">¶</a></dt>
+<dd><p>create a cooperating greenhouse file from an existing descriptor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fd</strong> (<em>int</em>) &#8211; the file descriptor to wrap in a new file object</li>
+<li><strong>mode</strong> (<em>str</em>) &#8211; the file mode</li>
+<li><strong>bufsize</strong> &#8211; the size of read buffer to use. 0 indicates unbuffered, and &lt; 0
+means use the system default. defaults to -1</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a new <tt class="xref py py-class docutils literal"><span class="pre">File</span></tt> object connected to the descriptor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.isatty">
+<tt class="descname">isatty</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.isatty" title="Permalink to this definition">¶</a></dt>
+<dd><p>return whether the file is connected to a tty or not</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.read">
+<tt class="descname">read</tt><big>(</big><em>size=-1</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>read a number of bytes from the file and return it as a string</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block if there is no data already available</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<em>int</em>) &#8211; the maximum number of bytes to read from the file. &lt; 0 means read
+the file to the end</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a string of the read file contents</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.readline">
+<tt class="descname">readline</tt><big>(</big><em>max_len=-1</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.readline" title="Permalink to this definition">¶</a></dt>
+<dd><p>read from the file until a newline is encountered</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block if there isn&#8217;t already a full line available
+from the data source</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_len</strong> (<em>int</em>) &#8211; stop reading a single line after this many bytes</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a string of the line it read from the file, including the newline
+at the end</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.readlines">
+<tt class="descname">readlines</tt><big>(</big><em>bufsize=-1</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.readlines" title="Permalink to this definition">¶</a></dt>
+<dd><p>reads the entire file, producing the lines one at a time</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block until the data source is exhausted</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>bufsize</strong> (<em>int</em>) &#8211; the read buffer size to use</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a list of all the lines in the file to the end</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.seek">
+<tt class="descname">seek</tt><big>(</big><em>position</em>, <em>modifier=0</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.seek" title="Permalink to this definition">¶</a></dt>
+<dd><p>move the cursor on the file descriptor to a different location</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>position</strong> (<em>int</em>) &#8211; an integer offset from the location indicated by the modifier</li>
+<li><strong>modifier</strong> &#8211; <p>an indicator of how to find the seek location.</p>
+<ul>
+<li><tt class="docutils literal"><span class="pre">os.SEEK_SET</span></tt> means start from the beginning of the file</li>
+<li><tt class="docutils literal"><span class="pre">os.SEEK_CUR</span></tt> means start wherever the cursor already is</li>
+<li><tt class="docutils literal"><span class="pre">os.SEEK_END</span></tt> means start from the end of the file</li>
+</ul>
+<p>the default is <tt class="docutils literal"><span class="pre">os.SEEK_SET</span></tt></p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.tell">
+<tt class="descname">tell</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.tell" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the file descriptor&#8217;s position relative to the file&#8217;s beginning</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.write">
+<tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>write data to the file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>str</em>) &#8211; the data to write into the file, at the descriptor&#8217;s current
+position</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.io.files.File.writelines">
+<tt class="descname">writelines</tt><big>(</big><em>lines</em><big>)</big><a class="headerlink" href="#greenhouse.io.files.File.writelines" title="Permalink to this definition">¶</a></dt>
+<dd><p>write a sequence of strings into the file</p>
+<p><tt class="xref py py-meth docutils literal"><span class="pre">writelines()</span></tt> does not add newlines to the strings</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lines</strong> (<em>iterable</em>) &#8211; a sequence of strings to write to the file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-greenhouse.io.files"></span><dl class="data">
+<dt id="greenhouse.io.files.stdin">
+<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stdin</tt><em class="property"> = &lt;greenhouse.io.files._StdIOFile object at 0x18e23d0&gt;</em><a class="headerlink" href="#greenhouse.io.files.stdin" title="Permalink to this definition">¶</a></dt>
+<dd><p>a non-blocking file object for cooperative stdin reading</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="greenhouse.io.files.stdout">
+<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stdout</tt><em class="property"> = &lt;greenhouse.io.files._StdIOFile object at 0x18e2590&gt;</em><a class="headerlink" href="#greenhouse.io.files.stdout" title="Permalink to this definition">¶</a></dt>
+<dd><p>a non-blocking file object for cooperative stdout writing</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="greenhouse.io.files.stderr">
+<tt class="descclassname">greenhouse.io.files.</tt><tt class="descname">stderr</tt><em class="property"> = &lt;greenhouse.io.files._StdIOFile object at 0x18e26d0&gt;</em><a class="headerlink" href="#greenhouse.io.files.stderr" title="Permalink to this definition">¶</a></dt>
+<dd><p>a non-blocking file object for cooperative stderr writing</p>
+</dd></dl>
+
+<span class="target" id="module-greenhouse.io.descriptor"></span><dl class="function">
+<dt id="greenhouse.io.descriptor.wait_fds">
+<tt class="descclassname">greenhouse.io.descriptor.</tt><tt class="descname">wait_fds</tt><big>(</big><em>fd_events</em>, <em>inmask=1</em>, <em>outmask=2</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.io.descriptor.wait_fds" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait for the first of a number of file descriptors to have activity</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>this method can block</p>
+<p class="last">it will return once there is relevant activity on the file descriptors,
+or the timeout expires</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fd_events</strong> (<em>list</em>) &#8211; two-tuples, each one a file descriptor and a mask made up of the inmask
+and/or the outmask bitwise-ORd together</li>
+<li><strong>inmask</strong> (<em>int</em>) &#8211; the mask to use for readable events (default 1)</li>
+<li><strong>outmask</strong> (<em>int</em>) &#8211; the mask to use for writable events (default 2)</li>
+<li><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum time to wait before raising an exception (default None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a list of two-tuples, each is a file descriptor and an event mask (made
+up of inmask and/or outmask bitwise-ORd together) representing readable
+and writable events</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<span class="target" id="module-greenhouse.io.ipc"></span><dl class="function">
+<dt id="greenhouse.io.ipc.pipe">
+<tt class="descclassname">greenhouse.io.ipc.</tt><tt class="descname">pipe</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.io.ipc.pipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>create an inter-process communication pipe</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a pair of <tt class="xref py py-class docutils literal"><span class="pre">File</span></tt> objects <tt class="docutils literal"><span class="pre">(read,</span> <span class="pre">write)</span></tt> for the two ends of
+the pipe</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="scheduler.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenhouse.scheduler</span></tt> &#8211; Interacting With The Greenhouse Scheduler</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="util.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">greenhouse.util</span></tt> &#8211; Greenlet-Aware Concurrency Primitives</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/io.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="util.html" title="greenhouse.util – Greenlet-Aware Concurrency Primitives"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="scheduler.html" title="greenhouse.scheduler – Interacting With The Greenhouse Scheduler"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Travis J Parker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,238 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.emulation – Faking Out Third Parties &mdash; greenhouse 2.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse 2.1.1 documentation" href="../index.html" />
+    <link rel="next" title="greenhouse.backdoor – Interpreter On A Socket" href="backdoor.html" />
+    <link rel="prev" title="greenhouse.compat – Greenlet and Compatibility Hacks" href="compat.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="backdoor.html" title="greenhouse.backdoor – Interpreter On A Socket"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="compat.html" title="greenhouse.compat – Greenlet and Compatibility Hacks"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.emulation">
+<span id="greenhouse-emulation-faking-out-third-parties"></span><h1><a class="reference internal" href="#module-greenhouse.emulation" title="greenhouse.emulation"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.emulation</span></tt></a> &#8211; Faking Out Third Parties<a class="headerlink" href="#module-greenhouse.emulation" title="Permalink to this headline">¶</a></h1>
+<p>monkey-patching facilities for greenhouse&#8217;s  cooperative stdlib replacements</p>
+<p>many of the apis in greenhouse (particularly in the <a class="reference internal" href="util.html#module-greenhouse.util" title="greenhouse.util"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.util</span></tt></a>
+module) have been explicitly made to match the signatures and behavior of I/O
+and threading related apis from the python standard library.</p>
+<p>this module enables monkey-patching the stdlib modules to swap in the
+greenhouse versions, the idea being that you can cause a third-party library to
+use coroutines without it having to be explicitly written that way.</p>
+<dl class="function">
+<dt id="greenhouse.emulation.patch">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">patch</tt><big>(</big><em>*module_names</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply monkey-patches to stdlib modules in-place</p>
+<p>imports the relevant modules and simply overwrites attributes on the module
+objects themselves. those attributes may be functions, classes or other
+attributes.</p>
+<p>valid arguments are:</p>
+<ul class="simple">
+<li>__builtin__</li>
+<li>Queue</li>
+<li>fcntl</li>
+<li>os</li>
+<li>select</li>
+<li>signal</li>
+<li>socket</li>
+<li>ssl</li>
+<li>sys</li>
+<li>thread</li>
+<li>threading</li>
+<li>time</li>
+<li>zmq</li>
+</ul>
+<p>with no arguments, patches everything it can in all of the above modules</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><tt class="docutils literal"><span class="pre">ValueError</span></tt> if an unknown module name is provided</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>lots more standard library modules can be made non-blocking by virtue
+of patching some combination of the the above (because they only block
+by using blocking functions defined elsewhere). a few examples:</p>
+<ul class="last simple">
+<li><tt class="docutils literal"><span class="pre">subprocess</span></tt> works cooperatively with <tt class="docutils literal"><span class="pre">os</span></tt> and <tt class="docutils literal"><span class="pre">select</span></tt> patched</li>
+<li><tt class="docutils literal"><span class="pre">httplib</span></tt>, <tt class="docutils literal"><span class="pre">urllib</span></tt> and <tt class="docutils literal"><span class="pre">urllib2</span></tt> will all operate
+cooperatively with <tt class="docutils literal"><span class="pre">socket</span></tt> and <tt class="docutils literal"><span class="pre">ssl</span></tt> patched</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.emulation.unpatch">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">unpatch</tt><big>(</big><em>*module_names</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.unpatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>undo <a class="reference internal" href="#greenhouse.emulation.patch" title="greenhouse.emulation.patch"><tt class="xref py py-func docutils literal"><span class="pre">patch()</span></tt></a>es to standard library modules</p>
+<p>this function takes one or more module names and puts back their patched
+attributes to the standard library originals.</p>
+<p>valid arguments are the same as for <a class="reference internal" href="#greenhouse.emulation.patch" title="greenhouse.emulation.patch"><tt class="xref py py-func docutils literal"><span class="pre">patch()</span></tt></a>.</p>
+<p>with no arguments, undoes all monkeypatches that have been applied</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><tt class="docutils literal"><span class="pre">ValueError</span></tt> if an unknown module name is provided</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.emulation.patched">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">patched</tt><big>(</big><em>module_name</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.patched" title="Permalink to this definition">¶</a></dt>
+<dd><p>import and return a named module with patches applied locally only</p>
+<p>this function returns a module after importing it in such as way that it
+will operate cooperatively, but not overriding the module globally.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">green_httplib</span> <span class="o">=</span> <span class="n">patched</span><span class="p">(</span><span class="s">&quot;httplib&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># using green_httplib will only block greenlets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httplib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># using httplib will block threads/processes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># both can exist simultaneously</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>module_name</strong> (<em>str</em>) &#8211; the module&#8217;s name that is to be imported. this can be a dot-delimited
+name, in which case the module at the end of the path is the one that
+will be returned</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the module indicated by module_name, imported so that it will not block
+globally, but also not touching existing global modules</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.emulation.patched_context">
+<tt class="descclassname">greenhouse.emulation.</tt><tt class="descname">patched_context</tt><big>(</big><em>*args</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#greenhouse.emulation.patched_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply emulation patches only for a specific context</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>module_names</strong> &#8211; var-args for the modules to patch, as in <a class="reference internal" href="#greenhouse.emulation.patch" title="greenhouse.emulation.patch"><tt class="xref py py-func docutils literal"><span class="pre">patch()</span></tt></a></li>
+<li><strong>local</strong> &#8211; if True, unpatching is done on every switch-out, and re-patching on
+every switch-in, so that they are only applied for the one coroutine</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a contextmanager that patches on <tt class="docutils literal"><span class="pre">__enter__</span></tt> and unpatches on
+<tt class="docutils literal"><span class="pre">__exit__</span></tt></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="compat.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">greenhouse.compat</span></tt> &#8211; Greenlet and Compatibility Hacks</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="backdoor.html"
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">greenhouse.backdoor</span></tt> &#8211; Interpreter On A Socket</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/emulation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="backdoor.html" title="greenhouse.backdoor – Interpreter On A Socket"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="compat.html" title="greenhouse.compat – Greenlet and Compatibility Hacks"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Travis J Parker.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -93,3 +93,13 @@
       backdoor, emulation
     - match updates in pypy
     - SSL emulation
+
+2.1.1 (9/18/2012)
+    - fixed an infinite loop created by the Select poller when patching was
+      enabled (it was using select.select off the module, instead of grabbing
+      the function at import time)
+    - set default values for the 'eventmask' for (poll and epoll).register
+    - fixed a memory leak in the Select poller
+    - set the proper values for stdin, stdout, stderr in the event that the
+      objects on the sys module don't have a fileno() method (0, 1, 2
+      respectively)

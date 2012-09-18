@@ -180,8 +180,12 @@ class Select(object):
         self._registry.get(fd, {}).pop(counter, None)
 
         # rewrite the full mask
-        self._currentmasks[fd] = reduce(
+        newmask = reduce(
                 operator.or_, self._registry[fd].itervalues(), 0)
+        if newmask:
+            self._currentmasks[fd] = newmask
+        else:
+            self._currentmasks.pop(fd, 0)
 
         if not self._registry[fd]:
             self._registry.pop(fd)

@@ -6,6 +6,8 @@ import operator
 import select
 import sys
 
+_original_select = select.select
+
 
 class Poll(object):
     "a greenhouse poller using the poll system call"
@@ -193,7 +195,7 @@ class Select(object):
                 wlist.append(fd)
             if eventmask & self.ERRMASK:
                 xlist.append(fd)
-        rlist, wlist, xlist = select.select(rlist, wlist, xlist, timeout)
+        rlist, wlist, xlist = _original_select(rlist, wlist, xlist, timeout)
         events = collections.defaultdict(int)
         for fd in rlist:
             events[fd] |= self.INMASK

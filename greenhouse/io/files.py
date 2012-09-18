@@ -449,8 +449,8 @@ class _StdIOFile(FileBase):
 stdin = _StdIOFile(getattr(sys.stdin, "fileno", lambda: 0)())
 "a non-blocking file object for cooperative stdin reading"
 
-stdout = _StdIOFile(getattr(sys.stdout, "fileno", lambda: 0)())
+stdout = _StdIOFile(getattr(sys.stdout, "fileno", lambda: 1)())
 "a non-blocking file object for cooperative stdout writing"
 
-stderr = _StdIOFile(getattr(sys.stderr, "fileno", lambda: 0)())
+stderr = _StdIOFile(getattr(sys.stderr, "fileno", lambda: 2)())
 "a non-blocking file object for cooperative stderr writing"

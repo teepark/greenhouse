@@ -35,6 +35,11 @@ def green_select(rlist, wlist, xlist, timeout=None):
     return rlist_out, wlist_out, []
 
 
+if hasattr(select, "poll"):
+    all_poll_evs = select.POLLIN | select.POLLOUT | select.POLLPRI
+else:
+    all_poll_evs = 0
+
 class green_poll(object):
     def __init__(self):
         self._registry = {}
@@ -51,7 +56,7 @@ class green_poll(object):
         return io.wait_fds(self._registry.items(), timeout=timeout,
                 inmask=select.POLLIN, outmask=select.POLLOUT)
 
-    def register(self, fd, eventmask):
+    def register(self, fd, eventmask=all_poll_evs):
         fd = fd if isinstance(fd, int) else fd.fileno()
         self._registry[fd] = eventmask
 

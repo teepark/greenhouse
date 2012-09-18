@@ -105,6 +105,9 @@ def is_ipv4(name):
 def resolve(name):
     build_resolver()
 
+    if name is None:
+        return ["127.0.0.1"]
+
     if is_ipv4(name):
         return [name]
 

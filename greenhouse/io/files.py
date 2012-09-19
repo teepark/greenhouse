@@ -16,6 +16,11 @@ __all__ = ["File", "stdin", "stdout", "stderr"]
 
 _open = open
 _file = file
+_read = os.read
+_write = os.write
+_fdopen = os.fdopen
+_osopen = os.open
+_osclose = os.close
 
 
 class FileBase(object):
@@ -214,7 +219,7 @@ class File(FileBase):
 
         # open the file, get a descriptor
         try:
-            self._fileno = os.open(name, flags)
+            self._fileno = _osopen(name, flags)
         except OSError, exc:
             # stdlib open() raises IOError if the file doesn't exist, os.open
             # raises OSError. pfft, whatever.
@@ -278,7 +283,7 @@ class File(FileBase):
 
     def _read_chunk(self, size):
         try:
-            return os.read(self._fileno, size)
+            return _read(self._fileno, size)
         except EnvironmentError, err:
             if err.args[0] in (errno.EAGAIN, errno.EINTR):
                 self._wait(reading=True)
@@ -287,7 +292,7 @@ class File(FileBase):
 
     def _write_chunk(self, data):
         try:
-            return os.write(self._fileno, data)
+            return _write(self._fileno, data)
         except EnvironmentError, err:
             if err.args[0] in (errno.EAGAIN, errno.EINTR):
                 self._wait(reading=False)
@@ -328,7 +333,7 @@ class File(FileBase):
     def close(self):
         "close the file, and its underlying descriptor"
         self._closed = True
-        os.close(self._fileno)
+        _osclose(self._fileno)
 
     @property
     def closed(self):
@@ -378,7 +383,7 @@ class File(FileBase):
 
     def tell(self):
         "get the file descriptor's position relative to the file's beginning"
-        with os.fdopen(os.dup(self._fileno)) as fp:
+        with _fdopen(os.dup(self._fileno)) as fp:
             return fp.tell()
 
 
@@ -409,7 +414,7 @@ class _StdIOFile(FileBase):
         if scheduler.state.interrupted:
             raise IOError(errno.EINTR, "interrupted system call")
 
-        return os.read(self._fileno, size)
+        return _read(self._fileno, size)
 
     def _write_chunk(self, data):
         counter = scheduler.state.poller.register(self,
@@ -422,10 +427,10 @@ class _StdIOFile(FileBase):
         if scheduler.state.interrupted:
             raise IOError(errno.EINTR, "interrupted system call")
 
-        return os.write(self._fileno, data)
+        return _write(self._fileno, data)
 
     def close(self):
-        os.close(self._fileno)
+        _osclose(self._fileno)
 
     def fileno(self):
         return self._fileno

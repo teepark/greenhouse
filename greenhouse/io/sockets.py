@@ -384,7 +384,7 @@ class Socket(object):
 
 
 def socket_fromfd(fd, family, type_, *args):
-    raw_sock = socket.fromfd(fd, family, type_, *args)
+    raw_sock = _fromfd(fd, family, type_, *args)
     return Socket(fromsock=raw_sock)
 
 

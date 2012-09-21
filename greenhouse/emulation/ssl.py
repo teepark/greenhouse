@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import ssl
-import _ssl
 
 from ..io import sockets as gsock, ssl as gssl
 

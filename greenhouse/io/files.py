@@ -21,6 +21,7 @@ _write = os.write
 _fdopen = os.fdopen
 _osopen = os.open
 _osclose = os.close
+_fcntl = fcntl.fcntl
 
 
 class FileBase(object):
@@ -301,9 +302,9 @@ class File(FileBase):
 
     @staticmethod
     def _add_flags(fd, flags):
-        fdflags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fdflags = _fcntl(fd, fcntl.F_GETFL)
         if fdflags | flags != fdflags:
-            fcntl.fcntl(fd, fcntl.F_SETFL, flags | fdflags)
+            _fcntl(fd, fcntl.F_SETFL, flags | fdflags)
 
     @classmethod
     def fromfd(cls, fd, mode='rb', bufsize=-1):

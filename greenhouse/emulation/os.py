@@ -11,11 +11,13 @@ from .. import io, scheduler
 
 OS_TIMEOUT = 0.01
 
+original_fcntl = fcntl.fcntl
+
 
 def nonblocking_fd(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    flags = original_fcntl(fd, fcntl.F_GETFL)
     if not flags & os.O_NONBLOCK:
-        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        original_fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
     return flags
 
 
@@ -54,7 +56,7 @@ def green_read(fd, buffsize):
                 io.wait_fds([(fd, 1)])
     finally:
         if not flags & os.O_NONBLOCK:
-            fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+            original_fcntl(fd, fcntl.F_SETFL, flags)
 
 def green_write(fd, data):
     flags = nonblocking_fd(fd)
@@ -71,7 +73,7 @@ def green_write(fd, data):
                 io.wait_fds([(fd, 2)])
     finally:
         if not flags & os.O_NONBLOCK:
-            fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+            original_fcntl(fd, fcntl.F_SETFL, flags)
 
 def blocking_read(fd, buffsize):
     nonblocking_fd(fd)

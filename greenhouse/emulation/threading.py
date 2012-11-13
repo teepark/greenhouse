@@ -101,6 +101,7 @@ threading_patchers = {
     '_sleep': scheduler.pause_for,
     '_start_new_thread': green_start,
     '_active': util.Thread._active_by_id,
+    '_get_ident': thread_get_ident,
 }
 
 threading_local_patchers = {

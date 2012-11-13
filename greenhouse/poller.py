@@ -32,11 +32,13 @@ class Poll(object):
 
         # get the current registrations dictionary
         registrations = self._registry[fd]
-        newmask = reduce(
-                operator.or_, registrations.itervalues(), eventmask)
+        newmask = reduce(operator.or_,
+                registrations.itervalues(), eventmask)
 
         # update registrations in the OS poller
-        self._update_registration(fd, newmask, bool(registrations))
+        if registrations:
+            self._poller.unregister(fd)
+        self._poller.register(fd, newmask)
 
         # store the registration
         self._counter += 1
@@ -50,32 +52,20 @@ class Poll(object):
 
         registrations = self._registry[fd]
 
-        # allow for extra noop calls
-        if counter not in registrations:
-            self._registry.pop(fd)
-            return
-
-        mask = registrations.pop(counter)
-        the_rest = reduce(operator.or_, registrations.itervalues(), 0)
+        del registrations[counter]
+        oldmask = reduce(operator.or_, registrations.itervalues(), 0)
 
         # update the OS poller's registration
+        self._poller.unregister(fd)
         if registrations:
-            self._update_registration(fd, the_rest, True)
+            self._poller.register(fd, oldmask)
         else:
-            self._poller.unregister(fd)
-
-        if not registrations:
-            self._registry.pop(fd)
+            del self._registry[fd]
 
     def poll(self, timeout):
         if timeout is not None:
             timeout *= 1000
         return self._poller.poll(timeout)
-
-    def _update_registration(self, fd, mask, unregister=False):
-        if unregister:
-            self._poller.unregister(fd)
-        self._poller.register(fd, mask)
 
 
 class Epoll(Poll):
@@ -109,28 +99,55 @@ class KQueue(Poll):
         evs = self._poller.control(None, 2 * len(self._registry), timeout)
         return [(ev.ident, self._mask_map[ev.filter]) for ev in evs]
 
-    def _update_registration(self, fd, from_mask, to_mask):
-        if from_mask == to_mask:
-            return
+    def register(self, fd, eventmask=None):
+        # integer file descriptor
+        fd = fd if isinstance(fd, int) else fd.fileno()
 
-        xor = from_mask ^ to_mask
-        to_add = to_mask  & xor
-        to_drop = from_mask & xor
-        assert not to_add & to_drop # simple sanity
+        # mask nothing by default
+        if eventmask is None:
+            eventmask = self.INMASK | self.OUTMASK | self.ERRMASK
 
+        # get the current registrations dictionary
+        registrations = self._registry[fd]
+        oldmask = reduce(operator.or_, registrations.itervalues(), 0)
+
+        self._apply_events(fd, oldmask, oldmask | eventmask)
+
+        self._counter += 1
+        registrations[self._counter] = eventmask
+
+        return self._counter
+
+    def unregister(self, fd, counter):
+        # integer file descriptor
+        fd = fd if isinstance(fd, int) else fd.fileno()
+
+        registrations = self._registry[fd]
+
+        eventmask = registrations.pop(counter)
+        oldmask = reduce(operator.or_, registrations.itervalues(), 0)
+
+        self._apply_events(fd, oldmask | eventmask, oldmask)
+
+        if not registrations:
+            del self._registry[fd]
+
+    def _apply_events(self, fd, oldmask, newmask):
         events = []
-        if to_add & self.INMASK:
-            events.append(select.kevent(
-                fd, select.KQ_FILTER_READ, select.KQ_EV_ADD))
-        elif to_drop & self.INMASK:
-            events.append(select.kevent(
-                fd, select.KQ_FILTER_READ, select.KQ_EV_DELETE))
-        if to_add & self.OUTMASK:
-            events.append(select.kevent(
-                fd, select.KQ_FILTER_WRITE, select.KQ_EV_ADD))
-        elif to_drop & self.OUTMASK:
-            events.append(select.kevent(
-                fd, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE))
+
+        if self.INMASK & newmask & ~oldmask:
+            events.append(select.kevent(fd,
+                select.KQ_FILTER_READ, select.KQ_EV_ADD))
+        elif self.INMASK & oldmask & ~newmask:
+            events.append(select.kevent(fd,
+                select.KQ_FILTER_READ, select.KQ_EV_DELETE))
+
+        if self.OUTMASK & newmask & ~oldmask:
+            events.append(select.kevent(fd,
+                select.KQ_FILTER_WRITE, select.KQ_EV_ADD))
+        elif self.OUTMASK & oldmask & ~newmask:
+            events.append(select.kevent(fd,
+                select.KQ_FILTER_WRITE, select.KQ_EV_DELETE))
 
         if events:
             if sys.platform == 'darwin':

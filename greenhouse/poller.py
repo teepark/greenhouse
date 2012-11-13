@@ -32,11 +32,11 @@ class Poll(object):
 
         # get the current registrations dictionary
         registrations = self._registry[fd]
-        registered = reduce(
-                operator.or_, registrations.itervalues(), 0)
+        newmask = reduce(
+                operator.or_, registrations.itervalues(), eventmask)
 
         # update registrations in the OS poller
-        self._update_registration(fd, registered, registered | eventmask)
+        self._update_registration(fd, newmask, bool(registrations))
 
         # store the registration
         self._counter += 1
@@ -59,7 +59,10 @@ class Poll(object):
         the_rest = reduce(operator.or_, registrations.itervalues(), 0)
 
         # update the OS poller's registration
-        self._update_registration(fd, the_rest | mask, the_rest)
+        if registrations:
+            self._update_registration(fd, the_rest, True)
+        else:
+            self._poller.unregister(fd)
 
         if not registrations:
             self._registry.pop(fd)
@@ -69,12 +72,10 @@ class Poll(object):
             timeout *= 1000
         return self._poller.poll(timeout)
 
-    def _update_registration(self, fd, from_mask, to_mask):
-        if from_mask != to_mask:
-            if from_mask:
-                self._poller.unregister(fd)
-            if to_mask:
-                self._poller.register(fd, to_mask)
+    def _update_registration(self, fd, mask, unregister=False):
+        if unregister:
+            self._poller.unregister(fd)
+        self._poller.register(fd, mask)
 
 
 class Epoll(Poll):

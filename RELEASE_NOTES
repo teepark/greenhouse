@@ -103,3 +103,10 @@
     - set the proper values for stdin, stdout, stderr in the event that the
       objects on the sys module don't have a fileno() method (0, 1, 2
       respectively)
+
+2.1.2 (12/4/2012)
+    - fixed a class of infinite recursion issues that was all over the codebase
+      when greenhouse.patch() was in use
+    - fixed an issue with pool classes that was causing join() to never return
+    - removed a level of indirection in emulated sockets, speeding up and
+      simplifying them

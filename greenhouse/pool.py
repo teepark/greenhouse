@@ -65,12 +65,15 @@ class OneWayPool(object):
         while 1:
             input = self.inq.get()
             if input is _STOP:
+                self.inq.task_done()
                 break
             self._handle_one(input)
             self.inq.task_done()
 
     def _handle_one(self, input):
-        self._run_func(*input)
+        rval, success = self._run_func(*input)
+        if not success:
+            scheduler.handle_exception(*rval)
 
     def _run_func(self, args, kwargs):
         try:

@@ -41,6 +41,7 @@ original_os_spawnve = os.spawnve
 original_os_spawnvp = os.spawnvp
 original_os_spawnvpe = os.spawnvpe
 
+
 def green_read(fd, buffsize):
     flags = nonblocking_fd(fd)
     if flags & os.O_NONBLOCK:
@@ -57,6 +58,7 @@ def green_read(fd, buffsize):
     finally:
         if not flags & os.O_NONBLOCK:
             original_fcntl(fd, fcntl.F_SETFL, flags)
+
 
 def green_write(fd, data):
     flags = nonblocking_fd(fd)
@@ -75,6 +77,7 @@ def green_write(fd, data):
         if not flags & os.O_NONBLOCK:
             original_fcntl(fd, fcntl.F_SETFL, flags)
 
+
 def blocking_read(fd, buffsize):
     nonblocking_fd(fd)
     while 1:
@@ -85,6 +88,7 @@ def blocking_read(fd, buffsize):
                 raise
             io.wait_fds([(fd, 1)])
 
+
 def blocking_write(fd, data):
     nonblocking_fd(fd)
     while 1:
@@ -94,6 +98,7 @@ def blocking_write(fd, data):
             if exc.args[0] != errno.EAGAIN:
                 raise
             io.wait_fds([(fd, 2)])
+
 
 def polling_green_version(func, retry_test, opt_arg_num, arg_count, timeout):
     @functools.wraps(func)
@@ -123,9 +128,11 @@ green_wait3 = polling_green_version(
 green_wait4 = polling_green_version(
         original_os_wait4, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
 
+
 @functools.wraps(original_os_wait)
 def green_wait():
     return green_waitpid(0, 0)
+
 
 class green_popen_pipe(io.File):
     @classmethod
@@ -137,6 +144,7 @@ class green_popen_pipe(io.File):
     def close(self):
         super(green_popen_pipe, self).close()
         return green_waitpid(self._pid, 0)[1] or None
+
 
 @functools.wraps(original_os_popen)
 def green_popen(cmd, mode='r', bufsize=-1):
@@ -150,11 +158,13 @@ def green_popen(cmd, mode='r', bufsize=-1):
     return green_popen_pipe.fromfd(
             getattr(proc, pipe).fileno(), mode, proc.pid)
 
+
 @functools.wraps(original_os_popen2)
 def green_popen2(cmd, mode='r', bufsize=-1):
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
             stdin=green_subprocess.PIPE, stdout=green_subprocess.PIPE)
     return proc.stdin, proc.stdout
+
 
 @functools.wraps(original_os_popen3)
 def green_popen3(cmd, mode='r', bufsize=-1):
@@ -163,6 +173,7 @@ def green_popen3(cmd, mode='r', bufsize=-1):
             stderr=green_subprocess.PIPE)
     return proc.stdin, proc.stdout, proc.stderr
 
+
 @functools.wraps(original_os_popen4)
 def green_popen4(cmd, mode='r', bufsize=-1):
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
@@ -170,9 +181,11 @@ def green_popen4(cmd, mode='r', bufsize=-1):
             stderr=green_subprocess.STDOUT)
     return proc.stdin, proc.stdout
 
+
 @functools.wraps(original_os_system)
 def green_system(cmd):
     return green_waitpid(green_subprocess.Popen(cmd, shell=1).pid, 0)[1]
+
 
 def green_spawner(func):
     @functools.wraps(func)

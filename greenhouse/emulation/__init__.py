@@ -209,7 +209,8 @@ def unpatch(*module_names):
     if not module_names:
         module_names = _standard.keys()
 
-    log.info("undoing monkey-patches in-place (%d modules)" % len(module_names))
+    log.info("undoing monkey-patches in-place (%d modules)" %
+            len(module_names))
 
     for module_name in module_names:
         if module_name not in _standard:

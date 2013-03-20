@@ -182,7 +182,7 @@ class FileBase(object):
 
     @staticmethod
     def _mode_to_flags(mode):
-        flags = os.O_RDONLY | os.O_NONBLOCK # always non-blocking
+        flags = os.O_RDONLY | os.O_NONBLOCK  # always non-blocking
         if (('w' in mode or 'a' in mode) and 'r' in mode) or '+' in mode:
             # both read and write
             flags |= os.O_RDWR
@@ -320,7 +320,7 @@ class File(FileBase):
 
         :returns: a new :class:`File` object connected to the descriptor
         """
-        fp = object.__new__(cls) # bypass __init__
+        fp = object.__new__(cls)  # bypass __init__
         fp.mode = mode
         fp._fileno = fd
         fp._rbuf = StringIO()

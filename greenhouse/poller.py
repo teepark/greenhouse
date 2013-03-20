@@ -113,9 +113,9 @@ class KQueue(Poll):
             return
 
         xor = from_mask ^ to_mask
-        to_add = to_mask  & xor
+        to_add = to_mask & xor
         to_drop = from_mask & xor
-        assert not to_add & to_drop # simple sanity
+        assert not to_add & to_drop  # simple sanity
 
         events = []
         if to_add & self.INMASK:

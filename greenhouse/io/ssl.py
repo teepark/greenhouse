@@ -198,9 +198,8 @@ class SSLSocket(gsock.Socket):
             nbytes = 1024
         if self._sslobj:
             if flags != 0:
-                raise ValueError(
-                  "non-zero flags not allowed in calls to recv_into() on %s" %
-                  self.__class__)
+                raise ValueError("non-zero flags not allowed in calls to "
+                        "recv_into() on %s" % self.__class__)
             temp = self.read(nbytes)
             v = len(temp)
             buffer[:v] = temp
@@ -277,7 +276,8 @@ class SSLSocket(gsock.Socket):
                 self.ca_certs, self.ciphers)
 
         err = super(SSLSocket, self).connect_ex(address)
-        if err: return err
+        if err:
+            return err
 
         try:
             if self.do_handshake_on_connect:
@@ -385,7 +385,8 @@ class _timeout(object):
 
     @property
     def now(self):
-        if self._timeout is None: return None
+        if self._timeout is None:
+            return None
         timeout = self._deadline - time.time()
         if timeout < 0:
             raise self._exc('timed out')

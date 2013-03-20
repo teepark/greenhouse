@@ -13,6 +13,7 @@ def wrap_socket(sock, keyfile=None, certfile=None, server_side=False,
             ssl_version, ca_certs, do_handshake_on_connect,
             suppress_ragged_eofs, ciphers)
 
+
 def get_server_certificate(
         addr, ssl_version=ssl.PROTOCOL_SSLv3, ca_certs=None):
     if (ca_certs is not None):

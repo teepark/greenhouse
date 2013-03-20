@@ -16,9 +16,11 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     return [(socket.AF_INET, socktype, proto, '', (addr, port))
             for addr in addrs]
 
+
 @functools.wraps(socket.gethostbyname)
 def gethostbyname(hostname):
     return dns.resolve(hostname)[0]
+
 
 @functools.wraps(socket.gethostbyname_ex)
 def gethostbyname_ex(hostname):
@@ -32,6 +34,7 @@ def gethostbyname_ex(hostname):
         aliases = []
 
     return canon, aliases, results
+
 
 @functools.wraps(socket.getnameinfo)
 def getnameinfo(address, flags):

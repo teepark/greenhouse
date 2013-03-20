@@ -17,10 +17,12 @@ VERSION = (2, 1, 2, '')
 
 __version__ = ".".join(filter(None, (str(x) for x in VERSION)))
 
+reset_poller()
+
+
 # prime the pump. if there is a traceback before the mainloop greenlet
 # has a chance to get into its 'try' block, the mainloop will die of that
 # traceback and it will wind up being raised in the main greenlet
-reset_poller()
 @schedule
 def f():
     pass

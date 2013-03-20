@@ -16,11 +16,14 @@ def green_start(function, args, kwargs=None):
     scheduler.schedule(glet)
     return id(glet)
 
+
 def thread_exit():
     raise SystemExit()
 
+
 def thread_get_ident():
     return current_thread().ident
+
 
 def thread_stack_size(size=None):
     if size is not None:
@@ -41,6 +44,7 @@ _main_thread.__dict__.update({
 })
 _main_thread._activate()
 
+
 class _DummyThread(util.Thread):
     def __init__(self):
         super(_DummyThread, self).__init__(name=self._newname("Dummy-%d"))
@@ -50,11 +54,14 @@ class _DummyThread(util.Thread):
         # but we'll just match the raised exception
         assert False, "cannot join a dummy thread"
 
+
 def enumerate_threads():
     return util.Thread._active.values()
 
+
 def active_thread_count():
     return len(util.Thread._active)
+
 
 def current_thread():
     glet = compat.getcurrent()

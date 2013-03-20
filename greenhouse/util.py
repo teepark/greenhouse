@@ -12,6 +12,7 @@ __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
            "BoundedSemaphore", "Timer", "Local", "Thread", "Queue",
            "LifoQueue", "PriorityQueue", "Counter"]
 
+
 def _debugger(cls):
     import types
     for name in dir(cls):
@@ -29,6 +30,7 @@ def _debugger(cls):
                 return wrapper
             setattr(cls, name, extrascope(attr))
     return cls
+
 
 #@_debugger
 class Event(object):
@@ -89,7 +91,7 @@ class Event(object):
         if self._is_set:
             return False
 
-        current = compat.getcurrent() # the waiting greenlet
+        current = compat.getcurrent()  # the waiting greenlet
 
         waketime = None if timeout is None else time.time() + timeout
         if timeout is not None:
@@ -104,6 +106,7 @@ class Event(object):
                 return True
 
         return False
+
 
 #@_debugger
 class Lock(object):
@@ -190,6 +193,7 @@ class Lock(object):
     def __exit__(self, type, value, traceback):
         return self.release()
 
+
 class RLock(Lock):
     """a lock which may be acquired more than once by the same greenlet
 
@@ -259,6 +263,7 @@ class RLock(Lock):
             else:
                 self._locked = False
                 self._owner = None
+
 
 class Condition(object):
     """a synchronization object capable of waking all or one of its waiters
@@ -348,6 +353,7 @@ class Condition(object):
         self._waiters.clear()
     notifyAll = notify_all
 
+
 class Semaphore(object):
     """a synchronization object with a counter that blocks when it reaches 0
 
@@ -402,6 +408,7 @@ class Semaphore(object):
     def __exit__(self, type, value, traceback):
         return self.release()
 
+
 class BoundedSemaphore(Semaphore):
     """a semaphore with an upper limit to the counter
 
@@ -430,6 +437,7 @@ class BoundedSemaphore(Semaphore):
         return super(BoundedSemaphore, self).release()
     release.__doc__ = Semaphore.release.__doc__
 
+
 class Local(object):
     """an object that holds greenlet-local data
 
@@ -451,7 +459,7 @@ class Local(object):
             current = self._main_standin
         local = self._local_data.setdefault(current, {})
         if name not in local:
-            raise AttributeError, "Local object has no attribute %s" % name
+            raise AttributeError("Local object has no attribute %s" % name)
         return local[name]
 
     def __setattr__(self, name, value):
@@ -459,6 +467,7 @@ class Local(object):
         if current is compat.main_greenlet:
             current = self._main_standin
         self._local_data.setdefault(current, {})[name] = value
+
 
 class Thread(object):
     """a standin class for threads, but powered by greenlets
@@ -492,7 +501,7 @@ class Thread(object):
             args=(),
             kwargs=None,
             verbose=None):
-        assert group is None, "group argument must be None for now" #[sic]
+        assert group is None, "group argument must be None for now"  # [sic]
 
         self._target = target
         self.name = str(name or self._newname())
@@ -529,6 +538,7 @@ class Thread(object):
         """
         if self._started:
             raise RuntimeError("thread already started")
+
         def run():
             try:
                 self.run(*self._args, **self._kwargs)
@@ -537,6 +547,7 @@ class Thread(object):
                 pass
             finally:
                 self._deactivate()
+
         self._glet = scheduler.greenlet(run)
         self._ident = id(self._glet)
         scheduler.schedule(self._glet)

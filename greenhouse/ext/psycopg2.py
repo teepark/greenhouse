@@ -13,8 +13,8 @@ def wait_callback(connection):
     """callback function suitable for ``psycopg2.set_wait_callback``
 
     pass this function to ``psycopg2.extensions.set_wait_callack`` to force any
-    blocking operations from psycopg2 to only block the current coroutine, rather
-    than the entire thread or process
+    blocking operations from psycopg2 to only block the current coroutine,
+    rather than the entire thread or process
 
     to undo the change and return to normal blocking operation, use
     `psycopg2.extensions.set_wait_callback(None)``

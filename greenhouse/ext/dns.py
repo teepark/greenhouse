@@ -61,6 +61,7 @@ class LRU(object):
         self._keyed[key] = item
         self._purge()
 
+
 class LRUItem(object):
     __slots__ = ["key", "value", "next", "prev"]
 
@@ -74,9 +75,11 @@ etc_hosts = {}
 cache = LRU(DNS_CACHE_SIZE)
 resolver_obj = None
 
+
 def build_resolver(filename="/etc/resolv.conf"):
     if resolver_obj is None:
         globals()['resolver_obj'] = resolver.Resolver(filename)
+
 
 def load_etc_hosts(filename="/etc/hosts"):
     with open(filename) as fp:
@@ -95,12 +98,14 @@ def load_etc_hosts(filename="/etc/hosts"):
                 etc_hosts.setdefault(part, []).append(parts[0])
     globals()['etc_hosts_loaded'] = True
 
+
 def is_ipv4(name):
     try:
         socket.inet_pton(socket.AF_INET, name)
     except socket.error:
         return False
     return True
+
 
 def resolve(name):
     build_resolver()

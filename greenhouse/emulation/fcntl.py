@@ -29,6 +29,7 @@ def green_flock(fd, operation):
                 raise
             scheduler.pause_for(TIMEOUT)
 
+
 @functools.wraps(original_lockf)
 def green_lockf(fd, operation, length=0, start=0, whence=0):
     # pass unlocks and non-blocking acquires straight through
@@ -44,6 +45,7 @@ def green_lockf(fd, operation, length=0, start=0, whence=0):
             if exc.args[0] not in (errno.EACCES, errno.EAGAIN):
                 raise
             scheduler.pause_for(TIMEOUT)
+
 
 @functools.wraps(original_fcntl)
 def green_fcntl(fd, opt, arg=0):

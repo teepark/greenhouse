@@ -13,6 +13,7 @@ def green_socketpair(*args, **kwargs):
     a, b = io.sockets._socketpair(*args, **kwargs)
     return io.Socket(fromsock=a), io.Socket(fromsock=b)
 
+
 def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
         source_address=None):
     if dns:

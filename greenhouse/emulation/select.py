@@ -40,6 +40,7 @@ if hasattr(select, "poll"):
 else:
     all_poll_evs = 0
 
+
 class green_poll(object):
     def __init__(self):
         self._registry = {}
@@ -69,6 +70,7 @@ if hasattr(select, 'epoll'):
     all_epoll_evs = select.EPOLLIN | select.EPOLLOUT | select.EPOLLPRI
 else:
     all_epoll_evs = 0
+
 
 class green_epoll(object):
     def __init__(self, sizehint=-1, from_ep=None):

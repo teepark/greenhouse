@@ -68,6 +68,7 @@ class TimeoutManager(object):
     def install(cls):
         state.timed_paused = cls(state.timed_paused.dump())
 
+
 class BisectingTimeoutManager(TimeoutManager):
     def __init__(self, data=None):
         self.data = data or []
@@ -94,6 +95,7 @@ class BisectingTimeoutManager(TimeoutManager):
 
     def dump(self):
         return self.data
+
 
 class BTreeTimeoutManager(TimeoutManager):
     def __init__(self, data=None, order=BTREE_ORDER):
@@ -241,6 +243,7 @@ def greenlet(func, args=(), kwargs=None):
         target = func
     return compat.greenlet(target, state.mainloop)
 
+
 def pause():
     """pause and reschedule the current greenlet and switch to the next
 
@@ -248,6 +251,7 @@ def pause():
     """
     schedule(compat.getcurrent())
     state.mainloop.switch()
+
 
 def pause_until(unixtime):
     """pause and reschedule the current greenlet until a set time
@@ -260,6 +264,7 @@ def pause_until(unixtime):
     schedule_at(unixtime, compat.getcurrent())
     state.mainloop.switch()
 
+
 def pause_for(secs):
     """pause and reschedule the current greenlet for a set number of seconds
 
@@ -269,6 +274,7 @@ def pause_for(secs):
     :type secs: int or float
     """
     pause_until(time.time() + secs)
+
 
 def schedule(target=None, args=(), kwargs=None):
     """insert a greenlet into the scheduler
@@ -308,6 +314,7 @@ def schedule(target=None, args=(), kwargs=None):
         glet = greenlet(target, args, kwargs)
     state.paused.append(glet)
     return target
+
 
 def schedule_at(unixtime, target=None, args=(), kwargs=None):
     """insert a greenlet into the scheduler to be run at a set time
@@ -352,6 +359,7 @@ def schedule_at(unixtime, target=None, args=(), kwargs=None):
     state.timed_paused.insert(unixtime, glet)
     return target
 
+
 def schedule_in(secs, target=None, args=(), kwargs=None):
     """insert a greenlet into the scheduler to run after a set time
 
@@ -384,6 +392,7 @@ def schedule_in(secs, target=None, args=(), kwargs=None):
     ...     print 'hello %s' % name
     """
     return schedule_at(time.time() + secs, target, args, kwargs)
+
 
 def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
         args=(), kwargs=None):
@@ -448,6 +457,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
 
     return target
 
+
 def schedule_exception(exception, target):
     """schedule a greenlet to have an exception raised in it immediately
 
@@ -462,6 +472,7 @@ def schedule_exception(exception, target):
         raise ValueError("can't send exceptions to a dead greenlet")
     schedule(target)
     state.to_raise[target] = exception
+
 
 def schedule_exception_at(unixtime, exception, target):
     """schedule a greenlet to have an exception raised at a unix timestamp
@@ -480,6 +491,7 @@ def schedule_exception_at(unixtime, exception, target):
     schedule_at(unixtime, target)
     state.to_raise[target] = exception
 
+
 def schedule_exception_in(secs, exception, target):
     """schedule a greenlet receive an exception after a number of seconds
 
@@ -492,6 +504,7 @@ def schedule_exception_in(secs, exception, target):
     """
     schedule_exception_at(time.time() + secs, exception, target)
 
+
 def end(target):
     """schedule a greenlet to be stopped immediately
 
@@ -503,6 +516,7 @@ def end(target):
     if not target.dead:
         schedule(target)
         state.to_raise[target] = compat.GreenletExit()
+
 
 def _remove_timer(waketime, glet):
     if state.timed_paused.remove(waketime, glet):
@@ -569,6 +583,7 @@ def mainloop():
 
 state.mainloop = mainloop
 
+
 def _run_local_hooks(target, hooks, incoming):
     replacement_hooks = []
     direction = 1 if incoming else 2
@@ -585,6 +600,7 @@ def _run_local_hooks(target, hooks, incoming):
         replacement_hooks.append(weak)
 
     hooks[:] = replacement_hooks
+
 
 def _run_global_hooks(coming_from, going_to):
     replacement_hooks = []
@@ -658,6 +674,7 @@ def handle_exception(klass, exc, tb, coro=None):
 
     state.global_exception_handlers[:] = replacement
 
+
 def global_exception_handler(handler):
     """add a callback for when an exception goes uncaught in any greenlet
 
@@ -680,6 +697,7 @@ def global_exception_handler(handler):
 
     return handler
 
+
 def remove_global_exception_handler(handler):
     """remove a callback from the list of global exception handlers
 
@@ -697,6 +715,7 @@ def remove_global_exception_handler(handler):
             log.info("removing a global exception handler")
             return True
     return False
+
 
 def local_exception_handler(handler=None, coro=None):
     """add a callback for when an exception occurs in a particular greenlet
@@ -728,6 +747,7 @@ def local_exception_handler(handler=None, coro=None):
             weakref.ref(handler))
 
     return handler
+
 
 def remove_local_exception_handler(handler, coro=None):
     """remove a callback from the list of exception handlers for a coroutine
@@ -770,6 +790,7 @@ def global_hook(handler):
     state.global_hooks.append(weakref.ref(handler))
 
     return handler
+
 
 def remove_global_hook(handler):
     """remove a callback from the list of global hooks
@@ -824,6 +845,7 @@ def local_incoming_hook(handler=None, coro=None):
 
     return handler
 
+
 def remove_local_incoming_hook(handler, coro=None):
     """remove a callback from the incoming hooks for a particular coro
 
@@ -844,6 +866,7 @@ def remove_local_incoming_hook(handler, coro=None):
             state.local_to_hooks[coro].pop(i)
             return True
     return False
+
 
 def local_outgoing_hook(handler=None, coro=None):
     """add a callback to run every time a greenlet is switched away from
@@ -878,6 +901,7 @@ def local_outgoing_hook(handler=None, coro=None):
 
     return handler
 
+
 def remove_local_outgoing_hook(handler, coro=None):
     """remove a callback from the outgoing hooks for a particular coro
 
@@ -899,6 +923,7 @@ def remove_local_outgoing_hook(handler, coro=None):
             return True
     return False
 
+
 def set_ignore_interrupts(flag=True):
     """turn off EINTR-raising from emulated syscalls on interruption by signals
 
@@ -913,6 +938,7 @@ def set_ignore_interrupts(flag=True):
     """
     log.info("setting ignore_interrupts to %r" % flag)
     state.ignore_interrupts = bool(flag)
+
 
 def reset_poller(poll=None):
     """replace the scheduler's poller, throwing away any pre-existing state

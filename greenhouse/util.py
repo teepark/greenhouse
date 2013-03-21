@@ -21,11 +21,11 @@ def _debugger(cls):
             def extrascope(attr):
                 @functools.wraps(attr)
                 def wrapper(*args, **kwargs):
-                    print "%s.%s %s %s" % (cls.__name__, attr.__name__,
-                            repr(args[1:]), repr(kwargs))
+                    print "%s(%x).%s %s %s" % (cls.__name__, id(args[0]),
+                            attr.__name__, repr(args[1:]), repr(kwargs))
                     rc = attr(*args, **kwargs)
-                    print "%s.%s --> %s" % (cls.__name__, attr.__name__,
-                            repr(rc))
+                    print "%s(%x).%s --> %s" % (cls.__name__, id(args[0]),
+                            attr.__name__, repr(rc))
                     return rc
                 return wrapper
             setattr(cls, name, extrascope(attr))
@@ -102,7 +102,9 @@ class Event(object):
 
         if timeout is not None:
             if not scheduler._remove_timer(waketime, current):
-                self._waiters.remove(current)
+                scheduler.state.awoken_from_events.discard(current)
+                if current in self._waiters:
+                    self._waiters.remove(current)
                 return True
 
         return False

@@ -287,7 +287,9 @@ class Socket(object):
             a file-like object for which reading and writing sends and receives
             data over the socket connection
         """
-        return SocketFile(self._sock, mode)
+        f = SocketFile(self._sock, mode)
+        f._sock.settimeout(self.gettimeout())
+        return f
 
     def recv(self, bufsize, flags=0):
         """receive data from the connection

@@ -110,3 +110,10 @@
     - fixed an issue with pool classes that was causing join() to never return
     - removed a level of indirection in emulated sockets, speeding up and
       simplifying them
+
+2.1.3 (4/4/2013)
+    - fixed a race condition around Event.wait with a timeout in use
+    - socketfile objects created with makefile() now obey the timeout set
+      on the socket from which they were created
+    - send() and sendto() block instead of returning 0 when their send buffers
+      are full

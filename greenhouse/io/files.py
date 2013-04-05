@@ -194,6 +194,10 @@ class FileBase(object):
             # append-write mode
             flags |= os.O_APPEND
 
+        # builtin open() also creates the file on writable opens
+        if flags & (os.O_WRONLY|os.O_RDWR):
+            flags |= os.O_CREAT
+
         return flags
 
 
@@ -213,10 +217,6 @@ class File(FileBase):
 
         # translate mode into the proper open flags
         flags = self._mode_to_flags(mode)
-
-        # if write or append mode and the file doesn't exist, create it
-        if flags & (os.O_WRONLY | os.O_RDWR) and not os.path.exists(name):
-            _open(name, 'w').close()
 
         # open the file, get a descriptor
         try:

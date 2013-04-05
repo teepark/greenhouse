@@ -455,12 +455,17 @@ class Socket(object):
             the number of bytes successfully sent, which may not necessarily be
             all the provided data
         """
-        try:
-            return self._sock.send(data)
-        except socket.error, exc:
-            if exc[0] not in _CANT_SEND:
-                raise
-            return 0
+        with self._registered('we'):
+            while 1:
+                try:
+                    return self._sock.send(data)
+                except socket.error, exc:
+                    if exc[0] not in _CANT_SEND or not self._blocking:
+                        raise
+                    if self._writable.wait(self.gettimeout()):
+                        raise socket.timeout("timed out")
+                    if scheduler.state.interrupted:
+                        raise IOError(errno.EINTR, "interrupted system call")
 
     def sendall(self, data, flags=0):
         """send data over the connection, and keep sending until it all goes
@@ -474,15 +479,9 @@ class Socket(object):
             :meth:`recv`
         :type flags: int
         """
-        with self._registered('we'):
-            sent = self.send(data, flags)
-            while sent < len(data):
-                if self._blocking:
-                    if self._writable.wait(self.gettimeout()):
-                        raise socket.timeout("timed out")
-                    if scheduler.state.interrupted:
-                        raise IOError(errno.EINTR, "interrupted system call")
-                sent += self.send(data[sent:], flags)
+        sent = self.send(data, flags)
+        while sent < len(data):
+            self.send(data[sent:], flags)
 
     def sendto(self, data, *args):
         """send data to a particular address
@@ -499,12 +498,17 @@ class Socket(object):
             a representation of the address to which to send the data, the
             format depends on the socket's type
         """
-        try:
-            return self._sock.sendto(data, *args)
-        except socket.error, exc:
-            if exc[0] not in _CANT_SEND:
-                raise
-            return 0
+        with self._registered('we'):
+            while 1:
+                try:
+                    return self._sock.sendto(data, *args)
+                except socket.error, exc:
+                    if exc[0] not in _CANT_SEND or not self._blocking:
+                        raise
+                    if self._writable.wait(self.gettimeout()):
+                        raise socket.timeout("timed out")
+                    if scheduler.state.interrupted:
+                        raise IOError(errno.EINTR, "interrupted system call")
 
     def setblocking(self, flag):
         """modify the behavior of blocking methods on the socket

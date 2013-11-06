@@ -682,7 +682,9 @@ class Timer(Thread):
             ``True`` if it was successful, ``False`` if the timer had already
             run or been cancelled
         """
+        done = self.finished.is_set()
         self.finished.set()
+        return not done
 
     def run(self):
         self.finished.wait(self.interval)

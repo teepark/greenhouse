@@ -18,7 +18,6 @@ _socket = socket.socket
 _socketpair = socket.socketpair
 _fromfd = socket.fromfd
 
-_SOCKET_CLOSED = frozenset((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 _BLOCKING_OP = frozenset((
         errno.EINPROGRESS, errno.EAGAIN, errno.EWOULDBLOCK, errno.EALREADY))
 _CANT_SEND = frozenset((errno.EWOULDBLOCK, errno.ENOTCONN))
@@ -317,9 +316,6 @@ class Socket(object):
                     return self._sock.recv(bufsize, flags)
                 except socket.error, exc:
                     if not self._blocking or exc[0] not in _BLOCKING_OP:
-                        if exc[0] in _SOCKET_CLOSED:
-                            self._closed = True
-                            return ''
                         raise
                     sys.exc_clear()
                     if self._readable.wait(self.gettimeout()):
@@ -354,9 +350,6 @@ class Socket(object):
                     return self._sock.recv_into(buffer, bufsize, flags)
                 except socket.error, exc:
                     if not self._blocking or exc[0] not in _BLOCKING_OP:
-                        if exc[0] in _SOCKET_CLOSED:
-                            self._closed = True
-                            return
                         raise
                     sys.exc_clear()
                     if self._readable.wait(self.gettimeout()):
@@ -390,9 +383,6 @@ class Socket(object):
                     return self._sock.recvfrom(bufsize, flags)
                 except socket.error, exc:
                     if not self._blocking or exc[0] not in _BLOCKING_OP:
-                        if exc[0] in _SOCKET_CLOSED:
-                            self._closed = True
-                            return '', (None, 0)
                         raise
                     sys.exc_clear()
                     if self._readable.wait(self.gettimeout()):
@@ -429,9 +419,6 @@ class Socket(object):
                     return self._sock.recvfrom_into(buffer, bufsize, flags=0)
                 except socket.error, exc:
                     if not self._blocking or exc[0] not in _BLOCKING_OP:
-                        if exc[0] in _SOCKET_CLOSED:
-                            self._closed = True
-                            return '', (None, 0)
                         raise
                     sys.exc_clear()
                     if self._readable.wait(self.gettimeout()):

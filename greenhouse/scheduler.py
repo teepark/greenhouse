@@ -33,7 +33,7 @@ state.awoken_from_events = set()
 state.paused = []
 
 # map of file numbers to the sockets/files on that descriptor
-state.descriptormap = collections.defaultdict(list)
+state.descriptormap = {}
 
 # lined up to run right away
 state.to_run = collections.deque()
@@ -151,28 +151,12 @@ def _hit_poller(timeout):
                     for fd in state.poller._registry.iterkeys()]
 
     for fd, eventmap in events:
-        readables = []
-        writables = []
-        removals = []
-        callbackpairs = state.descriptormap.get(fd, [])
-        for index, (readable, writable) in enumerate(callbackpairs):
-            if not readable and not writable:
-                removals.append(index)
-            else:
-                if readable:
-                    readables.append(readable)
-                if writable:
-                    writables.append(writable)
-
-        for index in removals[::-1]:
-            callbackpairs.pop(index)
-
-        if not callbackpairs:
-            state.descriptormap.pop(fd)
+        readables, writables = state.descriptormap.get(fd, ([], []))
 
         if eventmap & (state.poller.INMASK | state.poller.ERRMASK):
             for readable in readables:
                 readable()
+
         if eventmap & (state.poller.OUTMASK | state.poller.ERRMASK):
             for writable in writables:
                 writable()
@@ -186,39 +170,26 @@ def _hit_poller(timeout):
     state.paused = []
 
 
-class _WeakMethodRef(object):
-    def __init__(self, method):
-        if getattr(method, "im_self", None):
-            self.obj = weakref.ref(method.im_self)
-        elif getattr(method, "im_class", None):
-            self.obj = weakref.ref(method.im_class)
-        else:
-            self.obj = None
-
-        if getattr(method, "im_func", None):
-            method = method.im_func
-        self.func = weakref.ref(method)
-
-    def __nonzero__(self):
-        if self.obj is not None and not self.obj():
-            return False
-        return self.func() is not None
-
-    def __call__(self, *args, **kwargs):
-        if not self:
-            return None
-        if self.obj is not None:
-            args = (self.obj(),) + args
-        return self.func()(*args, **kwargs)
-
-
 def _register_fd(fd, readable, writable):
-    # accepts callback functions for readable and writable events
-    if readable is not None:
-        readable = _WeakMethodRef(readable)
-    if writable is not None:
-        writable = _WeakMethodRef(writable)
-    state.descriptormap[fd].append((readable, writable))
+    if fd not in state.descriptormap:
+        state.descriptormap[fd] = (set(), set())
+    readables, writables = state.descriptormap[fd]
+
+    if readable:
+        readables.add(readable)
+    if writable:
+        writables.add(writable)
+
+def _unregister_fd(fd, readable, writable):
+    if fd not in state.descriptormap:
+        return
+    readables, writables = state.descriptormap[fd]
+
+    readables.discard(readable)
+    writables.discard(writable)
+
+    if not (readables or writables):
+        state.descriptormap.pop(fd)
 
 
 def greenlet(func, args=(), kwargs=None):

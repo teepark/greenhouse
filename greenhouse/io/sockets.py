@@ -57,10 +57,6 @@ class Socket(object):
         self._readable = util.Event()
         self._writable = util.Event()
 
-        # register the socket for this fd in the scheduler
-        scheduler._register_fd(
-                self._fileno, self._on_readable, self._on_writable)
-
     def _on_readable(self):
         self._readable.set()
         self._readable.clear()
@@ -71,29 +67,38 @@ class Socket(object):
 
     def _poller_evmask(self, poller, events):
         mask = 0
+        rd, wr = False, False
         if 'r' in events:
             mask |= poller.INMASK
+            rd = True
         if 'w' in events:
             mask |= poller.OUTMASK
+            wr = True
         if 'e' in events:
             mask |= poller.ERRMASK
-        return mask
+        return mask, rd, wr
 
     @contextlib.contextmanager
     def _registered(self, events=None):
         poller = scheduler.state.poller
         if events:
-            events = self._poller_evmask(poller, events)
+            events, rd, wr = self._poller_evmask(poller, events)
         try:
             counter = poller.register(self, events)
         except EnvironmentError, exc:
+            tb = sys.exc_info()[2]
             if exc.args and exc.args[0] in errno.errorcode:
-                raise socket.error(*exc.args)
+                raise socket.error, socket.error(*exc.args), tb
             raise
+
+        rd = self._on_readable if rd else None
+        wr = self._on_writable if wr else None
+        scheduler._register_fd(self._fileno, rd, wr)
 
         try:
             yield
         finally:
+            scheduler._unregister_fd(self._fileno, rd, wr)
             try:
                 poller.unregister(self, counter)
             except EnvironmentError, exc:

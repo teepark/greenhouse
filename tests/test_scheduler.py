@@ -171,38 +171,6 @@ class ScheduleMixin(object):
         self.assertRaises(TypeError, greenhouse.schedule_recurring,
                 TESTING_TIMEOUT, f, maxtimes=2)
 
-    def test_deleted_sock_gets_cleared(self):
-        dmap = greenhouse.scheduler.state.descriptormap
-
-        client = greenhouse.Socket()
-        server = greenhouse.Socket()
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        temp = greenhouse.Socket()
-        temps_fileno = temp.fileno()
-
-        one_good = filter(lambda (r, w): r and w, dmap[temps_fileno])
-        self.assertEqual(len(one_good), 1, one_good)
-
-        del temp
-        del one_good
-
-        @greenhouse.schedule
-        def f():
-            server.bind(("", port()))
-            server.listen(5)
-            conn = server.accept()[0]
-            assert conn.recv(8192) == "test_deleted_sock_gets_cleared"
-
-        greenhouse.pause_for(TESTING_TIMEOUT)
-        client.connect(("", port()))
-        client.sendall("test_deleted_sock_gets_cleared")
-
-        greenhouse.pause_for(TESTING_TIMEOUT)
-
-        gc.collect()
-        gone = filter(lambda (r, w): r and w, dmap[temps_fileno])
-        self.assertEqual(len(gone), 0, gone)
-
     def test_socketpolling(self):
         client = greenhouse.Socket()
         server = greenhouse.Socket()

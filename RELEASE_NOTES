@@ -117,3 +117,12 @@
       on the socket from which they were created
     - send() and sendto() block instead of returning 0 when their send buffers
       are full
+
+2.1.4 (12/10/2013)
+    - updated zeromq monkey-patching to match api changes in a release of pyzmq
+    - the cancel method of util.Timer (which patches threading.Timer) is
+      documented to return a boolean, now it actually does so
+    - fixed an emulation failure: it was eating ENOTCONNs and ECONNRESETs in
+      socket operations, it now lets them through
+    - simplified internal registration of FDs with the scheduler and poller,
+      should clear up some possible memory-leaking scenarios

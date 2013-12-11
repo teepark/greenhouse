@@ -498,7 +498,7 @@ class QueueTestCase(StateClearingTestCase):
     def test_nonblocking_raises_empty(self):
         q = self.klass()
         self.assertRaises(util.Empty, q.get_nowait)
-        self.assertRaises(util.Empty, q.get, blocking=False)
+        self.assertRaises(util.Empty, q.get, block=False)
 
     def test_nonblocking_raises_full(self):
         q = self.klass(2)
@@ -506,14 +506,14 @@ class QueueTestCase(StateClearingTestCase):
         q.put(2)
 
         self.assertRaises(util.Full, q.put_nowait, 3)
-        self.assertRaises(util.Full, q.put, 3, blocking=False)
+        self.assertRaises(util.Full, q.put, 3, block=False)
 
     def test_put_sized_nonblocking(self):
         q = self.klass(3)
         q.put(4)
         q.put(5)
         q.put(6)
-        self.assertRaises(util.Full, q.put, 7, blocking=False)
+        self.assertRaises(util.Full, q.put, 7, block=False)
 
     def test_put_sized_blocking(self):
         l = [False]

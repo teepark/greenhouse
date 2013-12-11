@@ -763,33 +763,33 @@ class Queue(object):
     def _get(self):
         return self._data.popleft()
 
-    def get(self, blocking=True, timeout=None):
+    def get(self, block=True, timeout=None):
         """get an item out of the queue
 
         .. note::
 
-            if `blocking` is ``True`` (the default) and the queue is
+            if `block` is ``True`` (the default) and the queue is
             :meth`empty`, this method will block the current coroutine until
             something has been :meth:`put`.
 
-        :param blocking:
+        :param block:
             whether to block if there is no data yet available (default
             ``True``)
-        :type blocking: bool
+        :type block: bool
         :param timeout:
             the maximum time in seconds to block waiting for data. with the
             default of ``None``, can wait indefinitely. this is unused if
-            `blocking` is ``False``.
+            `block` is ``False``.
         :type timeout: int, float or None
 
         :raises:
-            :class:`Empty` if there is no data in the queue and blocking is
+            :class:`Empty` if there is no data in the queue and block is
             ``False``, or `timeout` expires
 
         :returns: something that was previously :meth:`put` in the queue
         """
         if not self._data:
-            if not blocking:
+            if not block:
                 raise Empty()
 
             current = compat.getcurrent()
@@ -814,16 +814,16 @@ class Queue(object):
     def get_nowait(self):
         """get an item out of the queue without ever blocking
 
-        this call is equivalent to ``get(blocking=False)``
+        this call is equivalent to ``get(block=False)``
 
         :returns: something that was previously :meth:`put` in the queue
         """
-        return self.get(blocking=False)
+        return self.get(block=False)
 
     def _put(self, item):
         self._data.append(item)
 
-    def put(self, item, blocking=True, timeout=None):
+    def put(self, item, block=True, timeout=None):
         """put an item into the queue
 
         .. note::
@@ -833,22 +833,22 @@ class Queue(object):
             another coroutine :meth:`get`\ s an item.
 
         :param item: the object to put into the queue, can be any type
-        :param blocking:
+        :param block:
             whether to block if the queue is already :meth:`full` (default
             ``True``)
-        :type blocking: bool
+        :type block: bool
         :param timeout:
             the maximum time in seconds to block waiting. with the default of
-            ``None``, it can wait indefinitely. this is unused if `blocking` is
+            ``None``, it can wait indefinitely. this is unused if `block` is
             ``False``.
         :type timeout: int, float or None
 
         :raises:
-            :class:`Full` if the queue is :meth:`full` and `blocking` is
+            :class:`Full` if the queue is :meth:`full` and `block` is
             ``False``, or if `timeout` expires.
         """
         if self.full():
-            if not blocking:
+            if not block:
                 raise Full()
 
             current = compat.getcurrent()
@@ -877,11 +877,11 @@ class Queue(object):
     def put_nowait(self, item):
         """put an item into the queue without any chance of blocking
 
-        this call is equivalent to ``put(blocking=False)``
+        this call is equivalent to ``put(block=False)``
 
         ;param item: the object to put into the queue, can be any type
         """
-        return self.put(item, blocking=False)
+        return self.put(item, block=False)
 
     def qsize(self):
         """the number of queued pieces of data

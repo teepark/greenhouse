@@ -36,7 +36,6 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
         and writable events
     """
     current = compat.getcurrent()
-    poller = scheduler.state.poller
     activated = {}
     poll_regs = {}
     callback_refs = {}
@@ -57,20 +56,15 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
         activated[fd] |= event
 
     for fd, events in fd_events:
-        poller_events = 0
         readable = None
         writable = None
-
         if events & inmask:
-            poller_events |= poller.INMASK
             readable = functools.partial(activate, fd, inmask)
         if events & outmask:
-            poller_events |= poller.OUTMASK
             writable = functools.partial(activate, fd, outmask)
 
-        poll_regs[fd] = poller.register(fd, poller_events)
         callback_refs[fd] = (readable, writable)
-        scheduler._register_fd(fd, readable, writable)
+        poll_regs[fd] = scheduler._register_fd(fd, readable, writable)
 
     if timeout:
         # real timeout value, schedule ourself `timeout` seconds in the future
@@ -85,8 +79,7 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
 
     for fd, reg in poll_regs.iteritems():
         readable, writable = callback_refs[fd]
-        poller.unregister(fd, reg)
-        scheduler._unregister_fd(fd, readable, writable)
+        scheduler._unregister_fd(fd, readable, writable, reg)
 
     if scheduler.state.interrupted:
         raise IOError(errno.EINTR, "interrupted system call")

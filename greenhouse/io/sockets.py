@@ -65,42 +65,23 @@ class Socket(object):
         self._writable.set()
         self._writable.clear()
 
-    def _poller_evmask(self, poller, events):
-        mask = 0
-        rd, wr = False, False
-        if 'r' in events:
-            mask |= poller.INMASK
-            rd = True
-        if 'w' in events:
-            mask |= poller.OUTMASK
-            wr = True
-        if 'e' in events:
-            mask |= poller.ERRMASK
-        return mask, rd, wr
-
     @contextlib.contextmanager
     def _registered(self, events=None):
-        poller = scheduler.state.poller
-        if events:
-            events, rd, wr = self._poller_evmask(poller, events)
+        rd = self._on_readable if events and 'r' in events else None
+        wr = self._on_writable if events and 'w' in events else None
         try:
-            counter = poller.register(self, events)
+            reg = scheduler._register_fd(self._fileno, rd, wr)
         except EnvironmentError, exc:
             tb = sys.exc_info()[2]
             if exc.args and exc.args[0] in errno.errorcode:
                 raise socket.error, socket.error(*exc.args), tb
             raise
 
-        rd = self._on_readable if rd else None
-        wr = self._on_writable if wr else None
-        scheduler._register_fd(self._fileno, rd, wr)
-
         try:
             yield
         finally:
-            scheduler._unregister_fd(self._fileno, rd, wr)
             try:
-                poller.unregister(self, counter)
+                scheduler._unregister_fd(self._fileno, rd, wr, reg)
             except EnvironmentError, exc:
                 if exc.args and exc.args[0] in errno.errorcode:
                     raise socket.error(*exc.args)

@@ -75,7 +75,6 @@ else:
 class green_epoll(object):
     def __init__(self, sizehint=-1, from_ep=None):
         self._readable = util.Event()
-        self._writable = util.Event()
         if from_ep:
             self._epoll = from_ep
         else:
@@ -84,10 +83,6 @@ class green_epoll(object):
     def _on_readable(self):
         self._readable.set()
         self._readable.clear()
-
-    def _on_writable(self):
-        self._writable.set()
-        self._writable.clear()
 
     def close(self):
         self._epoll.close()
@@ -108,16 +103,13 @@ class green_epoll(object):
         self._epoll.modify(fd, eventmask)
 
     def poll(self, timeout=None, maxevents=-1):
-        poller = scheduler.state.poller
-        reg = poller.register(self._epoll.fileno(), poller.INMASK)
-        onr, onw = self._on_readable, self._on_writable
-        scheduler._register_fd(self._epoll.fileno(), onr, onw)
+        onr = self._on_readable
+        reg = scheduler._register_fd(self._epoll.fileno(), onr, None)
         try:
             self._readable.wait(timeout=timeout)
             return self._epoll.poll(0, maxevents)
         finally:
-            poller.unregister(self._epoll.fileno(), reg)
-            scheduler._unregister_fd(self._epoll.fileno(), onr, onw)
+            scheduler._unregister_fd(self._epoll.fileno(), onr, None, reg)
 
     def register(self, fd, eventmask=all_epoll_evs):
         self._epoll.register(fd, eventmask)
@@ -155,16 +147,13 @@ class green_kqueue(object):
         if not max_events:
             return self._kqueue.control(events, max_events, 0)
 
-        poller = scheduler.state.poller
-        reg = poller.register(self._kqueue.fileno(), poller.INMASK)
         onr, onw = self._on_readable, self._on_writable
-        scheduler._register_fd(self._kqueue.fileno(), onr, onw)
+        reg = scheduler._register_fd(self._kqueue.fileno(), onr, onw)
         try:
             self._readable.wait(timeout=timeout)
             return self._kqueue.control(events, max_events, 0)
         finally:
-            poller.unregister(self._kqueue.fileno(), reg)
-            scheduler._unregister_fd(self._kqueue.fileno(), onr, onw)
+            scheduler._unregister_fd(self._kqueue.fileno(), onr, onw, reg)
 
     def fileno(self):
         return self._kqueue.fileno()

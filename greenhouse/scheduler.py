@@ -171,6 +171,14 @@ def _hit_poller(timeout):
 
 
 def _register_fd(fd, readable, writable):
+    poller = state.poller
+    mask = poller.ERRMASK
+    if readable:
+        mask |= poller.INMASK
+    if writable:
+        mask |= poller.OUTMASK
+    reg = state.poller.register(fd, mask)
+
     if fd not in state.descriptormap:
         state.descriptormap[fd] = (set(), set())
     readables, writables = state.descriptormap[fd]
@@ -180,7 +188,9 @@ def _register_fd(fd, readable, writable):
     if writable:
         writables.add(writable)
 
-def _unregister_fd(fd, readable, writable):
+    return reg
+
+def _unregister_fd(fd, readable, writable, reg):
     if fd not in state.descriptormap:
         return
     readables, writables = state.descriptormap[fd]
@@ -190,6 +200,8 @@ def _unregister_fd(fd, readable, writable):
 
     if not (readables or writables):
         state.descriptormap.pop(fd)
+
+    state.poller.unregister(fd, reg)
 
 
 def greenlet(func, args=(), kwargs=None):

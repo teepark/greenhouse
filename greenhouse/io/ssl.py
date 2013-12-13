@@ -9,7 +9,7 @@ import ssl
 import sys
 import time
 
-from greenhouse import poller, scheduler, util
+from greenhouse import scheduler, util
 from greenhouse.io import sockets as gsock
 
 
@@ -73,9 +73,6 @@ class SSLSocket(gsock.Socket):
         self._readable = util.Event()
         self._writable = util.Event()
 
-        scheduler._register_fd(self.fileno(),
-                self._on_readable, self._on_writable)
-
         if do_handshake_on_connect and self._connected:
             self.do_handshake(self._timeout)
 
@@ -96,8 +93,6 @@ class SSLSocket(gsock.Socket):
         clone._sslobj = self._sslobj
         clone._readable = util.Event()
         clone._writable = util.Event()
-        scheduler._register_fd(clone.fileno(),
-            clone._on_readable, clone._on_writable)
         return clone
 
     def settimeout(self, timeout):
@@ -338,11 +333,15 @@ class SSLSocket(gsock.Socket):
         self._writable.clear()
 
     def _wait_event(self, timeout=None, write=False):
-        poller = scheduler.state.poller
-        mask = poller.ERRMASK | (poller.OUTMASK if write else poller.INMASK)
-        event = self._writable if write else self._readable
+        if write:
+            event = self._writable
+            onr, onw = None, self._on_writable
+        else:
+            event = self._readable
+            onr, onw = self._on_readable, None
+
         try:
-            counter = poller.register(self, mask)
+            reg = scheduler._register_fd(self.fileno(), onr, onw)
         except EnvironmentError, error:
             if error.args[0] in errno.errorcode:
                 raise socket.error(*error.args)
@@ -353,7 +352,7 @@ class SSLSocket(gsock.Socket):
                 raise socket.timeout("timed out")
         finally:
             try:
-                poller.unregister(self, counter)
+                scheduler._unregister_fd(self.fileno(), onr, onw, reg)
             except EnvironmentError, error:
                 if error.args[0] in errno.errorcode:
                     raise socket.error(*error.args)

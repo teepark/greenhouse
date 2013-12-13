@@ -76,6 +76,18 @@ class Poll(object):
             if to_mask:
                 self._poller.register(fd, to_mask)
 
+    def supports(self, fd):
+        if not isinstance(fd, int):
+            fd = fd.fileno()
+
+        try:
+            self._poller.register(fd)
+        except EnvironmentError:
+            return False
+
+        self._poller.unregister(fd)
+        return True
+
 
 class Epoll(Poll):
     "a greenhouse poller utilizing the 2.6+ stdlib's epoll support"
@@ -204,6 +216,10 @@ class Select(object):
         for fd in xlist:
             events[fd] |= self.ERRMASK
         return events.items()
+
+    def supports(self, fd):
+        # it might lie though
+        return True
 
 
 def best():

@@ -235,51 +235,32 @@ class File(FileBase):
 
     @contextlib.contextmanager
     def _registered(self, read=True, write=True):
-        poller = scheduler.state.poller
-
-        mask, rd, wr = scheduler.state.poller.ERRMASK, None, None
-        if read:
-            rd = self._on_readable
-            mask |= scheduler.state.poller.INMASK
-        if write:
-            wr = self._on_writable
-            mask |= scheduler.state.poller.OUTMASK
-
+        rd = self._on_readable if read else None
+        wr = self._on_writable if write else None
         try:
-            counter = poller.register(self, mask)
+            reg = scheduler._register_fd(self._fileno, rd, wr)
         except EnvironmentError, exc:
             if exc.args and exc.args[0] in errno.errorcode:
                 raise IOError, IOError(*exc.args), sys.exc_info()[2]
             raise
 
-        scheduler._register_fd(self._fileno, rd, wr)
-
         try:
             yield
         finally:
-            scheduler._unregister_fd(self._fileno, rd, wr)
             try:
-                poller.unregister(self, counter)
+                scheduler._unregister_fd(self._fileno, rd, wr, reg)
             except EnvironmentError, exc:
                 if exc.args and exc.args[0] in errno.errorcode:
                     raise IOError, IOError(*exc.args), sys.exc_info()[2]
                 raise
 
     def _set_up_waiting(self):
-        counter = None
-        try:
-            counter = scheduler.state.poller.register(self)
-        except EnvironmentError, exc:
-            if exc.args[0] != errno.EPERM:
-                raise
-            self._waiter = "_wait_yield"
-        else:
-            self._waiter = "_wait_event"
+        if scheduler.state.poller.supports(self):
+            self._wait = self._wait_event
             self._readable = util.Event()
             self._writable = util.Event()
-        finally:
-            if counter is not None:
-                scheduler.state.poller.unregister(self, counter)
+        else:
+            self._wait = self._wait_yield
 
     def _on_readable(self):
         self._readable.set()
@@ -300,9 +281,6 @@ class File(FileBase):
     def _wait_yield(self, reading):
         "generic busy wait, for when polling won't work"
         scheduler.pause()
-
-    def _wait(self, reading):
-        getattr(self, self._waiter)(reading)
 
     def _read_chunk(self, size):
         try:
@@ -417,7 +395,6 @@ class _StdIOFile(FileBase):
         self._fileno = fd
         self._readable = util.Event()
         self._writable = util.Event()
-        scheduler._register_fd(fd, self._on_readable, self._on_writable)
 
     def _on_readable(self):
         self._readable.set()
@@ -428,12 +405,12 @@ class _StdIOFile(FileBase):
         self._writable.clear()
 
     def _read_chunk(self, size):
-        counter = scheduler.state.poller.register(self,
-                scheduler.state.poller.INMASK)
+        onr = self._on_readable
+        reg = scheduler._register_fd(self._fileno, onr, None)
         try:
             self._readable.wait()
         finally:
-            scheduler.state.poller.unregister(self, counter)
+            scheduler._unregister_fd(self._fileno, onr, None, reg)
 
         if scheduler.state.interrupted:
             raise IOError(errno.EINTR, "interrupted system call")
@@ -441,12 +418,12 @@ class _StdIOFile(FileBase):
         return _read(self._fileno, size)
 
     def _write_chunk(self, data):
-        counter = scheduler.state.poller.register(self,
-                scheduler.state.poller.OUTMASK)
+        onw = self._on_writable
+        reg = scheduler._register_fd(self._fileno, None, onw)
         try:
             self._writable.wait()
         finally:
-            scheduler.state.poller.unregister(self._fileno, counter)
+            scheduler._unregister_fd(self._fileno, None, onw, reg)
 
         if scheduler.state.interrupted:
             raise IOError(errno.EINTR, "interrupted system call")

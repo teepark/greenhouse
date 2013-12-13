@@ -126,3 +126,6 @@
       socket operations, it now lets them through
     - simplified internal registration of FDs with the scheduler and poller,
       should clear up some possible memory-leaking scenarios
+
+2.1.5 (12/12/2013)
+    - packaging fix (paver has been too broken for too long)

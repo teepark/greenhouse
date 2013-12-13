@@ -1,7 +1,31 @@
-import os
-if os.path.exists("paver-minilib.zip"):
-    import sys
-    sys.path.insert(0, "paver-minilib.zip")
+#!/usr/bin/env python
+# vim: fileencoding=utf8:et:sw=4:ts=8:sts=4
 
-import paver.tasks
-paver.tasks.main()
+import os
+from setuptools import setup
+
+
+VERSION = (2, 1, 4, "")
+
+setup(
+    name="greenhouse",
+    description="An I/O parallelism library making use of coroutines",
+    packages=[
+        "greenhouse",
+        "greenhouse.io",
+        "greenhouse.emulation",
+        "greenhouse.ext"],
+    version=".".join(filter(None, map(str, VERSION))),
+    author="Travis Parker",
+    author_email="travis.parker@gmail.com",
+    url="http://github.com/teepark/greenhouse",
+    license="BSD",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Programming Language :: Python",
+    ],
+    install_requires=['greenlet'],
+)

@@ -3,7 +3,6 @@
 .*.swp
 .*.swo
 greenhouse.egg-info/*
-MANIFEST.in
 build/*
 docs/build/*
 dist/*

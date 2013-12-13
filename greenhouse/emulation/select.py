@@ -80,8 +80,6 @@ class green_epoll(object):
             self._epoll = from_ep
         else:
             self._epoll = original_epoll(sizehint)
-        scheduler._register_fd(
-                self._epoll.fileno(), self._on_readable, self._on_writable)
 
     def _on_readable(self):
         self._readable.set()
@@ -112,11 +110,14 @@ class green_epoll(object):
     def poll(self, timeout=None, maxevents=-1):
         poller = scheduler.state.poller
         reg = poller.register(self._epoll.fileno(), poller.INMASK)
+        onr, onw = self._on_readable, self._on_writable
+        scheduler._register_fd(self._epoll.fileno(), onr, onw)
         try:
             self._readable.wait(timeout=timeout)
             return self._epoll.poll(0, maxevents)
         finally:
             poller.unregister(self._epoll.fileno(), reg)
+            scheduler._unregister_fd(self._epoll.fileno(), onr, onw)
 
     def register(self, fd, eventmask=all_epoll_evs):
         self._epoll.register(fd, eventmask)
@@ -133,8 +134,6 @@ class green_kqueue(object):
             self._kqueue = from_kq
         else:
             self._kqueue = original_kqueue()
-        scheduler._register_fd(
-                self._kqueue.fileno(), self._on_readable, self._on_writable)
 
     def _on_readable(self):
         self._readable.set()
@@ -158,11 +157,14 @@ class green_kqueue(object):
 
         poller = scheduler.state.poller
         reg = poller.register(self._kqueue.fileno(), poller.INMASK)
+        onr, onw = self._on_readable, self._on_writable
+        scheduler._register_fd(self._kqueue.fileno(), onr, onw)
         try:
             self._readable.wait(timeout=timeout)
             return self._kqueue.control(events, max_events, 0)
         finally:
             poller.unregister(self._kqueue.fileno(), reg)
+            scheduler._unregister_fd(self._kqueue.fileno(), onr, onw)
 
     def fileno(self):
         return self._kqueue.fileno()

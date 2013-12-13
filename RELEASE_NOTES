@@ -129,3 +129,9 @@
 
 2.1.5 (12/12/2013)
     - packaging fix (paver has been too broken for too long)
+
+2.1.[6-9] (12/12/2013), 2.1.10 (12/13/2013)
+    - memory leak patches
+    - added a timeout argument to Pool.join
+    - emulation fix: default value of bufsize in socket.recv_into and
+      recvfrom_into

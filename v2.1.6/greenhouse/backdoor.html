@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.backdoor – Interpreter On A Socket &mdash; greenhouse 2.1.6 documentation</title>
+    
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.1.6',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse 2.1.6 documentation" href="../index.html" />
+    <link rel="prev" title="greenhouse.emulation – Faking Out Third Parties" href="emulation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="emulation.html" title="greenhouse.emulation – Faking Out Third Parties"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.6 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.backdoor">
+<span id="greenhouse-backdoor-interpreter-on-a-socket"></span><h1><a class="reference internal" href="#module-greenhouse.backdoor" title="greenhouse.backdoor"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.backdoor</span></tt></a> &#8211; Interpreter On A Socket<a class="headerlink" href="#module-greenhouse.backdoor" title="Permalink to this headline">¶</a></h1>
+<p>These functions enable running an additional server in greenhouse server
+processes, which accepts connections and runs interactive python interpreters
+on them, enabling entirely flexible and ad-hoc server administration at
+runtime.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p><strong>backdoors are a gaping security hole</strong></p>
+<p class="last">Make certain that you use <tt class="docutils literal"><span class="pre">&quot;127.0.0.1&quot;</span></tt> as the host on which to listen
+for connections so that it will only accept connection requests made
+locally. If you must connect to it from another machine, at least make sure
+it is behind a firewall that will block the backdoor port.</p>
+</div>
+<dl class="function">
+<dt id="greenhouse.backdoor.run_backdoor">
+<tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">run_backdoor</tt><big>(</big><em>address</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.run_backdoor" title="Permalink to this definition">¶</a></dt>
+<dd><p>start a server that runs python interpreters on connections made to it</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this function blocks effectively indefinitely &#8211; it runs the listening
+socket loop in the current greenlet. to keep the current greenlet free,
+<a class="reference internal" href="scheduler.html#greenhouse.scheduler.schedule" title="greenhouse.scheduler.schedule"><tt class="xref py py-func docutils literal"><span class="pre">schedule</span></tt></a> this function.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>address</strong> (<em>tuple</em>) &#8211; the address on which to listen for backdoor connections, in the form of
+a two-tuple <tt class="docutils literal"><span class="pre">(host,</span> <span class="pre">port)</span></tt></li>
+<li><strong>namespace</strong> (<em>dict or None</em>) &#8211; the local namespace dict for the interpreter, or None to have each
+connection create its own empty namespace</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="greenhouse.backdoor.backdoor_handler">
+<tt class="descclassname">greenhouse.backdoor.</tt><tt class="descname">backdoor_handler</tt><big>(</big><em>clientsock</em>, <em>namespace=None</em><big>)</big><a class="headerlink" href="#greenhouse.backdoor.backdoor_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>start an interactive python interpreter on an existing connection</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this function will block for as long as the connection remains alive.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sock</strong> (<a class="reference internal" href="io.html#greenhouse.io.sockets.Socket" title="greenhouse.io.sockets.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a>) &#8211; the socket on which to serve the interpreter</li>
+<li><strong>namespace</strong> (<em>dict or None</em>) &#8211; the local namespace dict for the interpreter, or None to have the
+function create its own empty namespace</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="emulation.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenhouse.emulation</span></tt> &#8211; Faking Out Third Parties</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/backdoor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="emulation.html" title="greenhouse.emulation – Faking Out Third Parties"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.6 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Travis J Parker.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

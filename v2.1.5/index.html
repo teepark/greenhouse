@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to the Greenhouse Documentation! &mdash; greenhouse 2.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="greenhouse 2.1.5 documentation" href="#" />
+    <link rel="next" title="Tutorial" href="tutorial/parallel-urls.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial/parallel-urls.html" title="Tutorial"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">greenhouse 2.1.5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-the-greenhouse-documentation">
+<h1>Welcome to the Greenhouse Documentation!<a class="headerlink" href="#welcome-to-the-greenhouse-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Greenhouse is a library that makes massively parallel I/O efficient for python,
+while supporting a synchronous coding style. It requires <a class="reference external" href="http://bitbucket.org/ambroff/greenlet">greenlet</a>, which
+provides coroutines for python as a C extension.</p>
+<p>Using coroutines in conjunction with non-blocking I/O, greenhouse&#8217;s concurrency
+approach has most of the benefits of all other approaches for python, with
+relatively few of their deficiencies.</p>
+<p>Let&#8217;s look at a few.</p>
+<dl class="docutils">
+<dt><strong>single thread, blocking I/O</strong></dt>
+<dd>No parallelism whatsoever, this approach spends an inordinate amount of
+time doing nothing but waiting for network activity.</dd>
+<dt><strong>multiple threads, blocking I/O</strong></dt>
+<dd><a class="reference external" href="http://weblogs.mozillazine.org/roadmap/archives/2007/02/threads_suck.html">Threads suck</a>. They are too big in RAM meaning we run out of memory
+before reaching our potential in concurrent connections, we have hard to
+debug race conditions due to the unholy union of shared memory and
+preemptive scheduling, we have slow switching, and in most dynamic
+languages including python we have a GIL. <a class="reference external" href="http://tomayko.com/writings/unicorn-is-unix#threads-are-out">Threads are out</a>.</dd>
+<dt><strong>multiple processes, blocking I/O</strong></dt>
+<dd>By using processes instead of threads, a major class of race conditions is
+avoided by trading in shared memory for message passing IPC which is less
+convenient than shared memory but much less error-prone. This approach for
+python can also utilize multiple CPU cores. However, processes are larger
+even than threads, so the parallelism achievable is very limited.</dd>
+<dt><strong>single thread, non-blocking I/O</strong></dt>
+<dd>Switching to non-blocking I/O allows for multiple connections in a single
+thread and process, meaning the sky is the limit for concurrency without
+high memory use. However not having I/O functions block makes control flow
+tricky. The whole procedural programming paradigm is built on executing
+tasks one at a time in order, but here we have concurrency without separate
+threads of control resulting in a hard to manage jungle of callbacks and
+&#8220;deferred&#8221; or &#8220;promise&#8221; types.</dd>
+</dl>
+<p>Greenhouse takes the parallelism/memory ratio strength of non-blocking I/O and
+uses coroutines to provide an api that blocks from a control-flow standpoint,
+but which is actually executing in a single thread and single process.</p>
+<p>Greenlet&#8217;s coroutines are much lighter in memory than operating system threads,
+allowing greenlet-per-connection into the thousands, much faster to switch
+between, and very importantly they <strong>only switch cooperatively</strong>.</p>
+<p>Cooperative switching removes the vast majority of locking needs, reducing
+overhead further beyond just the lighter threads and faster switching. It also
+allows for the convenience of shared memory without the race conditions.</p>
+<p>The emulation of the behavior of python&#8217;s default blocking I/O is so good that
+by monkey-patching in greenhouse&#8217;s drop-in replacements for sockets and files,
+most third-party libraries written to block threads will work unmodified,
+blocking greenlets instead.</p>
+<div class="section" id="index">
+<h2>Index<a class="headerlink" href="#index" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/parallel-urls.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/scheduler.html"><tt class="docutils literal"><span class="pre">greenhouse.scheduler</span></tt> &#8211; Interacting With The Greenhouse Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/io.html"><tt class="docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/util.html"><tt class="docutils literal"><span class="pre">greenhouse.util</span></tt> &#8211; Greenlet-Aware Concurrency Primitives</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/pool.html"><tt class="docutils literal"><span class="pre">greenhouse.pool</span></tt> &#8211; Managed Greenlet Pools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/compat.html"><tt class="docutils literal"><span class="pre">greenhouse.compat</span></tt> &#8211; Greenlet and Compatibility Hacks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/emulation.html"><tt class="docutils literal"><span class="pre">greenhouse.emulation</span></tt> &#8211; Faking Out Third Parties</a></li>
+<li class="toctree-l1"><a class="reference internal" href="greenhouse/backdoor.html"><tt class="docutils literal"><span class="pre">greenhouse.backdoor</span></tt> &#8211; Interpreter On A Socket</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to the Greenhouse Documentation!</a><ul>
+<li><a class="reference internal" href="#index">Index</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorial/parallel-urls.html"
+                        title="next chapter">Tutorial</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial/parallel-urls.html" title="Tutorial"
+             >next</a> |</li>
+        <li><a href="#">greenhouse 2.1.5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Travis J Parker.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -7,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenhouse.util – Greenlet-Aware Concurrency Primitives &mdash; greenhouse 2.1.3 documentation</title>
+    <title>greenhouse.util – Greenlet-Aware Concurrency Primitives &mdash; greenhouse 2.1.5 documentation</title>
     
     <link rel="stylesheet" href="../static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -15,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '2.1.3',
+        VERSION:     '2.1.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +23,7 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="top" title="greenhouse 2.1.3 documentation" href="../index.html" />
+    <link rel="top" title="greenhouse 2.1.5 documentation" href="../index.html" />
     <link rel="next" title="greenhouse.pool – Managed Greenlet Pools" href="pool.html" />
     <link rel="prev" title="greenhouse.io – Cooperative I/O Drop-Ins" href="io.html" /> 
   </head>
@@ -44,7 +43,7 @@
         <li class="right" >
           <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">greenhouse 2.1.3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 2.1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -811,11 +810,11 @@ never block</td>
 
 <dl class="method">
 <dt id="greenhouse.util.Queue.get">
-<tt class="descname">get</tt><big>(</big><em>blocking=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.get" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get</tt><big>(</big><em>block=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>get an item out of the queue</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">if <cite>blocking</cite> is <tt class="docutils literal"><span class="pre">True</span></tt> (the default) and the queue is
+<p class="last">if <cite>block</cite> is <tt class="docutils literal"><span class="pre">True</span></tt> (the default) and the queue is
 :meth`empty`, this method will block the current coroutine until
 something has been <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a>.</p>
 </div>
@@ -824,15 +823,15 @@ something has been <a class="reference internal" href="#greenhouse.util.Queue.pu
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>blocking</strong> (<em>bool</em>) &#8211; whether to block if there is no data yet available (default
+<li><strong>block</strong> (<em>bool</em>) &#8211; whether to block if there is no data yet available (default
 <tt class="docutils literal"><span class="pre">True</span></tt>)</li>
 <li><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum time in seconds to block waiting for data. with the
 default of <tt class="docutils literal"><span class="pre">None</span></tt>, can wait indefinitely. this is unused if
-<cite>blocking</cite> is <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
+<cite>block</cite> is <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first"><tt class="xref py py-class docutils literal"><span class="pre">Empty</span></tt> if there is no data in the queue and blocking is
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first"><tt class="xref py py-class docutils literal"><span class="pre">Empty</span></tt> if there is no data in the queue and block is
 <tt class="docutils literal"><span class="pre">False</span></tt>, or <cite>timeout</cite> expires</p>
 </td>
 </tr>
@@ -847,7 +846,7 @@ default of <tt class="docutils literal"><span class="pre">None</span></tt>, can 
 <dt id="greenhouse.util.Queue.get_nowait">
 <tt class="descname">get_nowait</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.get_nowait" title="Permalink to this definition">¶</a></dt>
 <dd><p>get an item out of the queue without ever blocking</p>
-<p>this call is equivalent to <tt class="docutils literal"><span class="pre">get(blocking=False)</span></tt></p>
+<p>this call is equivalent to <tt class="docutils literal"><span class="pre">get(block=False)</span></tt></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -885,7 +884,7 @@ pending.</p>
 
 <dl class="method">
 <dt id="greenhouse.util.Queue.put">
-<tt class="descname">put</tt><big>(</big><em>item</em>, <em>blocking=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.put" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">put</tt><big>(</big><em>item</em>, <em>block=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.put" title="Permalink to this definition">¶</a></dt>
 <dd><p>put an item into the queue</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -899,15 +898,15 @@ another coroutine <a class="reference internal" href="#greenhouse.util.Queue.get
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>item</strong> &#8211; the object to put into the queue, can be any type</li>
-<li><strong>blocking</strong> (<em>bool</em>) &#8211; whether to block if the queue is already <a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a> (default
+<li><strong>block</strong> (<em>bool</em>) &#8211; whether to block if the queue is already <a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a> (default
 <tt class="docutils literal"><span class="pre">True</span></tt>)</li>
 <li><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum time in seconds to block waiting. with the default of
-<tt class="docutils literal"><span class="pre">None</span></tt>, it can wait indefinitely. this is unused if <cite>blocking</cite> is
+<tt class="docutils literal"><span class="pre">None</span></tt>, it can wait indefinitely. this is unused if <cite>block</cite> is
 <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first last"><tt class="xref py py-class docutils literal"><span class="pre">Full</span></tt> if the queue is <a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a> and <cite>blocking</cite> is
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first last"><tt class="xref py py-class docutils literal"><span class="pre">Full</span></tt> if the queue is <a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a> and <cite>block</cite> is
 <tt class="docutils literal"><span class="pre">False</span></tt>, or if <cite>timeout</cite> expires.</p>
 </td>
 </tr>
@@ -919,7 +918,7 @@ another coroutine <a class="reference internal" href="#greenhouse.util.Queue.get
 <dt id="greenhouse.util.Queue.put_nowait">
 <tt class="descname">put_nowait</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.put_nowait" title="Permalink to this definition">¶</a></dt>
 <dd><p>put an item into the queue without any chance of blocking</p>
-<p>this call is equivalent to <tt class="docutils literal"><span class="pre">put(blocking=False)</span></tt></p>
+<p>this call is equivalent to <tt class="docutils literal"><span class="pre">put(block=False)</span></tt></p>
 <p>;param item: the object to put into the queue, can be any type</p>
 </dd></dl>
 
@@ -1037,10 +1036,10 @@ never block</td>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="io.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins</a></p>
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="pool.html"
-                        title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">greenhouse.pool</span></tt> &#8211; Managed Greenlet Pools</a></p>
+                        title="next chapter"><tt class="docutils literal"><span class="pre">greenhouse.pool</span></tt> &#8211; Managed Greenlet Pools</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/greenhouse/util.txt"
@@ -1078,12 +1077,12 @@ never block</td>
         <li class="right" >
           <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
              >previous</a> |</li>
-        <li><a href="../index.html">greenhouse 2.1.3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">greenhouse 2.1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2010, Travis J Parker.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+        &copy; Copyright 2013, Travis J Parker.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

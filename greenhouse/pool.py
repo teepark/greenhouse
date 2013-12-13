@@ -90,13 +90,17 @@ class OneWayPool(object):
         """
         self.inq.put((args, kwargs))
 
-    def join(self):
+    def join(self, timeout=None):
         """wait for the pool's input queue to be cleaned out
 
         .. note::
-            this method will block until it has no more pending tasks
+            this method will block until it has no more pending tasks or, if a
+            timeout is provided, it expires
+
+        :param timeout: maximum time in seconds to wait
+        :type timeout: float or None
         """
-        self.inq.join()
+        self.inq.join(timeout)
 
     def __enter__(self):
         self.start()

@@ -328,7 +328,7 @@ class Socket(object):
                     if scheduler.state.interrupted:
                         raise IOError(errno.EINTR, "interrupted system call")
 
-    def recv_into(self, buffer, bufsize=-1, flags=0):
+    def recv_into(self, buffer, bufsize=0, flags=0):
         """receive data from the connection and place it into a buffer
 
         .. note:: this method will block until data is available to be read
@@ -395,7 +395,7 @@ class Socket(object):
                     if scheduler.state.interrupted:
                         raise IOError(errno.EINTR, "interrupted system call")
 
-    def recvfrom_into(self, buffer, bufsize=-1, flags=0):
+    def recvfrom_into(self, buffer, bufsize=0, flags=0):
         """receive data on a non-TCP socket and place it in a buffer
 
         .. note:: this method will block until data is available to be read

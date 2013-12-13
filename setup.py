@@ -5,7 +5,7 @@ import os
 from setuptools import setup
 
 
-VERSION = (2, 1, 8, "")
+VERSION = (2, 1, 9, "")
 
 setup(
     name="greenhouse",

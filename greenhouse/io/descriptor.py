@@ -84,7 +84,9 @@ def wait_fds(fd_events, inmask=1, outmask=2, timeout=None):
         scheduler.state.mainloop.switch()
 
     for fd, reg in poll_regs.iteritems():
+        readable, writable = callback_refs[fd]
         poller.unregister(fd, reg)
+        scheduler._unregister_fd(fd, readable, writable)
 
     if scheduler.state.interrupted:
         raise IOError(errno.EINTR, "interrupted system call")

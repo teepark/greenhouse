@@ -1,5 +1,6 @@
 from __future__ import absolute_import, with_statement
 
+import contextlib
 import errno
 import fcntl
 import os
@@ -30,6 +31,7 @@ class FileBase(object):
 
     def __init__(self):
         self._rbuf = StringIO()
+        self.encoding = None
 
     def __iter__(self):
         line = self.readline()
@@ -231,6 +233,38 @@ class File(FileBase):
         # back to waiting with a simple yield
         self._set_up_waiting()
 
+    @contextlib.contextmanager
+    def _registered(self, read=True, write=True):
+        poller = scheduler.state.poller
+
+        mask, rd, wr = scheduler.state.poller.ERRMASK, None, None
+        if read:
+            rd = self._on_readable
+            mask |= scheduler.state.poller.INMASK
+        if write:
+            wr = self._on_writable
+            mask |= scheduler.state.poller.OUTMASK
+
+        try:
+            counter = poller.register(self, mask)
+        except EnvironmentError, exc:
+            if exc.args and exc.args[0] in errno.errorcode:
+                raise IOError, IOError(*exc.args), sys.exc_info()[2]
+            raise
+
+        scheduler._register_fd(self._fileno, rd, wr)
+
+        try:
+            yield
+        finally:
+            scheduler._unregister_fd(self._fileno, rd, wr)
+            try:
+                poller.unregister(self, counter)
+            except EnvironmentError, exc:
+                if exc.args and exc.args[0] in errno.errorcode:
+                    raise IOError, IOError(*exc.args), sys.exc_info()[2]
+                raise
+
     def _set_up_waiting(self):
         counter = None
         try:
@@ -243,8 +277,6 @@ class File(FileBase):
             self._waiter = "_wait_event"
             self._readable = util.Event()
             self._writable = util.Event()
-            scheduler._register_fd(
-                    self._fileno, self._on_readable, self._on_writable)
         finally:
             if counter is not None:
                 scheduler.state.poller.unregister(self, counter)
@@ -259,18 +291,8 @@ class File(FileBase):
 
     def _wait_event(self, reading):
         "wait on our events"
-        if reading:
-            mask = scheduler.state.poller.INMASK
-            ev = self._readable
-        else:
-            mask = scheduler.state.poller.OUTMASK
-            ev = self._writable
-
-        counter = scheduler.state.poller.register(self, mask)
-        try:
-            ev.wait()
-        finally:
-            scheduler.state.poller.unregister(self, counter)
+        with self._registered(reading, not reading):
+            (self._readable if reading else self._writable).wait()
 
         if scheduler.state.interrupted:
             raise IOError(errno.EINTR, "interrupted system call")
@@ -321,9 +343,10 @@ class File(FileBase):
         :returns: a new :class:`File` object connected to the descriptor
         """
         fp = object.__new__(cls)  # bypass __init__
+        fp._rbuf = StringIO()
+        fp.encoding = None
         fp.mode = mode
         fp._fileno = fd
-        fp._rbuf = StringIO()
         fp._closed = False
 
         cls._add_flags(fd, cls._mode_to_flags(mode))

@@ -135,3 +135,7 @@
     - added a timeout argument to Pool.join
     - emulation fix: default value of bufsize in socket.recv_into and
       recvfrom_into
+
+2.1.11 (1/30/2014)
+    - socket.sendall() fix. it wouldn't work at all and would in fact send the
+      same chunk multiple times if everything didn't go in the first send(2).

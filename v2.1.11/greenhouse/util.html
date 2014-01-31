@@ -1,0 +1,1088 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenhouse.util – Greenlet-Aware Concurrency Primitives &mdash; greenhouse 2.1.11 documentation</title>
+    
+    <link rel="stylesheet" href="../static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.1.11',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="top" title="greenhouse 2.1.11 documentation" href="../index.html" />
+    <link rel="next" title="greenhouse.pool – Managed Greenlet Pools" href="pool.html" />
+    <link rel="prev" title="greenhouse.io – Cooperative I/O Drop-Ins" href="io.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pool.html" title="greenhouse.pool – Managed Greenlet Pools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.11 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-greenhouse.util">
+<span id="greenhouse-util-greenlet-aware-concurrency-primitives"></span><h1><a class="reference internal" href="#module-greenhouse.util" title="greenhouse.util"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.util</span></tt></a> &#8211; Greenlet-Aware Concurrency Primitives<a class="headerlink" href="#module-greenhouse.util" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="greenhouse.util.Event">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Event</tt><a class="headerlink" href="#greenhouse.util.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>an event for which greenlets can wait</p>
+<p>mirrors the standard library <cite>threading.Event</cite> API</p>
+<dl class="method">
+<dt id="greenhouse.util.Event.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Event.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>clear the event from being triggered</p>
+<p>after calling this method, waiting on this event will block until the
+<a class="reference internal" href="#greenhouse.util.Event.set" title="greenhouse.util.Event.set"><tt class="xref py py-meth docutils literal"><span class="pre">set()</span></tt></a> method has been called</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Event.isSet">
+<tt class="descname">isSet</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Event.isSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether waiting on the event will block right now</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if the event has been <a class="reference internal" href="#greenhouse.util.Event.set" title="greenhouse.util.Event.set"><tt class="xref py py-meth docutils literal"><span class="pre">set()</span></tt></a> and waiting will not
+block, <tt class="docutils literal"><span class="pre">False</span></tt> if the event is <a class="reference internal" href="#greenhouse.util.Event.clear" title="greenhouse.util.Event.clear"><tt class="xref py py-meth docutils literal"><span class="pre">cleared</span></tt></a> and
+<a class="reference internal" href="#greenhouse.util.Event.wait" title="greenhouse.util.Event.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> will block</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Event.is_set">
+<tt class="descname">is_set</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Event.is_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether waiting on the event will block right now</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if the event has been <a class="reference internal" href="#greenhouse.util.Event.set" title="greenhouse.util.Event.set"><tt class="xref py py-meth docutils literal"><span class="pre">set()</span></tt></a> and waiting will not
+block, <tt class="docutils literal"><span class="pre">False</span></tt> if the event is <a class="reference internal" href="#greenhouse.util.Event.clear" title="greenhouse.util.Event.clear"><tt class="xref py py-meth docutils literal"><span class="pre">cleared</span></tt></a> and
+<a class="reference internal" href="#greenhouse.util.Event.wait" title="greenhouse.util.Event.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> will block</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Event.set">
+<tt class="descname">set</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Event.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the event to triggered</p>
+<p>after calling this method, all greenlets waiting on the event will be
+rescheduled, and calling <a class="reference internal" href="#greenhouse.util.Event.wait" title="greenhouse.util.Event.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> will not block until
+<a class="reference internal" href="#greenhouse.util.Event.clear" title="greenhouse.util.Event.clear"><tt class="xref py py-meth docutils literal"><span class="pre">clear()</span></tt></a> has been called</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Event.wait">
+<tt class="descname">wait</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Event.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>pause the current coroutine until this event is set</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block the current coroutine if <a class="reference internal" href="#greenhouse.util.Event.set" title="greenhouse.util.Event.set"><tt class="xref py py-meth docutils literal"><span class="pre">set()</span></tt></a> has not
+been called.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>number or None</em>) &#8211; the maximum amount of time to block in seconds. the default of
+<tt class="docutils literal"><span class="pre">None</span></tt> allows indefinite blocking.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if a timeout was provided and was hit, otherwise <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Lock">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Lock</tt><a class="headerlink" href="#greenhouse.util.Lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>an object that can only be &#8216;owned&#8217; by one greenlet at a time</p>
+<p>mirrors the standard library <cite>threading.Lock</cite> API</p>
+<dl class="method">
+<dt id="greenhouse.util.Lock.acquire">
+<tt class="descname">acquire</tt><big>(</big><em>blocking=True</em><big>)</big><a class="headerlink" href="#greenhouse.util.Lock.acquire" title="Permalink to this definition">¶</a></dt>
+<dd><p>lock the lock, blocking until it becomes available</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block the current coroutine if the lock is not
+already owned.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blocking</strong> (<em>bool</em>) &#8211; whether to block if the lock is already owned (default <tt class="docutils literal"><span class="pre">True</span></tt>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <cite>bool</cite> indicating whether the lock was acquired. In the default
+case of <tt class="docutils literal"><span class="pre">blocking</span> <span class="pre">=</span> <span class="pre">True</span></tt> this will always be the case, but may
+not be otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Lock.acquire_lock">
+<tt class="descname">acquire_lock</tt><big>(</big><em>blocking=True</em><big>)</big><a class="headerlink" href="#greenhouse.util.Lock.acquire_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>lock the lock, blocking until it becomes available</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block the current coroutine if the lock is not
+already owned.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blocking</strong> (<em>bool</em>) &#8211; whether to block if the lock is already owned (default <tt class="docutils literal"><span class="pre">True</span></tt>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <cite>bool</cite> indicating whether the lock was acquired. In the default
+case of <tt class="docutils literal"><span class="pre">blocking</span> <span class="pre">=</span> <span class="pre">True</span></tt> this will always be the case, but may
+not be otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Lock.locked">
+<tt class="descname">locked</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Lock.locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether the lock is currently locked</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if the lock is locked (and therefore calling
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquire()</span></tt></a> would block), otherwise <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Lock.locked_lock">
+<tt class="descname">locked_lock</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Lock.locked_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether the lock is currently locked</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if the lock is locked (and therefore calling
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquire()</span></tt></a> would block), otherwise <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Lock.release">
+<tt class="descname">release</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Lock.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>open the lock back up to wake up a waiting greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the calling greenlet is not the one that had
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a> the lock</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Lock.release_lock">
+<tt class="descname">release_lock</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Lock.release_lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>open the lock back up to wake up a waiting greenlet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the calling greenlet is not the one that had
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a> the lock</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.RLock">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">RLock</tt><a class="headerlink" href="#greenhouse.util.RLock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.util.Lock" title="greenhouse.util.Lock"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.util.Lock</span></tt></a></p>
+<p>a lock which may be acquired more than once by the same greenlet</p>
+<p>mirrors the standard library <cite>threading.RLock</cite> API</p>
+<dl class="method">
+<dt id="greenhouse.util.RLock.acquire">
+<tt class="descname">acquire</tt><big>(</big><em>blocking=True</em><big>)</big><a class="headerlink" href="#greenhouse.util.RLock.acquire" title="Permalink to this definition">¶</a></dt>
+<dd><p>acquire ownership of the lock</p>
+<p>if the lock is already owned by the calling greenlet, a counter simply
+gets incremented. if it is owned by a different greenlet then it will
+block until the lock becomes available.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block the current coroutine if the lock is not
+already owned by another coroutine.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blocking</strong> (<em>bool</em>) &#8211; whether to block if the lock is owned by a different greenlet
+(default <tt class="docutils literal"><span class="pre">True</span></tt>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <cite>bool</cite> indicating whether the lock was acquired. In the default
+case of <tt class="docutils literal"><span class="pre">blocking</span> <span class="pre">=</span> <span class="pre">True</span></tt> this will always be the case, but may
+not be otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.RLock.release">
+<tt class="descname">release</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.RLock.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>release one ownership of the lock</p>
+<p>if the calling greenlet has <a class="reference internal" href="#greenhouse.util.RLock.acquire" title="greenhouse.util.RLock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a> the lock more
+than once this will simply decrement the counter. if this is a final
+release then a waiting greenlet is awoken</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the calling greenlet is not the lock&#8217;s owner</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Condition">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Condition</tt><big>(</big><em>lock=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Condition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a synchronization object capable of waking all or one of its waiters</p>
+<p>mirrors the standard library <cite>threading.Condition</cite> API</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lock</strong> (<a class="reference internal" href="#greenhouse.util.Lock" title="greenhouse.util.Lock"><tt class="xref py py-class docutils literal"><span class="pre">Lock</span></tt></a> or <a class="reference internal" href="#greenhouse.util.RLock" title="greenhouse.util.RLock"><tt class="xref py py-class docutils literal"><span class="pre">RLock</span></tt></a>) &#8211; the lock object wrapped by the condition</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="greenhouse.util.Condition.notify">
+<tt class="descname">notify</tt><big>(</big><em>num=1</em><big>)</big><a class="headerlink" href="#greenhouse.util.Condition.notify" title="Permalink to this definition">¶</a></dt>
+<dd><p>wake one or more waiting greenlets</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num</strong> (<em>int</em>) &#8211; the number of waiters to wake (default 1)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the underlying lock hasn&#8217;t been
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Condition.notifyAll">
+<tt class="descname">notifyAll</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Condition.notifyAll" title="Permalink to this definition">¶</a></dt>
+<dd><p>wake all waiting greenlets</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the underlying lock hasn&#8217;t been
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Condition.notify_all">
+<tt class="descname">notify_all</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Condition.notify_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>wake all waiting greenlets</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the underlying lock hasn&#8217;t been
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Condition.wait">
+<tt class="descname">wait</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Condition.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait to be woken up by the condition</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method will block the current coroutine until a <a class="reference internal" href="#greenhouse.util.Condition.notify" title="greenhouse.util.Condition.notify"><tt class="xref py py-meth docutils literal"><span class="pre">notify()</span></tt></a>
+wakes it back up.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the underlying lock hasn&#8217;t been
+<a class="reference internal" href="#greenhouse.util.Lock.acquire" title="greenhouse.util.Lock.acquire"><tt class="xref py py-meth docutils literal"><span class="pre">acquired</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Semaphore">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Semaphore</tt><big>(</big><em>value=1</em><big>)</big><a class="headerlink" href="#greenhouse.util.Semaphore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a synchronization object with a counter that blocks when it reaches 0</p>
+<p>mirrors the api of <cite>threading.Semaphore</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>int</em>) &#8211; the starting value of the counter</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="greenhouse.util.Semaphore.acquire">
+<tt class="descname">acquire</tt><big>(</big><em>blocking=True</em><big>)</big><a class="headerlink" href="#greenhouse.util.Semaphore.acquire" title="Permalink to this definition">¶</a></dt>
+<dd><p>decrement the counter, waiting if it is already at 0</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if the counter is already at 0, this method will block the current
+coroutine until a <a class="reference internal" href="#greenhouse.util.Semaphore.release" title="greenhouse.util.Semaphore.release"><tt class="xref py py-meth docutils literal"><span class="pre">release()</span></tt></a> increments it again.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blocking</strong> (<em>bool</em>) &#8211; whether or not to block if the counter is already at 0 (default
+<tt class="docutils literal"><span class="pre">True</span></tt>)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a bool, indicating whether the count was decremented (this can only
+be <tt class="docutils literal"><span class="pre">False</span></tt> if <tt class="docutils literal"><span class="pre">blocking</span></tt> was <tt class="docutils literal"><span class="pre">False</span></tt> &#8211; otherwise it would
+have blocked until it could decrement the counter)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Semaphore.release">
+<tt class="descname">release</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Semaphore.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>increment the counter, waking up a waiter if there was any</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.BoundedSemaphore">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">BoundedSemaphore</tt><big>(</big><em>value=1</em><big>)</big><a class="headerlink" href="#greenhouse.util.BoundedSemaphore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.util.Semaphore" title="greenhouse.util.Semaphore"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.util.Semaphore</span></tt></a></p>
+<p>a semaphore with an upper limit to the counter</p>
+<p>mirrors the api of <cite>threading.BoundedSemaphore</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>int</em>) &#8211; the starting and maximum value of the counter</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="greenhouse.util.BoundedSemaphore.release">
+<tt class="descname">release</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.BoundedSemaphore.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>increment the counter, waking up a waiter if there was any</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Timer">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Timer</tt><big>(</big><em>interval</em>, <em>function</em>, <em>args=</em><span class="optional">[</span><span class="optional">]</span>, <em>kwargs={}</em><big>)</big><a class="headerlink" href="#greenhouse.util.Timer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.util.Thread" title="greenhouse.util.Thread"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.util.Thread</span></tt></a></p>
+<p>creates a greenlet from a function and schedules it to run later</p>
+<p>mirrors the standard library <cite>threading.Timer</cite> API</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>interval</strong> (<em>int or float</em>) &#8211; how far in the future to defer the function in seconds</li>
+<li><strong>func</strong> (<em>function</em>) &#8211; the function to run later</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; positional arguments to pass to the function</li>
+<li><strong>kwargs</strong> (<em>dict</em>) &#8211; keyword arguments to pass to the function</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="greenhouse.util.Timer.cancel">
+<tt class="descname">cancel</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Timer.cancel" title="Permalink to this definition">¶</a></dt>
+<dd><p>attempt to prevent the timer from ever running its function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if it was successful, <tt class="docutils literal"><span class="pre">False</span></tt> if the timer had already
+run or been cancelled</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="greenhouse.util.Timer.wrap">
+<em class="property">classmethod </em><tt class="descname">wrap</tt><big>(</big><em>secs</em>, <em>args=()</em>, <em>kwargs=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Timer.wrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>a classmethod decorator to immediately turn a function into a timer</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">you won&#8217;t find this on <cite>threading.Timer</cite>, it is an extension to
+that API</p>
+</div>
+<p>this is a function <em>returning a decorator</em>, so it is used like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@Timer.wrap</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;world&quot;</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">say_hi_timer</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;hello, </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">name</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>secs</strong> (<em>int or float</em>) &#8211; how far in the future to defer running the function in seconds</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; positional arguments to pass to the function</li>
+<li><strong>kwargs</strong> (<em>dict</em>) &#8211; keyword arguments to pass to the function</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a decorator function which produces an unstarted <a class="reference internal" href="#greenhouse.util.Timer" title="greenhouse.util.Timer"><tt class="xref py py-class docutils literal"><span class="pre">Timer</span></tt></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Local">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Local</tt><a class="headerlink" href="#greenhouse.util.Local" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>an object that holds greenlet-local data</p>
+<p>mirrors the standard library <cite>threading.local</cite> API</p>
+<p>to use, simply create an instance with no arguments, and any attribute gets
+and sets will be specific to that greenlet</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Thread">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Thread</tt><big>(</big><em>group=None</em>, <em>target=None</em>, <em>name=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>verbose=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a standin class for threads, but powered by greenlets</p>
+<p>this class is useful for <a class="reference internal" href="emulation.html#module-greenhouse.emulation" title="greenhouse.emulation"><tt class="xref py py-mod docutils literal"><span class="pre">monkey-patching</span></tt></a>
+the standard library, but for code written explicitly for greenhouse, the
+functions in <a class="reference internal" href="scheduler.html#module-greenhouse.scheduler" title="greenhouse.scheduler"><tt class="xref py py-mod docutils literal"><span class="pre">greenhouse.scheduler</span></tt></a> are a better way to go</p>
+<p>mirrors the standard library <cite>threading.Thread</cite> API</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>group</strong> (<em>None</em>) &#8211; this argument does nothing and must be <tt class="docutils literal"><span class="pre">None</span></tt> (for compatibility with
+the standard library <cite>threading.Thread</cite>)</li>
+<li><strong>target</strong> (<em>function</em>) &#8211; the function to run in the greenlet</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; the thread name (defaults to a generated name)</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; positional arguments to pass in to the <cite>target</cite> function</li>
+<li><strong>kwargs</strong> (<em>dict</em>) &#8211; keyword arguments to pass to the <cite>target</cite> function</li>
+<li><strong>verbose</strong> (<em>bool</em>) &#8211; here for compatibility, it is actually ignored</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="greenhouse.util.Thread.daemon">
+<tt class="descname">daemon</tt><a class="headerlink" href="#greenhouse.util.Thread.daemon" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the thread is set as a daemon thread (unsupported)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.getName">
+<tt class="descname">getName</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.getName" title="Permalink to this definition">¶</a></dt>
+<dd><p>the thread&#8217;s name as passed in the constructor or <a class="reference internal" href="#greenhouse.util.Thread.set_name" title="greenhouse.util.Thread.set_name"><tt class="xref py py-meth docutils literal"><span class="pre">set_name()</span></tt></a>,
+or failing those the automatically generated name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the thread&#8217;s <cite>str</cite> name</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.get_name">
+<tt class="descname">get_name</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.get_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>the thread&#8217;s name as passed in the constructor or <a class="reference internal" href="#greenhouse.util.Thread.set_name" title="greenhouse.util.Thread.set_name"><tt class="xref py py-meth docutils literal"><span class="pre">set_name()</span></tt></a>,
+or failing those the automatically generated name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the thread&#8217;s <cite>str</cite> name</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="greenhouse.util.Thread.ident">
+<tt class="descname">ident</tt><a class="headerlink" href="#greenhouse.util.Thread.ident" title="Permalink to this definition">¶</a></dt>
+<dd><p>unique identifier for this thread</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.isAlive">
+<tt class="descname">isAlive</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.isAlive" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether the thread is currently running</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if <a class="reference internal" href="#greenhouse.util.Thread.start" title="greenhouse.util.Thread.start"><tt class="xref py py-meth docutils literal"><span class="pre">start()</span></tt></a> has already been called but the function
+hasn&#8217;t yet finished or been killed, <tt class="docutils literal"><span class="pre">False</span></tt> if it isn&#8217;t currently
+running for any reason.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.isDaemon">
+<tt class="descname">isDaemon</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.isDaemon" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the thread is in daemonized mode</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt>. this is here for compatibility with <cite>threading.Thread</cite>,
+greenhouse-based threads always operate like daemonized threads.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.is_alive">
+<tt class="descname">is_alive</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.is_alive" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicates whether the thread is currently running</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if <a class="reference internal" href="#greenhouse.util.Thread.start" title="greenhouse.util.Thread.start"><tt class="xref py py-meth docutils literal"><span class="pre">start()</span></tt></a> has already been called but the function
+hasn&#8217;t yet finished or been killed, <tt class="docutils literal"><span class="pre">False</span></tt> if it isn&#8217;t currently
+running for any reason.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.is_daemon">
+<tt class="descname">is_daemon</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.is_daemon" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether the thread is in daemonized mode</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt>. this is here for compatibility with <cite>threading.Thread</cite>,
+greenhouse-based threads always operate like daemonized threads.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.join">
+<tt class="descname">join</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>block until this thread terminates</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method can block the calling coroutine if the thread has not
+yet completed.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum time to wait. with the default of <tt class="docutils literal"><span class="pre">None</span></tt>, waits
+indefinitely</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if called inside the thread, or it has not yet been
+started</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.run">
+<tt class="descname">run</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>override this method to define the thread&#8217;s behavior</p>
+<p>this is an alternative way to define the thread&#8217;s function than passing
+<cite>target</cite> to the constructor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.setDaemon">
+<tt class="descname">setDaemon</tt><big>(</big><em>daemonic</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.setDaemon" title="Permalink to this definition">¶</a></dt>
+<dd><p>here for compatibility with <cite>threading.Thread</cite> (this doesn&#8217;t work).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>daemonic</strong> (<em>bool</em>) &#8211; whether attempting to turn daemon mode on or off</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.setName">
+<tt class="descname">setName</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.setName" title="Permalink to this definition">¶</a></dt>
+<dd><p>overwrite the thread&#8217;s name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>str</em>) &#8211; the name to set</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.set_daemon">
+<tt class="descname">set_daemon</tt><big>(</big><em>daemonic</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.set_daemon" title="Permalink to this definition">¶</a></dt>
+<dd><p>here for compatibility with <cite>threading.Thread</cite> (this doesn&#8217;t work).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>daemonic</strong> (<em>bool</em>) &#8211; whether attempting to turn daemon mode on or off</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.set_name">
+<tt class="descname">set_name</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.set_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>overwrite the thread&#8217;s name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>str</em>) &#8211; the name to set</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Thread.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Thread.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>schedule to start the greenlet that runs this thread&#8217;s function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><cite>RuntimeError</cite> if the thread has already been started</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Queue">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Queue</tt><big>(</big><em>maxsize=0</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a producer-consumer queue</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>maxsize</strong> (<em>int</em>) &#8211; optional limit to the amount of queued data, after which <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a>
+can block. the default of 0 turns off the limit, so <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> will
+never block</td>
+</tr>
+</tbody>
+</table>
+<p>mirrors the standard library <cite>Queue.Queue</cite> API</p>
+<dl class="method">
+<dt id="greenhouse.util.Queue.empty">
+<tt class="descname">empty</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicate whether there is any queued data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if there is data in the queue, otherwise <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.full">
+<tt class="descname">full</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.full" title="Permalink to this definition">¶</a></dt>
+<dd><p>indicate whether the queue has <cite>maxsize</cite> data queued</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if the queue&#8217;s data has reached <cite>maxsize</cite>, otherwise
+<tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.get">
+<tt class="descname">get</tt><big>(</big><em>block=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>get an item out of the queue</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if <cite>block</cite> is <tt class="docutils literal"><span class="pre">True</span></tt> (the default) and the queue is
+:meth`empty`, this method will block the current coroutine until
+something has been <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a>.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>block</strong> (<em>bool</em>) &#8211; whether to block if there is no data yet available (default
+<tt class="docutils literal"><span class="pre">True</span></tt>)</li>
+<li><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum time in seconds to block waiting for data. with the
+default of <tt class="docutils literal"><span class="pre">None</span></tt>, can wait indefinitely. this is unused if
+<cite>block</cite> is <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first"><tt class="xref py py-class docutils literal"><span class="pre">Empty</span></tt> if there is no data in the queue and block is
+<tt class="docutils literal"><span class="pre">False</span></tt>, or <cite>timeout</cite> expires</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">something that was previously <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> in the queue</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.get_nowait">
+<tt class="descname">get_nowait</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.get_nowait" title="Permalink to this definition">¶</a></dt>
+<dd><p>get an item out of the queue without ever blocking</p>
+<p>this call is equivalent to <tt class="docutils literal"><span class="pre">get(block=False)</span></tt></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">something that was previously <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> in the queue</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.join">
+<tt class="descname">join</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait for task completions</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if <a class="reference internal" href="#greenhouse.util.Queue.task_done" title="greenhouse.util.Queue.task_done"><tt class="xref py py-meth docutils literal"><span class="pre">task_done()</span></tt></a> has not been called for every <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a>
+call, this method will block until it has.</p>
+</div>
+<p>the queue is still usable after a <a class="reference internal" href="#greenhouse.util.Queue.join" title="greenhouse.util.Queue.join"><tt class="xref py py-meth docutils literal"><span class="pre">join()</span></tt></a> call. a return from
+<a class="reference internal" href="#greenhouse.util.Queue.join" title="greenhouse.util.Queue.join"><tt class="xref py py-meth docutils literal"><span class="pre">join()</span></tt></a> simply indicates that the queue has no jobs <cite>currently</cite>
+pending.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum amount of time to wait in seconds. the default of
+<tt class="docutils literal"><span class="pre">None</span></tt> allows indefinite waiting.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">True</span></tt> if <cite>timeout</cite> was provided and expired, otherwise <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.put">
+<tt class="descname">put</tt><big>(</big><em>item</em>, <em>block=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.put" title="Permalink to this definition">¶</a></dt>
+<dd><p>put an item into the queue</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if the queue was created with a <cite>maxsize</cite> and it is currently
+<a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a>, this method will block the calling coroutine until
+another coroutine <a class="reference internal" href="#greenhouse.util.Queue.get" title="greenhouse.util.Queue.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a>s an item.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; the object to put into the queue, can be any type</li>
+<li><strong>block</strong> (<em>bool</em>) &#8211; whether to block if the queue is already <a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a> (default
+<tt class="docutils literal"><span class="pre">True</span></tt>)</li>
+<li><strong>timeout</strong> (<em>int, float or None</em>) &#8211; the maximum time in seconds to block waiting. with the default of
+<tt class="docutils literal"><span class="pre">None</span></tt>, it can wait indefinitely. this is unused if <cite>block</cite> is
+<tt class="docutils literal"><span class="pre">False</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first last"><tt class="xref py py-class docutils literal"><span class="pre">Full</span></tt> if the queue is <a class="reference internal" href="#greenhouse.util.Queue.full" title="greenhouse.util.Queue.full"><tt class="xref py py-meth docutils literal"><span class="pre">full()</span></tt></a> and <cite>block</cite> is
+<tt class="docutils literal"><span class="pre">False</span></tt>, or if <cite>timeout</cite> expires.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.put_nowait">
+<tt class="descname">put_nowait</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.put_nowait" title="Permalink to this definition">¶</a></dt>
+<dd><p>put an item into the queue without any chance of blocking</p>
+<p>this call is equivalent to <tt class="docutils literal"><span class="pre">put(block=False)</span></tt></p>
+<p>;param item: the object to put into the queue, can be any type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.qsize">
+<tt class="descname">qsize</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.qsize" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of queued pieces of data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Queue.task_done">
+<tt class="descname">task_done</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Queue.task_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>mark that a &#8220;job&#8221; (corresponding to a <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> or
+<a class="reference internal" href="#greenhouse.util.Queue.put_nowait" title="greenhouse.util.Queue.put_nowait"><tt class="xref py py-meth docutils literal"><span class="pre">put_nowait()</span></tt></a> call) is finished</p>
+<p>the <a class="reference internal" href="#greenhouse.util.Queue.join" title="greenhouse.util.Queue.join"><tt class="xref py py-meth docutils literal"><span class="pre">join()</span></tt></a> method won&#8217;t complete until the number of
+<a class="reference internal" href="#greenhouse.util.Queue.task_done" title="greenhouse.util.Queue.task_done"><tt class="xref py py-meth docutils literal"><span class="pre">task_done()</span></tt></a> calls equals the number of <a class="reference internal" href="#greenhouse.util.Queue.put" title="greenhouse.util.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> calls</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.LifoQueue">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">LifoQueue</tt><big>(</big><em>maxsize=0</em><big>)</big><a class="headerlink" href="#greenhouse.util.LifoQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.util.Queue" title="greenhouse.util.Queue"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.util.Queue</span></tt></a></p>
+<p>a producer-consumer queue that produces items in LIFO order</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>maxsize</strong> (<em>int</em>) &#8211; optional limit to the amount of queued data, after which <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt>
+can block. the default of 0 turns off the limit, so <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt> will
+never block</td>
+</tr>
+</tbody>
+</table>
+<p>mirrors the standard library <cite>Queue.LifoQueue</cite> API</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.PriorityQueue">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">PriorityQueue</tt><big>(</big><em>maxsize=0</em><big>)</big><a class="headerlink" href="#greenhouse.util.PriorityQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#greenhouse.util.Queue" title="greenhouse.util.Queue"><tt class="xref py py-class docutils literal"><span class="pre">greenhouse.util.Queue</span></tt></a></p>
+<p>a producer-consumer queue that produces items in prioritized order</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>maxsize</strong> (<em>int</em>) &#8211; optional limit to the amount of queued data, after which <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt>
+can block. the default of 0 turns off the limit, so <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt> will
+never block</td>
+</tr>
+</tbody>
+</table>
+<p>mirrors the standard library <cite>Queue.PriorityQueue</cite> API</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="greenhouse.util.Counter">
+<em class="property">class </em><tt class="descclassname">greenhouse.util.</tt><tt class="descname">Counter</tt><big>(</big><em>initial=0</em><big>)</big><a class="headerlink" href="#greenhouse.util.Counter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>a counter object that can block</p>
+<dl class="attribute">
+<dt id="greenhouse.util.Counter.count">
+<tt class="descname">count</tt><a class="headerlink" href="#greenhouse.util.Counter.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>the current integer value of the counter</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Counter.decrement">
+<tt class="descname">decrement</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Counter.decrement" title="Permalink to this definition">¶</a></dt>
+<dd><p>decrement the counter and wake anyone waiting for the new value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Counter.increment">
+<tt class="descname">increment</tt><big>(</big><big>)</big><a class="headerlink" href="#greenhouse.util.Counter.increment" title="Permalink to this definition">¶</a></dt>
+<dd><p>increment the counter, and wake anyone waiting for the new value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="greenhouse.util.Counter.wait">
+<tt class="descname">wait</tt><big>(</big><em>until=0</em><big>)</big><a class="headerlink" href="#greenhouse.util.Counter.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait until the count has reached a particular number</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method can block the current greenlet</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>until</strong> (<em>int</em>) &#8211; the number to wait for the count to get down (or up) to. default 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="io.html"
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenhouse.io</span></tt> &#8211; Cooperative I/O Drop-Ins</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pool.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">greenhouse.pool</span></tt> &#8211; Managed Greenlet Pools</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../sources/greenhouse/util.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pool.html" title="greenhouse.pool – Managed Greenlet Pools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="greenhouse.io – Cooperative I/O Drop-Ins"
+             >previous</a> |</li>
+        <li><a href="../index.html">greenhouse 2.1.11 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Travis J Parker.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>

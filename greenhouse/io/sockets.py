@@ -454,7 +454,7 @@ class Socket(object):
         """
         sent = self.send(data, flags)
         while sent < len(data):
-            self.send(data[sent:], flags)
+            sent += self.send(data[sent:], flags)
 
     def sendto(self, data, *args):
         """send data to a particular address

@@ -204,7 +204,7 @@ def _unregister_fd(fd, readable, writable, reg):
     state.poller.unregister(fd, reg)
 
 
-def greenlet(func, args=(), kwargs=None):
+def greenlet(func=None, args=(), kwargs=None):
     """create a new greenlet from a function and arguments
 
     :param func: the function the new greenlet should run
@@ -219,6 +219,10 @@ def greenlet(func, args=(), kwargs=None):
     greenhouse main loop greenlet, which is a requirement for greenlets that
     will wind up in the greenhouse scheduler.
     """
+    if func is None:
+        def decorator(func):
+            return greenlet(func, args=args, kwargs=kwargs)
+        return decorator
     if args or kwargs:
         def target():
             return func(*args, **(kwargs or {}))

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim: fileencoding=utf8:et:sw=4:ts=8:sts=4
-
+ 
 import os
 from setuptools import setup
 

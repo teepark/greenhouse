@@ -148,11 +148,11 @@ class green_popen_pipe(io.File):
 
 @functools.wraps(original_os_popen)
 def green_popen(cmd, mode='r', bufsize=-1):
+    kwarg = {}
     if 'r' in mode:
-        pipe = 'stdout'
+        kwarg['stdout'] = kwarg['stderr'] = green_subprocess.PIPE
     if 'w' in mode:
-        pipe = 'stderr'
-    kwarg = {pipe: green_subprocess.PIPE}
+        kwarg['stdin'] = green_subprocess.PIPE
 
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize, **kwarg)
     return green_popen_pipe.fromfd(
@@ -234,3 +234,4 @@ patchers = {
     'spawnvp': green_spawnvp,
     'spawnvpe': green_spawnvpe,
 }
+#TODO: os.pipe() which just returns fds, but with O_NONBLOCK applied

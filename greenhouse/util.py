@@ -107,6 +107,8 @@ class Event(object):
                     self._waiters.remove(current)
                 return True
 
+        #TODO: switch True/False return values to match threading.Event,
+        #      fix all feather/junction/zugzug code to match
         return False
 
 

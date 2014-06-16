@@ -31,7 +31,7 @@ del f
 
 
 def configure_logging(filename=None, filemode=None, fmt=None,
-        level=logging.INFO, stream=None, handler=None):
+                      level=logging.INFO, stream=None, handler=None):
     if handler is None:
         if filename is None:
             handler = logging.StreamHandler(stream or sys.stderr)

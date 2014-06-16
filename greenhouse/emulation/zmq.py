@@ -44,13 +44,14 @@ if zmq:
 
         def recv(self, flags=0, copy=True, track=False):
             if flags & zmq.NOBLOCK:
-                return super(ZMQSocketGreenifier, self).recv(flags, copy, track)
+                return super(ZMQSocketGreenifier, self).recv(
+                    flags, copy, track)
             flags |= zmq.NOBLOCK
 
             while 1:
                 try:
                     return super(ZMQSocketGreenifier, self).recv(
-                            flags, copy, track)
+                        flags, copy, track)
                 except zmq.ZMQError, exc:
                     if exc.errno != errno.EAGAIN:
                         raise
@@ -76,13 +77,15 @@ if zmq:
 
         def poll(self, timeout=None):
             return gzmq.wait_socks(self._registry.items(),
-                    inmask=zmq.POLLIN, outmask=zmq.POLLOUT, timeout=timeout)
+                                   inmask=zmq.POLLIN, outmask=zmq.POLLOUT,
+                                   timeout=timeout)
 
     def zmq_poll(sockets, timeout=-1):
         if timeout < 0:
             timeout = None
         return gzmq.wait_socks(sockets,
-                inmask=zmq.POLLIN, outmask=zmq.POLLOUT, timeout=timeout)
+                               inmask=zmq.POLLIN, outmask=zmq.POLLOUT,
+                               timeout=timeout)
 
 if zs:
     original_sugar_context = zmq.sugar.Context

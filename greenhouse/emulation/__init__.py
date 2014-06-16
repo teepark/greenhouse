@@ -88,7 +88,7 @@ def patched_context(*module_names, **kwargs):
     local = kwargs.pop('local', False)
     if kwargs:
         raise TypeError("patched_context() got an unexpected keyword " +
-                "argument %r" % kwargs.keys()[0])
+                        "argument %r" % kwargs.keys()[0])
 
     patch(*module_names)
     if local:
@@ -189,7 +189,7 @@ def patch(*module_names):
             module = sys.modules[module_name]
         else:
             module = __import__(
-                    module_name, {}, {}, module_name.rsplit(".", 1)[0])
+                module_name, {}, {}, module_name.rsplit(".", 1)[0])
         for attr, patch in _patchers[module_name].items():
             setattr(module, attr, patch)
 
@@ -210,7 +210,7 @@ def unpatch(*module_names):
         module_names = _standard.keys()
 
     log.info("undoing monkey-patches in-place (%d modules)" %
-            len(module_names))
+             len(module_names))
 
     for module_name in module_names:
         if module_name not in _standard:

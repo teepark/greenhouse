@@ -6,12 +6,12 @@ from ..io import sockets as gsock, ssl as gssl
 
 
 def wrap_socket(sock, keyfile=None, certfile=None, server_side=False,
-        cert_reqs=ssl.CERT_NONE, ssl_version=ssl.PROTOCOL_SSLv23,
-        ca_certs=None, do_handshake_on_connect=True, suppress_ragged_eofs=True,
-        ciphers=None):
+                cert_reqs=ssl.CERT_NONE, ssl_version=ssl.PROTOCOL_SSLv23,
+                ca_certs=None, do_handshake_on_connect=True,
+                suppress_ragged_eofs=True, ciphers=None):
     return gssl.SSLSocket(sock, keyfile, certfile, server_side, cert_reqs,
-            ssl_version, ca_certs, do_handshake_on_connect,
-            suppress_ragged_eofs, ciphers)
+                          ssl_version, ca_certs, do_handshake_on_connect,
+                          suppress_ragged_eofs, ciphers)
 
 
 def get_server_certificate(

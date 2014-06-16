@@ -122,11 +122,11 @@ def polling_green_version(func, retry_test, opt_arg_num, arg_count, timeout):
     return green_version
 
 green_waitpid = polling_green_version(
-        original_os_waitpid, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
+    original_os_waitpid, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
 green_wait3 = polling_green_version(
-        original_os_wait3, lambda x: not (x[0] or x[1]), 0, 1, OS_TIMEOUT)
+    original_os_wait3, lambda x: not (x[0] or x[1]), 0, 1, OS_TIMEOUT)
 green_wait4 = polling_green_version(
-        original_os_wait4, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
+    original_os_wait4, lambda x: not (x[0] or x[1]), 1, 2, OS_TIMEOUT)
 
 
 @functools.wraps(original_os_wait)
@@ -156,29 +156,32 @@ def green_popen(cmd, mode='r', bufsize=-1):
 
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize, **kwarg)
     return green_popen_pipe.fromfd(
-            getattr(proc, pipe).fileno(), mode, proc.pid)
+        getattr(proc, pipe).fileno(), mode, proc.pid)
 
 
 @functools.wraps(original_os_popen2)
 def green_popen2(cmd, mode='r', bufsize=-1):
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
-            stdin=green_subprocess.PIPE, stdout=green_subprocess.PIPE)
+                                  stdin=green_subprocess.PIPE,
+                                  stdout=green_subprocess.PIPE)
     return proc.stdin, proc.stdout
 
 
 @functools.wraps(original_os_popen3)
 def green_popen3(cmd, mode='r', bufsize=-1):
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
-            stdin=green_subprocess.PIPE, stdout=green_subprocess.PIPE,
-            stderr=green_subprocess.PIPE)
+                                  stdin=green_subprocess.PIPE,
+                                  stdout=green_subprocess.PIPE,
+                                  stderr=green_subprocess.PIPE)
     return proc.stdin, proc.stdout, proc.stderr
 
 
 @functools.wraps(original_os_popen4)
 def green_popen4(cmd, mode='r', bufsize=-1):
     proc = green_subprocess.Popen(cmd, shell=1, bufsize=bufsize,
-            stdin=green_subprocess.PIPE, stdout=green_subprocess.PIPE,
-            stderr=green_subprocess.STDOUT)
+                                  stdin=green_subprocess.PIPE,
+                                  stdout=green_subprocess.PIPE,
+                                  stderr=green_subprocess.STDOUT)
     return proc.stdin, proc.stdout
 
 

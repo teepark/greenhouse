@@ -47,11 +47,11 @@ def getnameinfo(address, flags):
             raise TypeError('getnameinfo() argument must be a tuple')
         else:
             raise socket.gaierror(
-                    socket.EAI_NONAME, "Name or service not known")
+                socket.EAI_NONAME, "Name or service not known")
 
     if (flags & socket.NI_NAMEREQD) and (flags & socket.NI_NUMERICHOST):
         raise socket.gaierror(
-                socket.EAI_NONAME, "Name or service not known")
+            socket.EAI_NONAME, "Name or service not known")
 
     if dns.is_ipv4(host):
         try:
@@ -60,7 +60,7 @@ def getnameinfo(address, flags):
             results = dns.resolver_obj.query(name, dns.rdatatype.PTR)
             if len(results) > 1:
                 raise socket.error(
-                        "sockaddr resolved to multiple addresses")
+                    "sockaddr resolved to multiple addresses")
 
             host = results[0].target.to_text(omit_final_dot=True)
         except dns.exception.Timeout, exc:
@@ -71,7 +71,7 @@ def getnameinfo(address, flags):
         except dns.exception.DNSException, exc:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(
-                        socket.EAI_NONAME, "Name or service not known")
+                    socket.EAI_NONAME, "Name or service not known")
 
     else:
         try:
@@ -88,13 +88,13 @@ def getnameinfo(address, flags):
         except dns.exception.DNSException, exc:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(
-                        socket.EAI_NONAME, "Name or service not known")
+                    socket.EAI_NONAME, "Name or service not known")
 
     if flags & socket.NI_NUMERICSERV:
         port = str(port)
     else:
         port = socket.getservbyport(
-                port, (flags & socket.NI_DGRAM) and 'udp' or 'tcp')
+            port, (flags & socket.NI_DGRAM) and 'udp' or 'tcp')
 
     return host, port
 

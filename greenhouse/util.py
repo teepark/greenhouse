@@ -13,26 +13,6 @@ __all__ = ["Event", "Lock", "RLock", "Condition", "Semaphore",
            "LifoQueue", "PriorityQueue", "Counter"]
 
 
-def _debugger(cls):
-    import types
-    for name in dir(cls):
-        attr = getattr(cls, name)
-        if isinstance(attr, types.MethodType):
-            def extrascope(attr):
-                @functools.wraps(attr)
-                def wrapper(*args, **kwargs):
-                    print "%s(%x).%s %s %s" % (cls.__name__, id(args[0]),
-                            attr.__name__, repr(args[1:]), repr(kwargs))
-                    rc = attr(*args, **kwargs)
-                    print "%s(%x).%s --> %s" % (cls.__name__, id(args[0]),
-                            attr.__name__, repr(rc))
-                    return rc
-                return wrapper
-            setattr(cls, name, extrascope(attr))
-    return cls
-
-
-#@_debugger
 class Event(object):
     """an event for which greenlets can wait
 
@@ -110,7 +90,6 @@ class Event(object):
         return False
 
 
-#@_debugger
 class Lock(object):
     """an object that can only be 'owned' by one greenlet at a time
 
@@ -622,7 +601,8 @@ class Thread(object):
     setDaemon = set_daemon
 
     daemon = property(is_daemon, set_daemon,
-            doc="whether the thread is set as a daemon thread (unsupported)")
+                      doc="whether the thread is set as a " +
+                          "daemon thread (unsupported)")
 
     def get_name(self):
         """the thread's name as passed in the constructor or :meth:`set_name`,

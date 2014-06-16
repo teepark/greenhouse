@@ -15,7 +15,7 @@ def green_socketpair(*args, **kwargs):
 
 
 def create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-        source_address=None):
+                      source_address=None):
     if dns:
         getaddrinfo = dns.getaddrinfo
     else:

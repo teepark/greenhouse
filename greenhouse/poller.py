@@ -33,7 +33,7 @@ class Poll(object):
         # get the current registrations dictionary
         registrations = self._registry[fd]
         registered = reduce(
-                operator.or_, registrations.itervalues(), 0)
+            operator.or_, registrations.itervalues(), 0)
 
         # update registrations in the OS poller
         self._update_registration(fd, registered, registered | eventmask)
@@ -71,9 +71,11 @@ class Poll(object):
 
     def _update_registration(self, fd, from_mask, to_mask):
         if from_mask != to_mask:
-            if from_mask:
+            if from_mask and to_mask:
+                self._poller.modify(fd, to_mask)
+            elif from_mask:
                 self._poller.unregister(fd)
-            if to_mask:
+            elif to_mask:
                 self._poller.register(fd, to_mask)
 
     def supports(self, fd):
@@ -189,7 +191,7 @@ class Select(object):
 
         # rewrite the full mask
         newmask = reduce(
-                operator.or_, self._registry[fd].itervalues(), 0)
+            operator.or_, self._registry[fd].itervalues(), 0)
         if newmask:
             self._currentmasks[fd] = newmask
         else:

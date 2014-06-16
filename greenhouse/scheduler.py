@@ -10,14 +10,14 @@ from greenhouse import compat, poller
 
 
 __all__ = ["pause", "pause_until", "pause_for", "schedule", "schedule_at",
-        "schedule_in", "schedule_recurring", "schedule_exception",
-        "schedule_exception_at", "schedule_exception_in", "end",
-        "global_exception_handler", "remove_global_exception_handler",
-        "local_exception_handler", "remove_local_exception_handler",
-        "handle_exception", "greenlet", "global_hook", "remove_global_hook",
-        "local_incoming_hook", "remove_local_incoming_hook",
-        "local_outgoing_hook", "remove_local_outgoing_hook",
-        "set_ignore_interrupts", "reset_poller"]
+           "schedule_in", "schedule_recurring", "schedule_exception",
+           "schedule_exception_at", "schedule_exception_in", "end",
+           "global_exception_handler", "remove_global_exception_handler",
+           "local_exception_handler", "remove_local_exception_handler",
+           "handle_exception", "greenlet", "global_hook", "remove_global_hook",
+           "local_incoming_hook", "remove_local_incoming_hook",
+           "local_outgoing_hook", "remove_local_outgoing_hook",
+           "set_ignore_interrupts", "reset_poller"]
 
 BTREE_ORDER = 64
 
@@ -148,7 +148,7 @@ def _hit_poller(timeout):
         else:
             state.interrupted = True
             events = [(fd, state.poller.ERRMASK)
-                    for fd in state.poller._registry.iterkeys()]
+                      for fd in state.poller._registry.iterkeys()]
 
     for fd, eventmap in events:
         readables, writables = state.descriptormap.get(fd, ([], []))
@@ -189,6 +189,7 @@ def _register_fd(fd, readable, writable):
         writables.add(writable)
 
     return reg
+
 
 def _unregister_fd(fd, readable, writable, reg):
     if fd not in state.descriptormap:
@@ -378,7 +379,7 @@ def schedule_in(secs, target=None, args=(), kwargs=None):
 
 
 def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
-        args=(), kwargs=None):
+                       args=(), kwargs=None):
     """insert a greenlet into the scheduler to run regularly at an interval
 
     If provided a function, it is wrapped in a new greenlet
@@ -417,7 +418,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
     if target is None:
         def decorator(target):
             return schedule_recurring(
-                    interval, target, maxtimes, starting_at, args, kwargs)
+                interval, target, maxtimes, starting_at, args, kwargs)
         return decorator
 
     func = target
@@ -433,7 +434,7 @@ def schedule_recurring(interval, target=None, maxtimes=0, starting_at=0,
             tstamp += interval
             func(*args, **(kwargs or {}))
             schedule_at(tstamp, run_and_schedule_one,
-                    args=(tstamp, count + 1))
+                        args=(tstamp, count + 1))
 
     firstrun = starting_at + interval
     schedule_at(firstrun, run_and_schedule_one, args=(firstrun, 0))
@@ -543,7 +544,7 @@ def mainloop():
         # local trace incoming hooks
         if target in state.local_to_hooks:
             _run_local_hooks(
-                    target, state.local_to_hooks[target], True)
+                target, state.local_to_hooks[target], True)
 
         try:
             # pick up any exception we are supposed to throw in
@@ -562,7 +563,7 @@ def mainloop():
         # local trace outgoing hooks
         if target in state.local_from_hooks:
             _run_local_hooks(
-                    target, state.local_from_hooks[target], False)
+                target, state.local_from_hooks[target], False)
 
 state.mainloop = mainloop
 
@@ -727,7 +728,7 @@ def local_exception_handler(handler=None, coro=None):
     log.info("setting a new coroutine local exception handler")
 
     state.local_exception_handlers.setdefault(coro, []).append(
-            weakref.ref(handler))
+        weakref.ref(handler))
 
     return handler
 
@@ -824,7 +825,7 @@ def local_incoming_hook(handler=None, coro=None):
     log.info("setting a coroutine incoming local hook callback")
 
     state.local_to_hooks.setdefault(coro, []).append(
-            weakref.ref(handler))
+        weakref.ref(handler))
 
     return handler
 
@@ -880,7 +881,7 @@ def local_outgoing_hook(handler=None, coro=None):
     log.info("setting a coroutine local outgoing hook callback")
 
     state.local_from_hooks.setdefault(coro, []).append(
-            weakref.ref(handler))
+        weakref.ref(handler))
 
     return handler
 

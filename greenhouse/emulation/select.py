@@ -55,7 +55,7 @@ class green_poll(object):
         if timeout is not None:
             timeout = float(timeout) / 1000
         return io.wait_fds(self._registry.items(), timeout=timeout,
-                inmask=select.POLLIN, outmask=select.POLLOUT)
+                           inmask=select.POLLIN, outmask=select.POLLOUT)
 
     def register(self, fd, eventmask=all_poll_evs):
         fd = fd if isinstance(fd, int) else fd.fileno()

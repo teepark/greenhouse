@@ -1,5 +1,4 @@
 import collections
-import functools
 import heapq
 from Queue import Empty, Full
 import time
@@ -429,10 +428,8 @@ class Local(object):
     """
     _main_standin = type('', (), {})()
 
-    def __new__(cls):
-        obj = object.__new__(cls)
-        object.__setattr__(obj, "_local_data", weakref.WeakKeyDictionary())
-        return obj
+    def __init__(self):
+        object.__setattr__(self, "_local_data", weakref.WeakKeyDictionary())
 
     def __getattr__(self, name):
         current = compat.getcurrent()

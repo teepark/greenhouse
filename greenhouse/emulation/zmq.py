@@ -4,15 +4,14 @@ import errno
 
 try:
     import zmq
-    import zmq.core
     from ..ext import zmq as gzmq
 except ImportError:
     zmq = gzmq = None
 
 try:
-    import zmq.core.poller as zcp
+    import zmq.backend as zback
 except ImportError:
-    zcp = None
+    zback = None
 
 try:
     import zmq.sugar as zs
@@ -21,8 +20,8 @@ except ImportError:
 
 
 if zmq:
-    original_core_context = zmq.core.Context
-    original_core_socket = zmq.core.Socket
+    original_backend_context = zmq.backend.Context
+    original_backend_socket = zmq.backend.Socket
 
     class ZMQContextGreenifier(object):
         def socket(self, sock_type):
@@ -57,11 +56,11 @@ if zmq:
                         raise
                     gzmq.wait_socks([(self, 1)])
 
-    class ZMQCoreSocket(ZMQSocketGreenifier, original_core_socket):
+    class ZMQBackendSocket(ZMQSocketGreenifier, original_backend_socket):
         pass
 
-    class ZMQCoreContext(ZMQContextGreenifier, original_core_context):
-        _SOCK_CLASS = ZMQCoreSocket
+    class ZMQBackendContext(ZMQContextGreenifier, original_backend_context):
+        _SOCK_CLASS = ZMQBackendSocket
 
     class ZMQPoller(object):
         def __init__(self):
@@ -88,8 +87,8 @@ if zmq:
                                timeout=timeout)
 
 if zs:
-    original_sugar_context = zmq.sugar.Context
-    original_sugar_socket = zmq.sugar.Socket
+    original_sugar_context = zs.Context
+    original_sugar_socket = zs.Socket
 
     class ZMQSugarSocket(ZMQSocketGreenifier, original_sugar_socket):
         pass
@@ -99,33 +98,26 @@ if zs:
 
 
 patchers = {}
-core_patchers = {}
-core_context_patchers = {}
-core_socket_patchers = {}
-core_poll_patchers = {}
+backend_patchers = {}
 sugar_patchers = {}
 sugar_context_patchers = {}
 sugar_socket_patchers = {}
 sugar_poll_patchers = {}
 
 if zmq:
-    patchers['Context'] = ZMQCoreContext
-    patchers['Socket'] = ZMQCoreSocket
+    patchers['Context'] = ZMQBackendContext
+    patchers['Socket'] = ZMQBackendSocket
     patchers['zmq_poll'] = zmq_poll
-    core_patchers.update(patchers)
-    core_context_patchers['Context'] = ZMQCoreContext
-    core_socket_patchers['Socket'] = ZMQCoreSocket
-
-if zcp:
     patchers['Poller'] = ZMQPoller
-    core_patchers['Poller'] = ZMQPoller
-    core_poll_patchers['Poller'] = ZMQPoller
+
+if zback:
+    backend_patchers.update(patchers)
 
 if zs:
     patchers['Context'] = ZMQSugarContext
     patchers['Socket'] = ZMQSugarSocket
     patchers['Poller'] = ZMQPoller
     sugar_patchers.update(patchers)
-    #sugar_context_patchers['Context'] = ZMQSugarContext
+    sugar_context_patchers['Context'] = ZMQSugarContext
     sugar_socket_patchers['Socket'] = ZMQSugarSocket
     sugar_poll_patchers['Poller'] = ZMQPoller

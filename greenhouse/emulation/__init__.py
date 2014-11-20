@@ -250,14 +250,10 @@ _patchers['fcntl'] = fcntl.patchers
 from . import zmq
 if zmq.patchers:
     _patchers['zmq'] = zmq.patchers
-if zmq.core_patchers:
-    _patchers['zmq.core'] = zmq.core_patchers
-if zmq.core_context_patchers:
-    _patchers['zmq.core.context'] = zmq.core_context_patchers
-if zmq.core_socket_patchers:
-    _patchers['zmq.core.socket'] = zmq.core_socket_patchers
-if zmq.core_poll_patchers:
-    _patchers['zmq.core.poll'] = zmq.core_poll_patchers
+
+
+if zmq.backend_patchers:
+    _patchers['zmq.backend'] = zmq.backend_patchers
 if zmq.sugar_patchers:
     _patchers['zmq.sugar'] = zmq.sugar_patchers
 if zmq.sugar_context_patchers:

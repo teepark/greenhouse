@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import time
 
 from ..io import descriptor
-import zmq.core
+import zmq.backend
 
 
 __all__ = ["wait_socks"]
@@ -37,7 +37,7 @@ def wait_socks(sock_events, inmask=1, outmask=2, timeout=None):
     """
     results = []
     for sock, mask in sock_events:
-        if isinstance(sock, zmq.core.Socket):
+        if isinstance(sock, zmq.backend.Socket):
             mask = _check_events(sock, mask, inmask, outmask)
             if mask:
                 results.append((sock, mask))
@@ -47,7 +47,7 @@ def wait_socks(sock_events, inmask=1, outmask=2, timeout=None):
     fd_map = {}
     fd_events = []
     for sock, mask in sock_events:
-        if isinstance(sock, zmq.core.Socket):
+        if isinstance(sock, zmq.backend.Socket):
             fd = sock.getsockopt(zmq.FD)
         elif isinstance(sock, int):
             fd = sock
@@ -67,7 +67,7 @@ def wait_socks(sock_events, inmask=1, outmask=2, timeout=None):
         results = []
         for fd, mask in active:
             sock = fd_map[fd]
-            if isinstance(sock, zmq.core.Socket):
+            if isinstance(sock, zmq.backend.Socket):
                 mask = _check_events(sock, mask, inmask, outmask)
                 if not mask:
                     continue

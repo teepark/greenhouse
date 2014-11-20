@@ -118,6 +118,6 @@ if zs:
     patchers['Socket'] = ZMQSugarSocket
     patchers['Poller'] = ZMQPoller
     sugar_patchers.update(patchers)
-    sugar_context_patchers['Context'] = ZMQSugarContext
+    #sugar_context_patchers['Context'] = ZMQSugarContext
     sugar_socket_patchers['Socket'] = ZMQSugarSocket
     sugar_poll_patchers['Poller'] = ZMQPoller

@@ -144,3 +144,6 @@
     - fixed an erroneous use of __new__ in the threading.local() patcher which
       caused needless issues when subclasses take __init__ arguments, but
       correctly call the super without args.
+
+2.1.13 (11/19/2014)
+    - updated the zmq patching code to match changes in pyzmq 

@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # vim: fileencoding=utf8:et:sw=4:ts=8:sts=4
 
-import os
 from setuptools import setup
 
 
-VERSION = (2, 1, 13, "")
+VERSION = (2, 2, 0, "")
 
 setup(
     name="greenhouse",

@@ -147,3 +147,7 @@
 
 2.1.13 (11/19/2014)
     - updated the zmq patching code to match changes in pyzmq 
+
+2.2.0 (12/30/2014)
+    - fixed ssl emulation with httplib for python 2.7.3 (I believe this fixes
+      it up through 2.7.8, but 2.7.9 is still very broken)

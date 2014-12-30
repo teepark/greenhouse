@@ -10,7 +10,7 @@ import sys
 import time
 
 from greenhouse import scheduler, util
-from greenhouse.io import sockets as gsock
+from greenhouse.io import sockets as gsock, files as gfiles
 
 
 class SSLSocket(gsock.Socket):
@@ -32,6 +32,7 @@ class SSLSocket(gsock.Socket):
             inner = inner._sock
         self._sock = inner._sock if hasattr(inner, "_sock") else inner
         self._sock.setblocking(False)
+        self._fileno = sock.fileno()
 
         if ciphers is None and ssl_version != ssl._SSLv2_IF_EXISTS:
             ciphers = ssl._DEFAULT_CIPHERS
@@ -322,7 +323,13 @@ class SSLSocket(gsock.Socket):
 
     def makefile(self, mode='r', bufsize=-1):
         'return a file-like object that operates on the ssl connection'
-        return gsock.SocketFile(self._clone(), mode)
+        sockfile = gsock.SocketFile.__new__(gsock.SocketFile)
+        gfiles.FileBase.__init__(sockfile)
+        sockfile._sock = self
+        sockfile.mode = mode
+        if bufsize > 0:
+            sockfile.CHUNKSIZE = bufsize
+        return sockfile
 
     def _on_readable(self):
         self._readable.set()

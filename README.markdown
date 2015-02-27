@@ -9,3 +9,6 @@ The github project is [here](http://github.com/teepark/greenhouse).
 It's also on the [python package
 index](http://pypi.python.org/pypi/greenhouse), so you can install it easily
 with `easy_install greenhouse`.
+
+The supported python versions are a [closely guarded
+secret](https://github.com/teepark/greenhouse/issues/16).
